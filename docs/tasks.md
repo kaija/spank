@@ -11,7 +11,7 @@
 | 0 | Repo 初始化 | T01 ✅ |
 | 1 | Spike + 基礎骨架 | T02 ✅ T03 ✅ T04 ✅ T05 ✅ T06 ✅ T07 ✅ T08 ✅ |
 | 2 | Spike 收尾 + 純邏輯模組 | T09 ✅ T10 ✅ T11 ✅ T12 ✅ T13 ✅ T14 ✅ T15 ✅ |
-| 3 | ⛳ Spike Gate + 平台層 | T16 T17 T18 T19 T20 T21 T22 |
+| 3 | ⛳ Spike Gate + 平台層 | T16 ✅ T17 T18 T19 T20 T21 T22 |
 | 4 | 偵測 / 規則 / Orchestrator | T23 T24 T26 T27 |
 | 5 | 感測整合、UI 頁面、CI gate | T28 T30 T31 T32 T33 T34 T35 |
 | 6 | Onboarding、進階功能、發佈管線 | T36 T37 T38 T39 T40 |
@@ -44,7 +44,7 @@ flowchart LR
     T15["T15 ✅ Next.js i18n + UI 基礎"]
   end
   subgraph W3["Wave 3"]
-    T16["T16 Spike 報告與 ADR 更新"]
+    T16["T16 ✅ Spike 報告與 ADR 更新"]
     T17["T17 IoHidLid source（spank-sensors）"]
     T18["T18 Trace 格式 + TraceReplay source"]
     T19["T19 Playback engine（spank-audio）"]
@@ -182,6 +182,7 @@ flowchart LR
   style T13 fill:#d4edda
   style T14 fill:#d4edda
   style T15 fill:#d4edda
+  style T16 fill:#d4edda
 ```
 
 **Critical path**：T01 → T03 → T09 → T16 → T24 → T30 → T36 → T43 → T44
@@ -205,7 +206,7 @@ flowchart LR
 | T13 ✅ Sound importer（spank-audio） | 2 | T06 |
 | T14 ✅ Config store | 2 | T06 |
 | T15 ✅ Next.js i18n + UI 基礎 | 2 | T08 |
-| T16 Spike 報告與 ADR 更新 | 3 | T02, T03, T04, T05, T09, T10 |
+| T16 ✅ Spike 報告與 ADR 更新 | 3 | T02, T03, T04, T05, T09, T10 |
 | T17 IoHidLid source（spank-sensors） | 3 | T02, T06 |
 | T18 Trace 格式 + TraceReplay source | 3 | T06, T10 |
 | T19 Playback engine（spank-audio） | 3 | T05, T13 |
@@ -337,6 +338,7 @@ flowchart LR
 
 ### T16 ⛳ Spike 報告與 ADR 更新
 - 依賴：T02、T03、T04、T05、T09、T10
+- 狀態：✅ 完成（2026-10-24）：S1–S5、T09、T10 結果已寫入 spike-report 與 ADR-0003/0005/0006/0007/0008/0014；決策：不需 root、Focus 用 provisioning profile、拍桌子視同拍打
 - 內容：彙整 `docs/spike-report.md`；更新 ADR-0003（Accepted 或 Superseded）、ADR-0005 取樣方式、ADR-0006 參數初值、ADR-0007 Focus 可行性；必要時調整本任務清單。
 - 狀態：S1、S2 已完成並更新 ADR（0003 → 0014、0005、0006）；等待 S3、S4、S5。
 - 完成條件：使用者審閱同意。
@@ -377,7 +379,7 @@ flowchart LR
 - 依賴：T12、T16、T18
 - 內容：design §4.2 第 1 步（高通、noise floor、開窗、特徵）；打字訊號特徵濾波；用 traces 調參數。
   **T10 發現**：峰值門檻不足以區分大力打字（0.198 g）、拿起／放下／走路（0.25–0.35 g）與輕拍（0.21–0.24 g），需用波形特徵分類。
-  **待產品決策**：拍桌子（峰值 1.9 g）要不要算拍打。
+  **決策**：拍桌子視同拍打（ADR-0006），T23 只需排除打字、拿起／放下、走路等非撞擊動作。
 - 完成條件：trace 重播 precision ≥ 0.95、recall ≥ 0.90。
 
 ### T24 `IoHidAccel` source

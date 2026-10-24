@@ -98,7 +98,7 @@ CI (`.github/workflows/ci.yml`) runs on `macos-latest`: frontend typecheck and b
   - Light/medium/hard thresholds come from per-user calibration, because measured light and medium slaps were nearly identical.
 - Lid: `lid::LidDetector` (opened on wake / closing below a threshold / overbent) with hysteresis and cooldown; it also reports `last_motion_ms` for the slap gate (ADR-0005).
 - Slap gates, levels and combos: `slap::SlapClassifier`. Gate order: disabled → lid moving (+500 ms) → own playback (+200 ms) → precise typing (+300 ms) → below light level.
-- **The peak threshold alone is not enough** (T10 traces): heavy typing reaches 0.198 g, lifting/carrying 0.25–0.35 g, light slaps 0.21–0.24 g, and hitting the table 1.9 g. T23 must classify on waveform features.
+- **The peak threshold alone is not enough** (T10 traces): heavy typing reaches 0.198 g, lifting/carrying 0.25–0.35 g, light slaps 0.21–0.24 g, and hitting the table 1.9 g. T23 must classify on waveform features to reject non-impact motion. Table bumps deliberately count as slaps (ADR-0006).
 - Playback priority order is in `EventKind::priority` (ADR-0008).
 - Defaults and validation live in `crates/spank-core/src/config.rs`.
 
