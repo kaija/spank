@@ -1,6 +1,6 @@
 //! Slap classification and suppression (ADR-0006, design §4.2 steps 2–3).
 //!
-//! The impact extractor (T23) turns raw accelerometer data into [`ImpactCandidate`]s. This module
+//! The impact extractor ([`crate::impact`]) turns raw accelerometer data into [`ImpactCandidate`]s. This module
 //! decides whether each candidate becomes a slap event: suppression gates first, then strength
 //! level, then combo detection.
 
@@ -26,8 +26,8 @@ pub struct ImpactCandidate {
     /// Sum of squared |a| over the window.
     pub energy: f32,
     pub duration_ms: u16,
-    /// Share of energy above ~50 Hz (typing taps are high, slaps are low).
-    pub hf_ratio: f32,
+    /// Energy-weighted mean frequency of the window (slaps ring at 20–35 Hz, motion stays below ~12 Hz).
+    pub mean_freq_hz: f32,
 }
 
 /// Context the gates need, supplied by the orchestrator.
@@ -159,7 +159,7 @@ mod tests {
         SlapConfig {
             enabled: true,
             ..SlapConfig::default()
-        } // levels 0.2 / 0.45 / 0.6
+        } // levels 0.15 / 0.3 / 0.5
     }
 
     fn imp(at_ms: u64, peak_g: f32) -> ImpactCandidate {
@@ -168,7 +168,7 @@ mod tests {
             peak_g,
             energy: 0.0,
             duration_ms: 40,
-            hf_ratio: 0.2,
+            mean_freq_hz: 25.0,
         }
     }
 
@@ -183,19 +183,19 @@ mod tests {
     fn levels() {
         let mut c = SlapClassifier::new(enabled());
         assert_eq!(
-            kind(c.process(&imp(0, 0.37), &GateSignals::default())),
+            kind(c.process(&imp(0, 0.2), &GateSignals::default())),
             Some(EventKind::SlapLight)
         );
         assert_eq!(
-            kind(c.process(&imp(10_000, 0.5), &GateSignals::default())),
+            kind(c.process(&imp(10_000, 0.4), &GateSignals::default())),
             Some(EventKind::SlapMedium)
         );
         assert_eq!(
             kind(c.process(&imp(20_000, 0.78), &GateSignals::default())),
             Some(EventKind::SlapHard)
         );
-        assert_eq!(c.level(0.6), EventKind::SlapHard);
-        assert_eq!(c.level(0.45), EventKind::SlapMedium);
+        assert_eq!(c.level(0.5), EventKind::SlapHard);
+        assert_eq!(c.level(0.3), EventKind::SlapMedium);
     }
 
     #[test]
@@ -211,7 +211,7 @@ mod tests {
     fn below_light_threshold_is_dropped() {
         let mut c = SlapClassifier::new(enabled());
         assert_eq!(
-            c.process(&imp(0, 0.15), &GateSignals::default()),
+            c.process(&imp(0, 0.1), &GateSignals::default()),
             SlapOutcome::Suppressed(SuppressReason::BelowThreshold)
         );
     }
@@ -223,7 +223,7 @@ mod tests {
         let g = GateSignals::default();
         let kinds: Vec<_> = [0, 332, 644, 976, 1328]
             .iter()
-            .map(|&t| kind(c.process(&imp(t, 0.35), &g)))
+            .map(|&t| kind(c.process(&imp(t, 0.2), &g)))
             .collect();
         assert_eq!(
             kinds,
@@ -235,7 +235,7 @@ mod tests {
                 Some(EventKind::SlapCombo)
             ]
         );
-        match c.process(&imp(1600, 0.35), &g) {
+        match c.process(&imp(1600, 0.2), &g) {
             SlapOutcome::Fire(TriggerEvent {
                 meta: EventMeta::Combo { count, .. },
                 ..
@@ -248,11 +248,11 @@ mod tests {
     fn combo_window_expires() {
         let mut c = SlapClassifier::new(enabled());
         let g = GateSignals::default();
-        c.process(&imp(0, 0.4), &g);
-        c.process(&imp(2000, 0.4), &g);
+        c.process(&imp(0, 0.25), &g);
+        c.process(&imp(2000, 0.25), &g);
         // 3rd slap 5.5 s after the 1st: the 1st has left the 5 s window, so only 2 remain.
-        assert_eq!(kind(c.process(&imp(5500, 0.4), &g)), Some(EventKind::SlapLight));
-        assert_eq!(kind(c.process(&imp(5800, 0.4), &g)), Some(EventKind::SlapCombo));
+        assert_eq!(kind(c.process(&imp(5500, 0.25), &g)), Some(EventKind::SlapLight));
+        assert_eq!(kind(c.process(&imp(5800, 0.25), &g)), Some(EventKind::SlapCombo));
     }
 
     #[test]
@@ -321,10 +321,10 @@ mod tests {
             lid_last_motion_ms: Some(0),
             ..Default::default()
         };
-        c.process(&imp(100, 0.4), &moving);
-        c.process(&imp(400, 0.4), &moving);
+        c.process(&imp(100, 0.25), &moving);
+        c.process(&imp(400, 0.25), &moving);
         assert_eq!(
-            kind(c.process(&imp(900, 0.4), &GateSignals::default())),
+            kind(c.process(&imp(900, 0.25), &GateSignals::default())),
             Some(EventKind::SlapLight)
         );
     }
@@ -333,10 +333,10 @@ mod tests {
     fn set_config_resets_combo_state() {
         let mut c = SlapClassifier::new(enabled());
         let g = GateSignals::default();
-        c.process(&imp(0, 0.4), &g);
-        c.process(&imp(300, 0.4), &g);
+        c.process(&imp(0, 0.25), &g);
+        c.process(&imp(300, 0.25), &g);
         c.set_config(enabled());
         assert!(c.config().enabled);
-        assert_eq!(kind(c.process(&imp(600, 0.4), &g)), Some(EventKind::SlapLight));
+        assert_eq!(kind(c.process(&imp(600, 0.25), &g)), Some(EventKind::SlapLight));
     }
 }

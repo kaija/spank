@@ -131,6 +131,60 @@ impl From<String> for ProfileId {
     }
 }
 
+/// Picks a random sound per event, never the same one twice in a row when there is a choice
+/// (ADR-0007).
+#[derive(Debug, Clone)]
+pub struct SoundPicker {
+    rng: fastrand::Rng,
+    last: BTreeMap<EventKind, SoundId>,
+}
+
+impl Default for SoundPicker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl SoundPicker {
+    pub fn new() -> Self {
+        Self::with_rng(fastrand::Rng::new())
+    }
+
+    /// Deterministic picker for tests.
+    pub fn with_seed(seed: u64) -> Self {
+        Self::with_rng(fastrand::Rng::with_seed(seed))
+    }
+
+    fn with_rng(rng: fastrand::Rng) -> Self {
+        Self {
+            rng,
+            last: BTreeMap::new(),
+        }
+    }
+
+    /// A sound for `kind`, or `None` if the binding is disabled or empty.
+    pub fn pick(&mut self, kind: EventKind, binding: &EventBinding) -> Option<SoundId> {
+        if !binding.is_playable() {
+            return None;
+        }
+        let last = self.last.get(&kind);
+        let choices: Vec<&SoundId> = binding.sounds.iter().filter(|s| Some(*s) != last).collect();
+        let pool = if choices.is_empty() {
+            binding.sounds.iter().collect()
+        } else {
+            choices
+        };
+        let chosen = pool[self.rng.usize(..pool.len())].clone();
+        self.last.insert(kind, chosen.clone());
+        Some(chosen)
+    }
+
+    /// Forget the history (e.g. after switching profiles).
+    pub fn reset(&mut self) {
+        self.last.clear();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -189,6 +243,44 @@ mod tests {
         let mut p = sample();
         p.id = "".into();
         assert!(p.validate().is_err());
+    }
+
+    #[test]
+    fn picker_never_repeats_when_it_can() {
+        let mut picker = SoundPicker::with_seed(7);
+        let p = sample();
+        let b = p.playable(EventKind::LidOpened).unwrap();
+        let mut prev = None;
+        let mut seen = std::collections::BTreeSet::new();
+        for _ in 0..50 {
+            let s = picker.pick(EventKind::LidOpened, b).unwrap();
+            assert_ne!(Some(&s), prev.as_ref());
+            seen.insert(s.clone());
+            prev = Some(s);
+        }
+        assert_eq!(seen.len(), 2);
+    }
+
+    #[test]
+    fn picker_single_sound_and_unplayable() {
+        let mut picker = SoundPicker::default();
+        let p = sample();
+        let hard = &p.mapping[&EventKind::SlapHard];
+        assert_eq!(picker.pick(EventKind::SlapHard, hard), Some("glass-01".into()));
+        assert_eq!(picker.pick(EventKind::SlapHard, hard), Some("glass-01".into()));
+        assert_eq!(
+            picker.pick(EventKind::SlapLight, &p.mapping[&EventKind::SlapLight]),
+            None
+        );
+        assert_eq!(
+            picker.pick(EventKind::LidClosing, &p.mapping[&EventKind::LidClosing]),
+            None
+        );
+        picker.reset();
+        assert_eq!(
+            SoundPicker::new().pick(EventKind::SlapHard, hard),
+            Some("glass-01".into())
+        );
     }
 
     #[test]

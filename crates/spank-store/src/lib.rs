@@ -17,6 +17,7 @@
 
 mod atomic;
 pub mod migrate;
+pub mod profiles;
 
 use serde::Serialize;
 use serde::de::DeserializeOwned;
@@ -26,6 +27,7 @@ use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub use atomic::write_atomic;
+pub use profiles::Profiles;
 
 #[derive(Debug, thiserror::Error)]
 pub enum StoreError {
@@ -75,7 +77,7 @@ fn io_err(path: &Path) -> impl FnOnce(io::Error) -> StoreError + '_ {
     }
 }
 
-fn now_ms() -> u64 {
+pub(crate) fn now_ms() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_millis() as u64)

@@ -94,6 +94,24 @@
 - **喇叭播放幾乎沒有振動**（0.012 g）：播放抑制閘保留為保險即可。
 - 這次的輕拍比 spike 那次輕，校準（ADR-0006）仍是必要的。
 
+## T23 — 衝擊特徵與參數調校（`spank-core::impact`）
+
+標註：逐段檢視高通後的波形，把每次拍打的起點記在 `fixtures/traces/m4air-v1/expected.json`（共 23 下）。
+使用者實際拍的次數和提示不同：輕拍 4 下、中拍 4 下、連拍 6 下（1 + 5 下快速連拍，間隔 ~200 ms）。
+
+| 特徵（80 ms 視窗） | 拍打 / 拍桌 | 打字 | 拿起、放下、走路、開合 | 重拍回彈 |
+|------|------|------|------|------|
+| 峰值 | 0.16–1.91 g | ≤ 0.198 g | ≤ 0.35 g | 0.17–0.22 g |
+| 峰值 ÷ noise floor（1 s EMA） | ≥ 21 | ≤ 8.2 | 5–19 | 47–83 |
+| 平均頻率 | 20–35 Hz | 17–30 Hz | ≤ 12 Hz | 15–17.5 Hz |
+| 峰值 ÷ 前一下峰值（250 ms 內） | ≥ 0.56 | — | — | 0.26–0.38 |
+
+- 打字和拍打的頻率重疊，但打字是連續活動，noise floor 會跟著升高 → 以 `12 × noise floor` 擋掉。
+- 拿起、走路是低頻晃動 → 平均頻率 < 16 Hz 擋掉（`Σ(Δa)² / Σa²` 換算成頻率）。
+- 回彈出現在 ~100–150 ms 後、峰值只剩 ~30 % → rebound 檢查；refractory 降到 150 ms 才不會漏掉快速連拍。
+- 報告是以 ~20 ms 為一批送達（同一批時間戳相同），濾波與計時改用樣本數 × 名目取樣率。
+- 結果：precision 1.00、recall 1.00；把 trigger 提高到 0.2 g 會漏掉 2 下輕拍（recall 0.91），refractory 300 ms 會漏掉 3 下連拍（0.87）。
+
 ## S4 — Focus 狀態（`tools/focus-probe`）
 
 - 以 `objc2-intents` 呼叫 `INFocusStatusCenter`，打包成 ad-hoc 簽章 + Hardened Runtime 的 `.app`，Info.plist 含 `NSFocusStatusUsageDescription`。
@@ -140,6 +158,7 @@
 1. **ADR-0003 → Superseded by ADR-0014**：加速度計直接在 App 內讀取，不需要 root helper。
 2. **ADR-0005**：取樣方式改為 feature report 輪詢（5 Hz / 30 Hz 自適應）。
 3. **ADR-0006**：初始參數 = 高通 2 Hz、觸發門檻 0.2 g、refractory 300 ms、同級 cooldown 由 400 ms 改為不另設（refractory 已涵蓋）；連擊窗 5 s 不變。
+   **T23 更新**：觸發 0.15 g、refractory 150 ms，加上噪音門檻、頻率門檻與 rebound 檢查（見上）。
 4. **ADR-0002（備註）**：root 已不是上 App Store 的阻礙，但 sandbox 內能否存取 HID / 設定 registry property 仍未知，維持 DMG 決策。
 5. **tasks.md**：移除 helper / IPC 相關任務（原 T25、T29），T09 改為驗證簽章 .app 內的感測器存取，並加測 Focus entitlement。
 6. **ADR-0008 / design §8**：播放引擎採「常駐但 paused」策略（S5）。

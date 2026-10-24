@@ -1,0 +1,15 @@
+{
+  "note": "Hand-annotated slap onsets (seconds, trace time base), found by inspecting the high-passed waveform in T23. The user slapped 4 times in slap_light and slap_medium and 6 times in slap_combo (1 + 5 fast slaps ~200 ms apart), not the prompted 3 / 3 / 5. table_bump counts as a slap (ADR-0006); the bump at 30.45 s ends just after the labeled segment. `lid` lists the lid events in order (thresholds 20° / 120°, 5° hysteresis, 3 s cooldown): in lid.ndjson the third overbend at ~11.4 s is inside the cooldown, and lid_fast never goes below 20° or back above 120°; baseline reopens only to 119°.",
+  "tolerance_ms": 120,
+  "scenarios": {
+    "baseline": {
+      "slaps": [22.90, 23.65, 24.30, 25.80, 27.60, 29.40, 30.80, 32.45, 37.00, 38.90, 40.95, 43.89, 45.18, 45.38, 45.60, 45.80, 46.08],
+      "lid": ["lid_closing"]
+    },
+    "carry": { "slaps": [], "lid": [] },
+    "desk": { "slaps": [], "lid": [] },
+    "lid": { "slaps": [], "lid": ["lid_overbent", "lid_overbent", "lid_closing", "lid_overbent"] },
+    "playback": { "slaps": [10.65, 11.80, 12.85], "lid": [] },
+    "typing": { "slaps": [28.35, 29.35, 30.45], "lid": [] }
+  }
+}

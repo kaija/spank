@@ -51,7 +51,7 @@ jobs:
         with:
           tool: cargo-llvm-cov
       - name: Coverage (report only; 80% gate added in T28)
-        run: cargo llvm-cov -p spank-core -p spank-store -p spank-audio --summary-only
+        run: cargo llvm-cov -p spank-core -p spank-store -p spank-audio -p spank-pack -p spank-sensors -p spank-sysmon --summary-only
 
   deny:
     name: Dependency policy (cargo-deny)

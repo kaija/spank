@@ -114,18 +114,22 @@ pub struct MuteRules  { meeting: bool, focus: bool, quiet_hours: Vec<TimeRange>,
 
 ### 4.2 Slap 管線
 
-1. **Impact extractor**（Core thread，從 ring buffer 批次取資料，~50 ms 一批）：
+1. **Impact extractor**（`spank-core::impact`，Core thread，從 ring buffer 批次取資料，~50 ms 一批）：
    `a = (x,y,z)` → 各軸一階高通（去重力，fc = 2 Hz）→ `m = |a_hp|`
-   → `m > max(trigger_g, k × noise_floor)`（`trigger_g` 初始 0.2 g，k≈6，noise floor 為慢速 EMA）時開窗 80 ms
-   → 輸出 `ImpactCandidate { ts, peak_g, energy, duration_ms, hf_ratio }`；之後 300 ms refractory。
+   → `m > max(trigger_g, 12 × noise_floor)`（`trigger_g` 0.15 g，noise floor 為 1 s EMA，接受衝擊後凍結 250 ms）時開窗 80 ms
+   → 平均頻率 ≥ 16 Hz 且不是 rebound（250 ms 內峰值 < 0.45 × 前一下）才輸出
+   `ImpactCandidate { at_ms, peak_g, energy, duration_ms, mean_freq_hz }`；refractory 150 ms（T23，見 spike-report）。
 2. **App suppression gates**（依序，任一成立即丟棄）：
-   `lid_moving(+500ms)` → `self_playing(+200ms)` → `typing_signature` 或 `precise_typing(+300ms)`。
+   `lid_moving(+500ms)` → `self_playing(+200ms)` → `precise_typing(+300ms)`（打字的訊號特徵已在第 1 步的噪音門檻處理）。
 3. **Classifier**：`peak_g` 對照校準門檻 → Light / Medium / Hard；
-   `combo_window`（5 s）內第 `combo_count`（3）次以上 → `SlapCombo(n)`。不另設同級 cooldown（實測連拍間隔 ~330 ms，300 ms refractory 已足夠）。
+   `combo_window`（5 s）內第 `combo_count`（3）次以上 → `SlapCombo(n)`。不另設同級 cooldown。
 
 ### 4.3 Orchestrator
 
-單一 async task（`tokio` current-thread）接收所有 `TriggerEvent`：
+`spank-core::Orchestrator`：純邏輯，由 runtime 餵入 lid 樣本、accel 批次、`SysSignal`、設定變更，回傳 `Output`
+（感測器啟停、`Fired { event, result }`、`MuteChanged`）；播放經 `Player` trait（測試用假的）。
+感測器只在「醒著 + 未鎖定 + 未暫停」時運作（accel 另需啟用拍打）；喚醒後即使鎖定也讀一次角度觸發 `LidOpened`。
+Combo 沒有綁音效時退回該次力道分級的音效（優先權仍為 Combo）。
 
 ```
 event → muted? (AutoMute) ─yes→ drop (log)
@@ -158,9 +162,9 @@ event → muted? (AutoMute) ─yes→ drop (log)
 |------|-----|
 | 睡眠 / 喚醒 | `NSWorkspaceWillSleepNotification` / `DidWakeNotification` |
 | 螢幕鎖定 | `NSDistributedNotificationCenter` `com.apple.screenIsLocked` / `screenIsUnlocked` |
-| 麥克風使用中 | CoreAudio：遍歷 input devices，`kAudioDevicePropertyDeviceIsRunningSomewhere` + property listener |
+| 麥克風使用中 | CoreAudio process 物件（macOS 14+）：任一其他程序 `kAudioProcessPropertyIsRunningInput` + property listener（排除本 App） |
 | 相機使用中 | CoreMediaIO：`kCMIODevicePropertyDeviceIsRunningSomewhere` |
-| 專注模式 | `INFocusStatusCenter.defaultCenter.focusStatus.isFocused`（需授權） |
+| 專注模式 | `INFocusStatusCenter.defaultCenter.focusStatus.isFocused`（需授權；沒有變更通知，每 5 s 輪詢） |
 | 系統音量 / 靜音 | CoreAudio default output `kAudioDevicePropertyMute` / `VolumeScalar` |
 | 鍵盤輸入（精準模式） | `IOHIDManager` keyboard/trackpad（需 Input Monitoring） |
 
@@ -172,7 +176,8 @@ event → muted? (AutoMute) ─yes→ drop (log)
 - **Library**：`sounds/index.json` + `sounds/<uuid>.wav`。
 - **Playback**：啟動時建立 `cpal` output stream 並保持 paused（Spike S5：常駐輸出讓 coreaudiod 吃 ~12% CPU）；觸發時 `play()`（20–40 ms），播完 500 ms 後 `pause()`。
   單聲部 mixer：`request(priority, buffer, gain)`；高優先權 → 50 ms fade-out 現有 → 播新的。
-- 預載：切換 Profile 時把該 Profile 所有音效解碼進記憶體（總量上限 ~ 30 MB）。
+- 預載：切換 Profile 時把該 Profile 所有音效解碼進記憶體（`SoundBank`，總量上限 ~ 30 MB）。
+  Mixer 即時做取樣率（線性內插）與聲道轉換，輸出裝置改變時不需重新載入。實測 pause → play 中位數 40 ms。
 
 ## 9. 設定儲存
 
@@ -250,8 +255,8 @@ sequenceDiagram
 |----|------|------|--------|
 | S1 | 角度感測器可不靠 root 讀取 | ✅ 已驗證：feature report 輪詢 | — |
 | S2 | 加速度計格式 / 權限 / 可區分拍打 | ✅ 已驗證：不需 root、~796 Hz、0.2 g 門檻 | — |
-| S3 | 簽章 + Hardened Runtime 的 .app 內同樣可讀兩個感測器 | ⏳ T09 | 加 entitlement；仍不行則回到 ADR-0003 helper |
-| S4 | `INFocusStatusCenter` 能回報專注狀態 | ⚠️ 授權 OK，但 isFocused 不變（ad-hoc） | T09 加 entitlement 重測；仍無效則專注模式規則標示不支援 |
+| S3 | 簽章 + Hardened Runtime 的 .app 內同樣可讀兩個感測器 | ✅ T09 | — |
+| S4 | `INFocusStatusCenter` 能回報專注狀態 | ✅ 需 Developer ID + provisioning profile | 開發版標示「需正式簽章版本」 |
 | S5 | cpal output stream 閒置耗電 | ✅ 常駐太耗電 → paused + 按需 play | — |
 | R1 | 未來 macOS 收緊 SPU property 權限 | 持續觀察 | 啟用 ADR-0003 helper 備案 |
 | R2 | 其他機型（M1–M3、MacBook Pro）行為不同 | 待社群 trace | capability detection 關閉功能 |

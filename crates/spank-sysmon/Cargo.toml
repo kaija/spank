@@ -1,0 +1,24 @@
+[package]
+name = "spank-sysmon"
+description = "System signals for spank: sleep/wake, screen lock, mic/camera in use, output volume, Focus (design §7)."
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+publish.workspace = true
+
+[dependencies]
+spank-core = { path = "../spank-core" }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+block2 = "0.6"
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "block2", "NSString", "NSNotification", "NSOperation", "NSDistributedNotificationCenter", "NSObject", "NSValue"] }
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSWorkspace"] }
+objc2-intents = { version = "0.3", default-features = false, features = ["std", "block2", "INFocusStatus", "INFocusStatusCenter"] }
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+core-foundation-sys.workspace = true
+serde_json.workspace = true

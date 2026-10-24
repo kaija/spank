@@ -11,8 +11,8 @@
 | 0 | Repo 初始化 | T01 ✅ |
 | 1 | Spike + 基礎骨架 | T02 ✅ T03 ✅ T04 ✅ T05 ✅ T06 ✅ T07 ✅ T08 ✅ |
 | 2 | Spike 收尾 + 純邏輯模組 | T09 ✅ T10 ✅ T11 ✅ T12 ✅ T13 ✅ T14 ✅ T15 ✅ |
-| 3 | ⛳ Spike Gate + 平台層 | T16 ✅ T17 T18 T19 T20 T21 T22 |
-| 4 | 偵測 / 規則 / Orchestrator | T23 T24 T26 T27 |
+| 3 | ⛳ Spike Gate + 平台層 | T16 ✅ T17 ✅ T18 ✅ T19 ✅ T20 T21 ✅ T22 ✅ |
+| 4 | 偵測 / 規則 / Orchestrator | T23 ✅ T24 ✅ T26 ✅ T27 ✅ |
 | 5 | 感測整合、UI 頁面、CI gate | T28 T30 T31 T32 T33 T34 T35 |
 | 6 | Onboarding、進階功能、發佈管線 | T36 T37 T38 T39 T40 |
 | 7 | 更新、強化、文件 | T41 T42 T43 |
@@ -45,18 +45,18 @@ flowchart LR
   end
   subgraph W3["Wave 3"]
     T16["T16 ✅ Spike 報告與 ADR 更新"]
-    T17["T17 IoHidLid source（spank-sensors）"]
-    T18["T18 Trace 格式 + TraceReplay source"]
-    T19["T19 Playback engine（spank-audio）"]
+    T17["T17 ✅ IoHidLid source（spank-sensors）"]
+    T18["T18 ✅ Trace 格式 + TraceReplay source"]
+    T19["T19 ✅ Playback engine（spank-audio）"]
     T20["T20 spank-sysmon 基礎訊號"]
-    T21["T21 Profiles 管理 + 內建 Profile 載入"]
-    T22["T22 spank-pack（.spankpack 讀寫）"]
+    T21["T21 ✅ Profiles 管理 + 內建 Profile 載入"]
+    T22["T22 ✅ spank-pack（.spankpack 讀寫）"]
   end
   subgraph W4["Wave 4"]
-    T23["T23 Impact feature extractor + 參數調校"]
-    T24["T24 IoHidAccel source"]
-    T26["T26 Auto-mute evaluator"]
-    T27["T27 Orchestrator"]
+    T23["T23 ✅ Impact feature extractor + 參數調校"]
+    T24["T24 ✅ IoHidAccel source"]
+    T26["T26 ✅ Auto-mute evaluator"]
+    T27["T27 ✅ Orchestrator"]
   end
   subgraph W5["Wave 5"]
     T28["T28 Trace 重播 CI gate"]
@@ -183,6 +183,15 @@ flowchart LR
   style T14 fill:#d4edda
   style T15 fill:#d4edda
   style T16 fill:#d4edda
+  style T17 fill:#d4edda
+  style T18 fill:#d4edda
+  style T19 fill:#d4edda
+  style T21 fill:#d4edda
+  style T22 fill:#d4edda
+  style T23 fill:#d4edda
+  style T24 fill:#d4edda
+  style T26 fill:#d4edda
+  style T27 fill:#d4edda
 ```
 
 **Critical path**：T01 → T03 → T09 → T16 → T24 → T30 → T36 → T43 → T44
@@ -207,16 +216,16 @@ flowchart LR
 | T14 ✅ Config store | 2 | T06 |
 | T15 ✅ Next.js i18n + UI 基礎 | 2 | T08 |
 | T16 ✅ Spike 報告與 ADR 更新 | 3 | T02, T03, T04, T05, T09, T10 |
-| T17 IoHidLid source（spank-sensors） | 3 | T02, T06 |
-| T18 Trace 格式 + TraceReplay source | 3 | T06, T10 |
-| T19 Playback engine（spank-audio） | 3 | T05, T13 |
+| T17 ✅ IoHidLid source（spank-sensors） | 3 | T02, T06 |
+| T18 ✅ Trace 格式 + TraceReplay source | 3 | T06, T10 |
+| T19 ✅ Playback engine（spank-audio） | 3 | T05, T13 |
 | T20 spank-sysmon 基礎訊號 | 3 | T06 |
-| T21 Profiles 管理 + 內建 Profile 載入 | 3 | T14 |
-| T22 spank-pack（.spankpack 讀寫） | 3 | T14 |
-| T23 Impact feature extractor + 參數調校 | 4 | T12, T16, T18 |
-| T24 IoHidAccel source | 4 | T16, T03 |
-| T26 Auto-mute evaluator | 4 | T20, T06 |
-| T27 Orchestrator | 4 | T11, T17, T19, T21 |
+| T21 ✅ Profiles 管理 + 內建 Profile 載入 | 3 | T14 |
+| T22 ✅ spank-pack（.spankpack 讀寫） | 3 | T14 |
+| T23 ✅ Impact feature extractor + 參數調校 | 4 | T12, T16, T18 |
+| T24 ✅ IoHidAccel source | 4 | T16, T03 |
+| T26 ✅ Auto-mute evaluator | 4 | T20, T06 |
+| T27 ✅ Orchestrator | 4 | T11, T17, T19, T21 |
 | T28 Trace 重播 CI gate | 5 | T23, T18, T07 |
 | T30 加速度計生命週期（App 內） | 5 | T12, T24, T27 |
 | T31 Tray 選單完整版 | 5 | T27, T26 |
@@ -345,31 +354,37 @@ flowchart LR
 
 ### T17 `IoHidLid` source（`spank-sensors`）
 - 依賴：T02、T06
+- 狀態：✅ 完成（2026-10-24）：`spank-sensors`（`LidSource`、`IoHidLid` feature report 輪詢、`LidPollSchedule` 5/30 Hz、`capabilities()`）；真機 `examples/sensor-check` 讀取 0.73 ms／次；睡眠時停止由 Orchestrator 下 `StopLid`
 - 內容：依 S1 結果實作 `LidSource`；capability detection；sleep 時停止。
 - 完成條件：真機手動驗證；解析函式單元測試。
 
 ### T18 Trace 格式 + `TraceReplay` source
 - 依賴：T06、T10
+- 狀態：✅ 完成（2026-10-24）：`spank-sensors::trace`（v1 讀寫、labels）、`TraceReplay`（`LidSource` / `AccelSource`、依時間合併、50 ms 批次、`with_speed` 加速重播）；讀取 `m4air-v1` 全部 6 段 trace 重播測試
 - 內容：NDJSON reader/writer、labels；`TraceReplay` 實作 `LidSource` / `AccelSource`，可加速重播。
 - 完成條件：讀取 T10 的 traces 並重播測試。
 
 ### T19 Playback engine（`spank-audio`）
 - 依賴：T05、T13
+- 狀態：✅ 完成（2026-10-24）：`spank-audio` `Mixer`（單聲部、優先權中斷 + 50 ms fade-out、即時重新取樣與聲道對應）、`SoundBank`（預載、30 MB 上限）、`AudioPlayer`（cpal stream 常駐 paused、播完 500 ms 後 pause、`PlaybackStatus` 供播放閘）；真機 `examples/playback-latency`：pause → play 中位數 40 ms（< 50 ms）
 - 內容：cpal 輸出、單聲部 mixer、優先權中斷 + 50 ms fade-out、預載、gain 計算、`self_playing` 訊號輸出。
 - 完成條件：單元測試（mixer 邏輯以假 output）；真機延遲 < 50 ms。
 
 ### T20 `spank-sysmon` 基礎訊號
 - 依賴：T06
+- 狀態：🟡 實作完成（2026-10-24）：`spank-sysmon` `SysMonitor`（NSWorkspace 睡眠／喚醒、distributed 鎖定通知、CoreAudio process 物件偵測麥克風（排除本 App）、CoreMediaIO 相機、預設輸出 mute／volume、Focus 每 5 s 輪詢），全部以 listener 為主；真機已確認初始值正確，**逐項切換驗證待使用者跑 `cargo run -p spank-sysmon --example sysmon-watch`**
 - 內容：sleep/wake、screen lock、mic in-use、camera in-use、系統音量/靜音（以 listener 為主，避免輪詢）。
 - 完成條件：真機手動驗證每個訊號；輸出 `SysSignal` 事件流。
 
 ### T21 Profiles 管理 + 內建 Profile 載入
 - 依賴：T14
+- 狀態：✅ 完成（2026-10-24）：`spank-store::Profiles`（內建唯讀 `builtin.*`、從 bundle 目錄載入、建立／複製／改名／刪除、active profile 與 fallback）；`spank-core::SoundPicker`（隨機、不連續重複）
 - 內容：Profile CRUD、複製、刪除、內建唯讀、active profile、隨機挑音（避免連續重複）。
 - 完成條件：單元測試。
 
 ### T22 `spank-pack`（.spankpack 讀寫）
 - 依賴：T14
+- 狀態：✅ 完成（2026-10-24）：`spank-pack`（manifest v1、路徑穿越／symlink／大小／zip bomb／sha256／WAV 格式驗證、匯入建立 Profile（內容定址 sound id，可重複匯入）、匯出、`PackSource` / `LocalFile`）；`fuzz/` cargo-fuzz target（需 nightly，未跑）+ stable 版 3000 次突變測試
 - 內容：ADR-0009 manifest schema、驗證（sha256、大小、路徑穿越、zip bomb）、匯入建立 Profile、匯出。
 - 完成條件：單元測試 + `cargo fuzz` target。
 
@@ -377,6 +392,7 @@ flowchart LR
 
 ### T23 Impact feature extractor + 參數調校
 - 依賴：T12、T16、T18
+- 狀態：✅ 完成（2026-10-24）：`spank-core::impact::ImpactExtractor`（高通 → `max(trigger, 12 × noise floor)` 開窗 → 平均頻率 ≥ 16 Hz、rebound 檢查）；預設 trigger 0.15 g、refractory 150 ms（連拍實測間隔 ~200 ms）；`m4air-v1` 23 個人工標註拍打：precision 1.00、recall 1.00（`spank-sensors/tests/slap_traces.rs`，標註在 `fixtures/traces/m4air-v1/expected.json`）。只有一台機器一位使用者，見 spike-report T23
 - 內容：design §4.2 第 1 步（高通、noise floor、開窗、特徵）；打字訊號特徵濾波；用 traces 調參數。
   **T10 發現**：峰值門檻不足以區分大力打字（0.198 g）、拿起／放下／走路（0.25–0.35 g）與輕拍（0.21–0.24 g），需用波形特徵分類。
   **決策**：拍桌子視同拍打（ADR-0006），T23 只需排除打字、拿起／放下、走路等非撞擊動作。
@@ -384,16 +400,19 @@ flowchart LR
 
 ### T24 `IoHidAccel` source
 - 依賴：T16、T03
+- 狀態：✅ 完成（2026-10-24）：`spank-sensors::IoHidAccel`（獨立 sensor thread + CFRunLoop、property 設定／還原、`reset_accel_properties()` 處理 crash 殘留、callback 只推 `rtrb` SPSC ring buffer、`drain` 批次讀取、`probe` capability 檢查）；真機 798 Hz、0 遺失、停止後 ReportInterval 回到 0。panic hook 還原留給 T30
 - 內容：依 S2 結果實作 `AccelSource`：sensor thread + CFRunLoop、property 設定 / 還原（含啟動時重設 crash 殘留）、callback 只寫 SPSC ring buffer 且不可 panic、批次讀取、停止/啟動。
 - 完成條件：真機驗證；解析函式單元測試。
 
 ### T26 Auto-mute evaluator
 - 依賴：T20、T06
+- 狀態：✅ 完成（2026-10-24）：`spank-core::mute`（四條規則、安靜時段跨午夜／多段、`MuteStatus` 原因與 `focus_unavailable`、`minutes_to_next_boundary`、時間由呼叫端注入）
 - 內容：四條規則合成、quiet hours（跨午夜、多段）、靜音原因輸出。（Focus 規則依 T04 結果接入或標記不支援）
 - 完成條件：單元測試（時間以可注入 clock）。
 
 ### T27 Orchestrator
 - 依賴：T11、T17、T19、T21
+- 狀態：✅ 完成（2026-10-24）：`spank-core::Orchestrator`（純邏輯：lid／slap 管線 → 暫停 → 靜音 → binding（combo 無音效時退回力道分級）→ 挑音 → `Player`；睡眠／鎖定／暫停停止感測器，喚醒後即使鎖定也讀一次角度觸發 `LidOpened`）；`spank-sensors/tests/orchestrator_replay.rs` 重播 lid trace 驗證事件序列、睡眠／喚醒、鎖定。尚未接進 Tauri App（T30／T31）
 - 內容：design §4.3；串接 lid detector → profile → playback；pause/resume；sleep/lock 時停止感測器。
 - 完成條件：用 `TraceReplay` 的整合測試：重播開合 trace 觸發正確事件序列。
 

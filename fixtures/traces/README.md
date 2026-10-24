@@ -41,3 +41,11 @@ The label names are defined in `tools/trace-recorder/src/main.rs` (`scenarios()`
 - `slap_*`: the user slapped the laptop.
 - `playback_*`: a system sound was looping through the speakers.
 - Every other label is a non-slap activity, and the detector must not fire during it.
+
+## Ground truth: `expected.json`
+
+`m4air-v1/expected.json` lists the slap onsets (seconds) of every scenario, annotated by hand from the
+waveform (T23), and the expected lid events in order. `crates/spank-sensors/tests/slap_traces.rs` scores
+slap detection against it (precision ≥ 0.95, recall ≥ 0.90, tolerance 120 ms), and
+`tests/orchestrator_replay.rs` checks the lid event sequences. When you add a trace, annotate it there too.
+

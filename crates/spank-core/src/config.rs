@@ -79,12 +79,13 @@ pub struct SlapLevels {
 }
 
 impl Default for SlapLevels {
-    /// Pre-calibration guesses from the M4 Air spike trace (light/medium ≈ 0.37–0.41 g, hard ≈ 0.57–0.78 g).
+    /// Pre-calibration guesses from the M4 Air traces (T10: light 0.16–0.38 g, medium 0.2–0.34 g,
+    /// hard 0.55–0.68 g; light and medium overlap, so calibration decides).
     fn default() -> Self {
         Self {
-            light_g: 0.2,
-            medium_g: 0.45,
-            hard_g: 0.6,
+            light_g: 0.15,
+            medium_g: 0.3,
+            hard_g: 0.5,
         }
     }
 }
@@ -123,8 +124,8 @@ impl Default for SlapConfig {
         Self {
             enabled: false,
             highpass_hz: 2.0,
-            trigger_g: 0.2,
-            refractory_ms: 300,
+            trigger_g: 0.15,
+            refractory_ms: 150,
             levels: SlapLevels::default(),
             combo_window_ms: 5000,
             combo_count: 3,
@@ -337,8 +338,8 @@ mod tests {
     fn defaults_match_adrs() {
         let c = AppConfig::default();
         assert!(!c.slap.enabled, "slap is opt-in");
-        assert_eq!(c.slap.trigger_g, 0.2);
-        assert_eq!(c.slap.refractory_ms, 300);
+        assert_eq!(c.slap.trigger_g, 0.15);
+        assert_eq!(c.slap.refractory_ms, 150);
         assert_eq!(c.lid.close_threshold_deg, 20.0);
         assert_eq!(c.lid.overbend_threshold_deg, 120.0);
         assert!(c.mute.meeting && c.mute.focus && c.mute.follow_system);
@@ -363,7 +364,7 @@ mod tests {
     fn partial_config_fills_defaults() {
         let c: AppConfig = serde_json::from_str(r#"{"schema_version":1,"slap":{"enabled":true}}"#).unwrap();
         assert!(c.slap.enabled);
-        assert_eq!(c.slap.trigger_g, 0.2);
+        assert_eq!(c.slap.trigger_g, 0.15);
         assert_eq!(c.lid, LidConfig::default());
         c.validate().unwrap();
     }
@@ -417,7 +418,7 @@ mod tests {
         };
         assert!(s.validate().is_err());
         let s = SlapConfig {
-            combo_window_ms: 500,
+            combo_window_ms: 400,
             ..Default::default()
         };
         assert!(s.validate().is_err());

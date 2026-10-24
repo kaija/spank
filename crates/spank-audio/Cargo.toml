@@ -13,6 +13,9 @@ ebur128 = "0.1"
 hound = "3.5"
 sha2 = "0.11"
 thiserror.workspace = true
+spank-core = { path = "../spank-core" }
+cpal = "0.18"
+rtrb = "0.4"
 
 [dev-dependencies]
 tempfile = "3"

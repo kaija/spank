@@ -41,7 +41,8 @@ cargo test --workspace
 cargo test -p spank-core profile::tests::duplicate_is_writable   # single test
 cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all
-cargo llvm-cov -p spank-core -p spank-store -p spank-audio --summary-only   # coverage (target ≥ 80%)
+cargo llvm-cov -p spank-core -p spank-store -p spank-audio -p spank-pack -p spank-sensors -p spank-sysmon --summary-only   # coverage (target ≥ 80%)
+cargo test -p spank-sensors --test slap_traces -- --nocapture  # slap precision/recall on the labeled traces (T23 gate)
 cargo test -p spank-core --features ts export_bindings           # regenerate apps/desktop/src/bindings (CI fails if stale)
 cargo deny check advisories bans licenses sources                # dependency policy (deny.toml)
 ```
@@ -64,6 +65,9 @@ pnpm --dir apps/desktop tauri build --bundles app         # → target/release/b
 **Hardware probes** (real MacBook only; none need root)
 
 ```bash
+cargo run --release -p spank-sensors --example sensor-check -- --secs 5 [--slaps]   # IoHidLid + IoHidAccel (+ live impacts)
+cargo run --release -p spank-audio --example playback-latency -- --runs 10        # paused stream → play delay (< 50 ms)
+cargo run -p spank-sysmon --example sysmon-watch -- --secs 60                     # prints every SysSignal change
 cargo run -p lid-probe -- --mode poll --secs 10 --interval-ms 50
 cargo run -p accel-probe -- --enable --secs 5                     # --ndjson to stream samples
 cargo run --release -p audio-probe -- cpu paused --secs 20        # or: latency --runs 10 --gap-ms 15000
@@ -90,19 +94,27 @@ CI (`.github/workflows/ci.yml`) runs on `macos-latest`: frontend typecheck and b
 **Crates:**
 - `spank-core`: pure logic, `#![forbid(unsafe_code)]`. `ts` feature exports TS types via ts-rs.
 - `spank-store`: on-disk layout of design §9. Atomic writes; corrupt files are renamed to `*.corrupt-<ms>` and replaced by defaults; `migrate.rs` holds config schema steps; ids double as file names, so `validate_id` guards them.
-- `spank-audio`: import pipeline (symphonia 0.6 → rubato 5 `Fft` → trim → ebur128). Clips < 400 ms are looped for loudness measurement; > 2 channels are mixed to mono. Fixtures and their ffmpeg commands are in `tests/fixtures/`.
+- `spank-audio`: import pipeline (symphonia 0.6 → rubato 5 `Fft` → trim → ebur128). Clips < 400 ms are looped for loudness measurement; > 2 channels are mixed to mono. Fixtures and their ffmpeg commands are in `tests/fixtures/`. Playback: `Mixer` (single voice, strictly-higher priority preempts with a 50 ms fade), `SoundBank` (preload, 30 MB cap), `AudioPlayer`.
+- `spank-store::Profiles`: built-in profiles (`builtin.*`, read-only, loaded from a bundle dir) + user profiles + active profile with fallback.
+- `spank-sensors`: `LidSource` / `AccelSource`, trace format v1 + `TraceReplay`, report parsers, `LidPollSchedule`, and on macOS `IoHidLid`, `IoHidAccel` (own CFRunLoop thread, SPSC ring buffer, properties reset to 0 on stop; call `reset_accel_properties()` at startup), `capabilities()`.
+- `spank-sysmon`: `SysMonitor` emits deduplicated `SysSignal`s (CoreAudio/CoreMediaIO listeners, NSWorkspace + distributed notifications on the **main queue**, so the main run loop must run; Focus polled every 5 s). Mic detection uses CoreAudio process objects and skips our own pid, so our playback never counts as a meeting.
+- `spank-pack`: `.spankpack` read/validate (untrusted input: paths, symlinks, sizes declared and actual, sha256, 48 kHz ≤ 10 s WAV), import (content-addressed `pack-<sha16>` sound ids), export. `fuzz/` is a standalone cargo-fuzz crate (nightly); `mutated_packs_never_panic` is the stable stand-in.
 
 **Detection** (`spank-core`):
-- Slaps: per-axis 2 Hz high-pass → |a| > 0.2 g → 80 ms window → 300 ms refractory.
-  - Measured: typing ≤ 0.09 g, slaps ≥ 0.34 g, combo slaps ~330 ms apart. A refractory > 300 ms would drop combos.
-  - Light/medium/hard thresholds come from per-user calibration, because measured light and medium slaps were nearly identical.
+- Slaps (`impact::ImpactExtractor`, T23): per-axis 2 Hz high-pass → `|a| > max(0.15 g, 12 × noise floor)` opens an 80 ms window → accepted if its mean frequency ≥ 16 Hz and it isn't a rebound (< 0.45 × the previous peak within 250 ms) → 150 ms refractory.
+  - Why: typing overlaps slaps in peak and frequency but raises the noise floor; lifting/carrying/lid motion stay ≤ 12 Hz; hard slaps echo ~30 % at +100–150 ms; fast combos are ~200 ms apart (a 300 ms refractory drops them).
+  - Timing uses sample counts at the nominal 800 Hz, because reports arrive in ~20 ms batches sharing one timestamp.
+  - Scored against hand-annotated onsets in `fixtures/traces/m4air-v1/expected.json` (precision/recall 1.00 on 23 slaps, one machine). Re-run `slap_traces` after touching any parameter.
+  - Light/medium/hard thresholds come from per-user calibration, because measured light and medium slaps overlap.
 - Lid: `lid::LidDetector` (opened on wake / closing below a threshold / overbent) with hysteresis and cooldown; it also reports `last_motion_ms` for the slap gate (ADR-0005).
 - Slap gates, levels and combos: `slap::SlapClassifier`. Gate order: disabled → lid moving (+500 ms) → own playback (+200 ms) → precise typing (+300 ms) → below light level.
-- **The peak threshold alone is not enough** (T10 traces): heavy typing reaches 0.198 g, lifting/carrying 0.25–0.35 g, light slaps 0.21–0.24 g, and hitting the table 1.9 g. T23 must classify on waveform features to reject non-impact motion. Table bumps deliberately count as slaps (ADR-0006).
+- Table bumps (1.3–1.9 g) deliberately count as slaps (ADR-0006).
 - Playback priority order is in `EventKind::priority` (ADR-0008).
+- Auto-mute: `mute::AutoMute` / `evaluate` (meeting, focus, quiet hours across midnight, system mute or volume 0). Wall time is passed in as `TimeOfDay`.
+- `Orchestrator` (design §4.3) is pure logic: feed it lid samples, accel batches, `SysSignal`s and config; it returns `Output`s (sensor start/stop, `Fired`, `MuteChanged`) and plays through the `Player` trait. Sensors run only while awake, unlocked and not paused; after a wake the lid is read once even when locked, so `LidOpened` isn't delayed until unlock. `crates/spank-sensors/tests/orchestrator_replay.rs` replays traces through it.
 - Defaults and validation live in `crates/spank-core/src/config.rs`.
 
-**Audio:** create the cpal output stream once at startup, keep it **paused**, `play()` it on trigger (~20–40 ms), then pause again. An always-running silent stream costs coreaudiod ~12% CPU, and the first open in a process can take ~1.9 s (spike S5).
+**Audio:** create the cpal output stream once at startup, keep it **paused**, `play()` it on trigger (~20–40 ms), then pause again. An always-running silent stream costs coreaudiod ~12% CPU, and the first open in a process can take ~1.9 s (spike S5). `spank-audio::AudioPlayer` does this (caller → mpsc → control thread owning the `cpal::Stream` → `rtrb` → callback owning the `Mixer`); the mixer resamples and maps channels on the fly, so clips stay at 48 kHz.
 
 **App shell** (`apps/desktop/src-tauri`):
 - Menu bar only: `LSUIElement` in `Info.plist` plus `ActivationPolicy::Accessory`.
@@ -121,7 +133,7 @@ CI (`.github/workflows/ci.yml`) runs on `macos-latest`: frontend typecheck and b
 - The window uses an overlay title bar (native traffic lights over the sidebar); elements with `data-tauri-drag-region` move the window.
 - It talks to Rust through `invoke` (e.g. `app_info`). The planned command list is in design §10.3.
 
-**Planned crates** (design §3): `spank-sensors`, `spank-sysmon`, `spank-pack`. They don't exist yet. The hardware code currently lives in `tools/`: FFI helpers in `tools/common/iokit.rs`, and `LidReader` / `AccelStream` in `tools/common/sensors.rs`, which `spank-sensors` should start from.
+**Not wired yet:** the Tauri app doesn't run the orchestrator, sensors, sysmon or player yet (T30/T31). The spike tools in `tools/` still use their own copies in `tools/common/` rather than `spank-sensors`.
 
 **Pinned versions:**
 - Tauri **2.x** (3.x is still alpha).

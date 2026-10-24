@@ -1474,8 +1474,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "300e883d756b2e4ec94e02791f39b04b522276138852cfc41d9fb7e904106099"
 dependencies = [
  "cfg-if",
+ "js-sys",
  "libc",
  "r-efi 6.0.0",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -3260,6 +3262,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "rtrb"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9278fb35b3e730abe136e9b395b5b81b96d06b9f5478a50f0c8430a2237b22de"
+
+[[package]]
 name = "rubato"
 version = "5.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3729,10 +3737,13 @@ dependencies = [
 name = "spank-audio"
 version = "0.0.0"
 dependencies = [
+ "cpal",
  "ebur128",
  "hound",
+ "rtrb",
  "rubato",
  "sha2 0.11.1",
+ "spank-core",
  "symphonia",
  "tempfile",
  "thiserror 2.0.21",
@@ -3742,6 +3753,7 @@ dependencies = [
 name = "spank-core"
 version = "0.0.0"
 dependencies = [
+ "fastrand",
  "serde",
  "serde_json",
  "thiserror 2.0.21",
@@ -3762,15 +3774,61 @@ dependencies = [
 ]
 
 [[package]]
-name = "spank-store"
+name = "spank-pack"
 version = "0.0.0"
 dependencies = [
- "dirs 7.0.0",
+ "fastrand",
+ "hound",
+ "serde",
+ "serde_json",
+ "sha2 0.11.1",
+ "spank-core",
+ "spank-store",
+ "tempfile",
+ "thiserror 2.0.21",
+ "zip",
+]
+
+[[package]]
+name = "spank-sensors"
+version = "0.0.0"
+dependencies = [
+ "core-foundation",
+ "core-foundation-sys",
+ "io-kit-sys",
+ "rtrb",
  "serde",
  "serde_json",
  "spank-core",
  "tempfile",
  "thiserror 2.0.21",
+]
+
+[[package]]
+name = "spank-store"
+version = "0.0.0"
+dependencies = [
+ "dirs 7.0.0",
+ "fastrand",
+ "serde",
+ "serde_json",
+ "spank-core",
+ "tempfile",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "spank-sysmon"
+version = "0.0.0"
+dependencies = [
+ "block2",
+ "core-foundation-sys",
+ "objc2",
+ "objc2-app-kit",
+ "objc2-foundation",
+ "objc2-intents",
+ "serde_json",
+ "spank-core",
 ]
 
 [[package]]
@@ -4761,6 +4819,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "typed-path"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ce898823d8cd0f028662d2f349694b1af0a5cc9be83f1d213a00d3147445e1e"
+
+[[package]]
 name = "typeid"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5604,6 +5668,22 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 3.0.9",
+]
+
+[[package]]
+name = "zip"
+version = "9.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2886b00003a72c4ccee3f42cfc34908d33b2508a74d827dc2a4244706475c704"
+dependencies = [
+ "crc32fast",
+ "flate2",
+ "getrandom 0.4.3",
+ "indexmap 2.14.2",
+ "memchr",
+ "nix",
+ "typed-path",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

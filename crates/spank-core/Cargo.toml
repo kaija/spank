@@ -13,6 +13,7 @@ ts = ["dep:ts-rs"]
 [dependencies]
 serde.workspace = true
 thiserror.workspace = true
+fastrand = "2"
 ts-rs = { version = "12", optional = true, features = ["no-serde-warnings"] }
 
 [dev-dependencies]
