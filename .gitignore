@@ -5,3 +5,6 @@ out/
 .DS_Store
 .claude/worktrees/
 fixtures/**/*.stderr
+
+# Provisioning profiles and other signing material (never commit)
+/signing/

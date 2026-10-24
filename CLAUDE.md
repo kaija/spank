@@ -157,4 +157,8 @@ These are high-fidelity designs from Claude Design, generated from `docs/ui-desi
 - **Verifying UI:** don't take full-screen screenshots with `screencapture`; it captures the user's private windows. Ask the user to confirm what's visible instead.
 - **Detecting the Dock icon:** `lsappinfo`'s `ApplicationType` does not update after switching back to `Accessory`, so it can't verify Dock icon state.
 - **Signing:** a Developer ID Application identity (team `H2ZM466J6A`) is in the keychain. Both ad-hoc and Developer ID–signed hardened-runtime `.app`s read both sensors (T09).
-- **Focus status:** `INFocusStatusCenter.isFocused` stays false without the Communication Notifications entitlement. That entitlement needs a provisioning profile; without one, AMFI kills the app at launch ("No matching profile found"). Whether to get one is the user's decision.
+- **Focus status:** `INFocusStatusCenter.isFocused` only works when the app is signed with Developer ID and carries the Communication Notifications entitlement plus an embedded provisioning profile.
+  - The App ID is `H2ZM466J6A.dev.spank.app`. The profile lives in gitignored `signing/Spank_Developer_ID.provisionprofile` and must never be committed.
+  - Test it with `tools/run-as-app.sh --sign "Developer ID Application: Chang KaiChieh (H2ZM466J6A)" --bundle-id dev.spank.app --profile signing/Spank_Developer_ID.provisionprofile --entitlements tools/focus-probe/communication-profiled.entitlements focus-probe`.
+  - Without the profile, the restricted entitlement makes AMFI refuse to launch ("No matching profile found"), and without the entitlement `isFocused` is always false.
+  - Renaming the bundle ID means registering a new App ID and profile.

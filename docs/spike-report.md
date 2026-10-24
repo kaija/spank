@@ -14,7 +14,7 @@
 | S2b | 報告格式 / 取樣率 | ✅ 22 bytes，x/y/z int32 LE @ 6/10/14，÷65536 = g，~796 Hz |
 | S2c | 拍打可否與打字等區分？ | ✅ 單一峰值門檻即可（見下表） |
 | S3 | 在簽章 + Hardened Runtime 的 .app 內是否同樣可行？ | ✅ ad-hoc 與 Developer ID 簽章的 .app（經 LaunchServices 啟動）都能讀兩個感測器，不需 entitlement |
-| S4 | `INFocusStatusCenter` 可由 objc2 呼叫？ | ❌ ad-hoc 與 Developer ID 簽章下 `isFocused` 都恆為 false；加 Communication Notifications entitlement 需 provisioning profile（AMFI 拒絕啟動） |
+| S4 | `INFocusStatusCenter` 可由 objc2 呼叫？ | ✅ 需 Developer ID 簽章 + Communication Notifications entitlement + 內嵌 provisioning profile（App ID `dev.spank.app`）；無 profile 時 `isFocused` 恆為 false |
 | S5 | cpal 常駐 stream 閒置耗電 | ✅ 常駐輸出會讓 coreaudiod 吃 ~12% CPU → **建立後保持 paused，需要時 resume** |
 | T08 | Tauri 選單列 App 閒置資源 | ✅ 只有 tray：phys_footprint 12 MB、CPU 0%；開過設定視窗後 26 MB |
 
@@ -104,7 +104,11 @@
   - Developer ID 簽章（無 entitlement），使用者先開啟勿擾再啟動：授權 `Authorized`，`isFocused` 仍為 `Some(false)`。
   - Developer ID + `com.apple.developer.usernotifications.communication`：AMFI 拒絕啟動（`No matching profile found`，需 provisioning profile）。
 - **結論**：在 macOS 上要讀到專注狀態，必須在 Apple Developer 網站為 App ID 啟用 Communication Notifications 並嵌入 Developer ID provisioning profile（是否支援 Developer ID 發佈仍待確認）。
-- **待決策**：(a) 申請 provisioning profile 再測；(b) v0.1 先把「專注模式」規則標示為不支援（其他三條規則不受影響）。
+- **申請 provisioning profile 後（2026-10-24）**：
+  - Apple 的 [Supported capabilities (macOS)](https://developer.apple.com/help/account/reference/supported-capabilities-macos) 表格顯示 Communication Notifications 支援 Developer ID。
+  - 註冊 App ID `H2ZM466J6A.dev.spank.app`（勾選 Communication Notifications），建立 Developer ID provisioning profile「Spank Developer ID」（期限 2044-10-19，存於 gitignored 的 `signing/`）。
+  - 以 bundle ID `dev.spank.app` + 內嵌 profile + entitlements（`application-identifier`、`team-identifier`、`usernotifications.communication`）簽章：AMFI 接受、授權後 **勿擾開 → `isFocused = true`，關 → `false`**。
+- **結論**：ADR-0007 的「專注模式」規則可行。發佈的 App 必須內嵌此 profile（T40），且 bundle ID 改名時要重新申請 App ID 與 profile。
 
 ## S5 — 音訊輸出（`tools/audio-probe`，MacBook Air 喇叭，48 kHz / 2 ch）
 

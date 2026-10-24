@@ -456,7 +456,7 @@ flowchart LR
 
 ### T40 簽章 / 公證 Release workflow
 - 依賴：T09、T07
-- 內容：`release.yml`：Developer ID 簽章、hardened runtime、entitlements、`notarytool`、`stapler`、DMG、GitHub Release；Secrets 文件化。
+- 內容：內嵌 Developer ID provisioning profile（`Contents/embedded.provisionprofile`，CI 由 Secret 還原）與 entitlements（`application-identifier`、`team-identifier`、`usernotifications.communication`，見 spike-report S4）；`release.yml`：Developer ID 簽章、hardened runtime、entitlements、`notarytool`、`stapler`、DMG、GitHub Release；Secrets 文件化。
 - 完成條件：tag 產出可在乾淨機器上安裝、無 Gatekeeper 警告的 DMG。
 
 ## Wave 7 — 更新、強化、文件
