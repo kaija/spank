@@ -23,7 +23,11 @@ use std::time::Instant;
 
 const PAGE_VENDOR: i64 = 0xFF00;
 const USAGE_ACCEL: i64 = 3;
-const PROPS: [&str; 3] = ["SensorPropertyReportingState", "SensorPropertyPowerState", "ReportInterval"];
+const PROPS: [&str; 3] = [
+    "SensorPropertyReportingState",
+    "SensorPropertyPowerState",
+    "ReportInterval",
+];
 
 struct Ctx {
     start: Instant,
@@ -64,7 +68,10 @@ unsafe extern "C" fn on_input(
     let xyz = parse_xyz(bytes);
     if c.dump_left > 0 {
         c.dump_left -= 1;
-        println!("[t={t:7.4}s] id={report_id} len={len} raw=[{}] xyz={xyz:.4?}", hex(bytes));
+        println!(
+            "[t={t:7.4}s] id={report_id} len={len} raw=[{}] xyz={xyz:.4?}",
+            hex(bytes)
+        );
     }
     if let Some((x, y, z)) = xyz {
         let m = (x * x + y * y + z * z).sqrt();
@@ -151,7 +158,13 @@ fn main() {
                 last_t: 0.0,
             }));
             let buf: &'static mut [u8] = Box::leak(vec![0u8; 4096].into_boxed_slice());
-            IOHIDDeviceRegisterInputReportCallback(dev, buf.as_mut_ptr(), buf.len() as CFIndex, Some(on_input), ctx as *mut c_void);
+            IOHIDDeviceRegisterInputReportCallback(
+                dev,
+                buf.as_mut_ptr(),
+                buf.len() as CFIndex,
+                Some(on_input),
+                ctx as *mut c_void,
+            );
             IOHIDDeviceScheduleWithRunLoop(dev, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
             opened += 1;
             println!("== listening {secs}s (slap / tap the laptop!) ==");
@@ -159,7 +172,11 @@ fn main() {
 
             let c = &*ctx;
             let span = c.last_t - c.first_t.unwrap_or(0.0);
-            let hz = if span > 0.0 { (c.count.saturating_sub(1)) as f64 / span } else { 0.0 };
+            let hz = if span > 0.0 {
+                (c.count.saturating_sub(1)) as f64 / span
+            } else {
+                0.0
+            };
             println!("reports={} rate≈{hz:.1} Hz lengths={:?}", c.count, c.lens);
             if !c.mags.is_empty() {
                 let n = c.mags.len() as f64;

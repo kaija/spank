@@ -1,0 +1,12 @@
+[package]
+name = "focus-probe"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+publish.workspace = true
+
+[dependencies]
+block2 = "0.6"
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSValue"] }
+objc2-intents = { version = "0.3", default-features = false, features = ["std", "block2", "INFocusStatus", "INFocusStatusCenter"] }
+core-foundation-sys.workspace = true

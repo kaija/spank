@@ -1,0 +1,5 @@
+{
+  "name": "spank",
+  "private": true,
+  "packageManager": "pnpm@11.22.0"
+}

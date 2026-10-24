@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Merged into the bundle's Info.plist by Tauri. -->
+<plist version="1.0">
+<dict>
+  <!-- Menu bar only: no Dock icon until the settings window opens (ADR-0004). -->
+  <key>LSUIElement</key>
+  <true/>
+  <key>NSFocusStatusUsageDescription</key>
+  <string>Spank mutes its sounds while Focus is on.</string>
+</dict>
+</plist>

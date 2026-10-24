@@ -50,10 +50,15 @@ unsafe extern "C" fn on_input(
     let angle = parse_angle(bytes);
     let t = ctx.start.elapsed().as_secs_f64();
     if ctx.ndjson {
-        println!(r#"{{"src":"input","t":{t:.4},"report_id":{report_id},"angle":{}}}"#,
-            angle.map_or("null".into(), |a| a.to_string()));
+        println!(
+            r#"{{"src":"input","t":{t:.4},"report_id":{report_id},"angle":{}}}"#,
+            angle.map_or("null".into(), |a| a.to_string())
+        );
     } else if angle != ctx.last || ctx.count <= 3 {
-        println!("[input t={t:7.3}s] type={type_} id={report_id} len={len} raw=[{}] angle={angle:?}", hex(bytes));
+        println!(
+            "[input t={t:7.3}s] type={type_} id={report_id} len={len} raw=[{}] angle={angle:?}",
+            hex(bytes)
+        );
     }
     ctx.last = angle;
 }
@@ -120,14 +125,29 @@ fn main() {
 
     if mode == "input" || mode == "both" {
         println!("\n== input-report listening for {secs}s (move the lid!) ==");
-        let ctx = Box::into_raw(Box::new(InputCtx { start: Instant::now(), count: 0, ndjson, last: None }));
+        let ctx = Box::into_raw(Box::new(InputCtx {
+            start: Instant::now(),
+            count: 0,
+            ndjson,
+            last: None,
+        }));
         let buf: &'static mut [u8] = Box::leak(vec![0u8; 64].into_boxed_slice());
         unsafe {
-            IOHIDDeviceRegisterInputReportCallback(dev, buf.as_mut_ptr(), buf.len() as CFIndex, Some(on_input), ctx as *mut c_void);
+            IOHIDDeviceRegisterInputReportCallback(
+                dev,
+                buf.as_mut_ptr(),
+                buf.len() as CFIndex,
+                Some(on_input),
+                ctx as *mut c_void,
+            );
             IOHIDDeviceScheduleWithRunLoop(dev, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
             CFRunLoopRunInMode(kCFRunLoopDefaultMode, secs, 0);
             let c = &*ctx;
-            println!("input reports received: {} ({:.1} Hz)", c.count, c.count as f64 / secs);
+            println!(
+                "input reports received: {} ({:.1} Hz)",
+                c.count,
+                c.count as f64 / secs
+            );
         }
     }
 
@@ -141,7 +161,8 @@ fn main() {
             let mut buf = [0u8; 64];
             let mut len: CFIndex = buf.len() as CFIndex;
             let t0 = Instant::now();
-            let r = unsafe { IOHIDDeviceGetReport(dev, kIOHIDReportTypeFeature, 1, buf.as_mut_ptr(), &mut len) };
+            let r =
+                unsafe { IOHIDDeviceGetReport(dev, kIOHIDReportTypeFeature, 1, buf.as_mut_ptr(), &mut len) };
             call_us.push(t0.elapsed().as_micros());
             let t = start.elapsed().as_secs_f64();
             if r != 0 {
@@ -154,7 +175,10 @@ fn main() {
                 let bytes = &buf[..len as usize];
                 let angle = parse_angle(bytes);
                 if ndjson {
-                    println!(r#"{{"src":"poll","t":{t:.4},"angle":{}}}"#, angle.map_or("null".into(), |a| a.to_string()));
+                    println!(
+                        r#"{{"src":"poll","t":{t:.4},"angle":{}}}"#,
+                        angle.map_or("null".into(), |a| a.to_string())
+                    );
                 } else if angle != last || ok <= 2 {
                     println!("[poll t={t:7.3}s] len={len} raw=[{}] angle={angle:?}", hex(bytes));
                 }

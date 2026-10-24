@@ -31,7 +31,8 @@
 ## Consequences
 
 - 不做「依條件自動切換 Profile」的規則引擎（未來可另開 ADR）。
-- `INFocusStatusCenter` 需從 Rust 透過 objc2 呼叫，並需 `NSFocusStatusUsageDescription`；Spike 時確認 objc2 綁定可用性。
+- `INFocusStatusCenter` 需從 Rust 透過 objc2 呼叫，並需 `NSFocusStatusUsageDescription`。
+  **Spike S4**：授權可取得，但 ad-hoc 簽章下開啟勿擾時 `isFocused` 仍為 false；T09 以 Developer ID + Communication Notifications entitlement 重測，仍無效則此規則標示為不支援。
 
 ## Alternatives
 

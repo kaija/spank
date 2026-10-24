@@ -14,8 +14,9 @@
 | S2b | 報告格式 / 取樣率 | ✅ 22 bytes，x/y/z int32 LE @ 6/10/14，÷65536 = g，~796 Hz |
 | S2c | 拍打可否與打字等區分？ | ✅ 單一峰值門檻即可（見下表） |
 | S3 | 在簽章 + Hardened Runtime 的 .app 內是否同樣可行？ | ⏳ 待驗證（T09，改為「不含 helper」版本） |
-| S4 | `INFocusStatusCenter` 可由 objc2 呼叫？ | ⏳ 待驗證（T04） |
-| S5 | cpal 常駐 stream 閒置耗電 | ⏳ 待驗證（T05） |
+| S4 | `INFocusStatusCenter` 可由 objc2 呼叫？ | ⚠️ 授權可取得，但 `isFocused` 開啟勿擾時仍為 false（ad-hoc 簽章）→ T09 以 Developer ID + entitlement 再測 |
+| S5 | cpal 常駐 stream 閒置耗電 | ✅ 常駐輸出會讓 coreaudiod 吃 ~12% CPU → **建立後保持 paused，需要時 resume** |
+| T08 | Tauri 選單列 App 閒置資源 | ✅ 只有 tray：phys_footprint 12 MB、CPU 0%；開過設定視窗後 26 MB |
 
 ## S1 — 螢幕角度感測器
 
@@ -59,13 +60,48 @@
 - 這次「輕」與「中」力道幾乎相同（0.37 vs 0.40）→ 分級必須靠個人校準，不能用固定值。
 - 只有一台機器、一位使用者、一段錄製；放桌上、走路攜帶、喇叭播放等情境尚未錄製（T10）。
 
+## S4 — Focus 狀態（`tools/focus-probe`）
+
+- 以 `objc2-intents` 呼叫 `INFocusStatusCenter`，打包成 ad-hoc 簽章 + Hardened Runtime 的 `.app`，Info.plist 含 `NSFocusStatusUsageDescription`。
+- `requestAuthorizationWithCompletionHandler`：跳出系統授權視窗，使用者允許後回傳 `Authorized`（不需額外 entitlement）。
+- `focusStatus.isFocused`：回傳 `Some(false)`；**使用者開啟「勿擾模式」且「分享專注模式狀態」已開啟，20 秒內值都沒有變成 true**。
+- 推測：需要 Communication Notifications capability（`com.apple.developer.usernotifications.communication`，需 provisioning profile），或需在完整 `NSApplication` 環境下才會收到更新。
+- **決策**：T09 用 Developer ID + entitlement 重測；若仍無效，ADR-0007 的「專注模式」規則標示為不支援（其他三條規則不受影響）。
+
+## S5 — 音訊輸出（`tools/audio-probe`，MacBook Air 喇叭，48 kHz / 2 ch）
+
+| 模式 | App CPU | coreaudiod CPU |
+|------|--------:|---------------:|
+| 無 stream | 0.02% | 0.00% |
+| 常駐 stream（輸出靜音） | 0.21% | **11.85%** |
+| stream 建立後 pause | 0.02% | 0.20% |
+
+| 延遲（到第一個 audio callback） | min | median | max |
+|------|----:|----:|----:|
+| 冷開啟（build + play），間隔 200 ms | 21.6 ms | 23.7 ms | **1.86 s**（行程內第一次開啟） |
+| 冷開啟，間隔 15 s | 21.8 ms | 23.1 ms | 50.8 ms |
+| pause → play，間隔 200 ms | 18.2 ms | 18.7 ms | 19.7 ms |
+| pause → play，間隔 15 s | 40.2 ms | 40.7 ms | 40.8 ms |
+
+→ **決策**：App 啟動時就建立 output stream（吸收第一次開啟的 ~1.9 s），平常保持 paused；觸發時 `play()`（~20–40 ms，符合 < 50 ms 目標），音效播完 500 ms 後 `pause()`。預設輸出裝置變更時重建 stream。
+
+## T08 — Tauri 選單列 App 骨架
+
+- `Spank.app`（release）9.1 MB；`LSUIElement=true`，啟動後無 Dock 圖示（`ApplicationType=UIElement`）。
+- 只有 tray：**phys_footprint 12 MB**、CPU 0%（RSS 70 MB 多為共享 framework）。
+- 第二次啟動（single-instance）→ 在既有行程開啟設定視窗、出現 Dock 圖示；關閉視窗 → Dock 圖示消失、tray 保留、App 不結束（使用者目視確認）。
+- 關閉設定視窗後 phys_footprint 26 MB：WebView 已銷毀但 WebKit 未完全釋放記憶體。可接受；若要壓低可考慮 T42 時研究。
+- 注意：`lsappinfo` 的 `ApplicationType` 在切回 Accessory 後不會更新，不能用來自動驗證 Dock 狀態。
+
 ## 對 ADR / 設計的影響
 
 1. **ADR-0003 → Superseded by ADR-0014**：加速度計直接在 App 內讀取，不需要 root helper。
 2. **ADR-0005**：取樣方式改為 feature report 輪詢（5 Hz / 30 Hz 自適應）。
 3. **ADR-0006**：初始參數 = 高通 2 Hz、觸發門檻 0.2 g、refractory 300 ms、同級 cooldown 由 400 ms 改為不另設（refractory 已涵蓋）；連擊窗 5 s 不變。
 4. **ADR-0002（備註）**：root 已不是上 App Store 的阻礙，但 sandbox 內能否存取 HID / 設定 registry property 仍未知，維持 DMG 決策。
-5. **tasks.md**：移除 helper / IPC 相關任務（原 T25、T29），T09 改為驗證簽章 .app 內的感測器存取。
+5. **tasks.md**：移除 helper / IPC 相關任務（原 T25、T29），T09 改為驗證簽章 .app 內的感測器存取，並加測 Focus entitlement。
+6. **ADR-0008 / design §8**：播放引擎採「常駐但 paused」策略（S5）。
+7. **ADR-0007**：專注模式規則列為風險（S4）。
 
 ## 風險
 

@@ -60,10 +60,12 @@ spank/
 │   ├── spank-sysmon/          # sleep/wake、lock、mic/cam in-use、focus、系統音量（objc2 / coreaudio）
 │   └── spank-pack/            # .spankpack 讀寫與驗證
 ├── apps/
-│   └── desktop/               # Tauri v2 app（src-tauri/）+ Next.js（ui/）
+│   └── desktop/               # Next.js 專案根目錄（src/app、out/ 靜態匯出）+ src-tauri/（Tauri v2 Rust）
 ├── tools/
 │   ├── lid-probe/             # Spike S1
 │   ├── accel-probe/           # Spike S2
+│   ├── audio-probe/           # Spike S5
+│   ├── focus-probe/           # Spike S4
 │   └── trace-recorder/        # 錄製 + 標註 trace
 ├── fixtures/traces/           # NDJSON traces（Git LFS）
 ├── assets/sounds/             # 內建 CC0 音效 + SOUNDS_LICENSE.md
@@ -168,7 +170,7 @@ event → muted? (AutoMute) ─yes→ drop (log)
 
 - **Importer**：`symphonia` decode → `rubato` resample 48 kHz → 去前導靜音（-50 dBFS）→ `ebur128` 正規化 -16 LUFS、true peak ≤ -1 dBTP → WAV。
 - **Library**：`sounds/index.json` + `sounds/<uuid>.wav`。
-- **Playback**：`cpal` output stream 常駐（閒置時輸出靜音或暫停 stream 以省電；Spike 時量測 stream 閒置耗電）。
+- **Playback**：啟動時建立 `cpal` output stream 並保持 paused（Spike S5：常駐輸出讓 coreaudiod 吃 ~12% CPU）；觸發時 `play()`（20–40 ms），播完 500 ms 後 `pause()`。
   單聲部 mixer：`request(priority, buffer, gain)`；高優先權 → 50 ms fade-out 現有 → 播新的。
 - 預載：切換 Profile 時把該 Profile 所有音效解碼進記憶體（總量上限 ~ 30 MB）。
 
@@ -249,7 +251,7 @@ sequenceDiagram
 | S1 | 角度感測器可不靠 root 讀取 | ✅ 已驗證：feature report 輪詢 | — |
 | S2 | 加速度計格式 / 權限 / 可區分拍打 | ✅ 已驗證：不需 root、~796 Hz、0.2 g 門檻 | — |
 | S3 | 簽章 + Hardened Runtime 的 .app 內同樣可讀兩個感測器 | ⏳ T09 | 加 entitlement；仍不行則回到 ADR-0003 helper |
-| S4 | `INFocusStatusCenter` 可由 objc2 呼叫 | ⏳ T04 | 專注模式規則降級為不支援 |
-| S5 | cpal 常駐 output stream 閒置耗電可接受 | ⏳ T05 | 需要時才開 stream（增加 ~100 ms 延遲） |
+| S4 | `INFocusStatusCenter` 能回報專注狀態 | ⚠️ 授權 OK，但 isFocused 不變（ad-hoc） | T09 加 entitlement 重測；仍無效則專注模式規則標示不支援 |
+| S5 | cpal output stream 閒置耗電 | ✅ 常駐太耗電 → paused + 按需 play | — |
 | R1 | 未來 macOS 收緊 SPU property 權限 | 持續觀察 | 啟用 ADR-0003 helper 備案 |
 | R2 | 其他機型（M1–M3、MacBook Pro）行為不同 | 待社群 trace | capability detection 關閉功能 |

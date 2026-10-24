@@ -37,7 +37,11 @@ pub fn ioreturn_name(r: i32) -> String {
 }
 
 pub fn now_unix_ms() -> f64 {
-    SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs_f64() * 1000.0
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs_f64()
+        * 1000.0
 }
 
 fn cf_to_i64(ptr: CFTypeRef, owned: bool) -> Option<i64> {
@@ -56,7 +60,10 @@ fn cf_to_i64(ptr: CFTypeRef, owned: bool) -> Option<i64> {
 
 pub fn device_prop_i64(dev: IOHIDDeviceRef, key: &str) -> Option<i64> {
     let k = CFString::new(key);
-    cf_to_i64(unsafe { IOHIDDeviceGetProperty(dev, k.as_concrete_TypeRef()) }, false)
+    cf_to_i64(
+        unsafe { IOHIDDeviceGetProperty(dev, k.as_concrete_TypeRef()) },
+        false,
+    )
 }
 
 pub fn device_prop_string(dev: IOHIDDeviceRef, key: &str) -> Option<String> {
@@ -71,9 +78,8 @@ pub fn device_prop_string(dev: IOHIDDeviceRef, key: &str) -> Option<String> {
 
 pub fn registry_prop_i64(entry: io_object_t, key: &str) -> Option<i64> {
     let k = CFString::new(key);
-    let p = unsafe {
-        IORegistryEntryCreateCFProperty(entry, k.as_concrete_TypeRef(), kCFAllocatorDefault, 0)
-    };
+    let p =
+        unsafe { IORegistryEntryCreateCFProperty(entry, k.as_concrete_TypeRef(), kCFAllocatorDefault, 0) };
     cf_to_i64(p, true)
 }
 
@@ -87,7 +93,10 @@ pub fn services_of_class(class: &str) -> Vec<io_service_t> {
         // IOServiceGetMatchingServices consumes `matching`.
         let kr = IOServiceGetMatchingServices(0, matching as _, &mut iter);
         if kr != 0 {
-            eprintln!("IOServiceGetMatchingServices({class}) failed: {}", ioreturn_name(kr));
+            eprintln!(
+                "IOServiceGetMatchingServices({class}) failed: {}",
+                ioreturn_name(kr)
+            );
             return out;
         }
         loop {
@@ -109,7 +118,11 @@ pub fn release(obj: io_object_t) {
 }
 
 pub fn hex(bytes: &[u8]) -> String {
-    bytes.iter().map(|b| format!("{b:02x}")).collect::<Vec<_>>().join(" ")
+    bytes
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 /// Minimal `--flag value` parser.

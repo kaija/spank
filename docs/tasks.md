@@ -8,8 +8,8 @@
 
 | Wave | 主題 | 任務（同 Wave 可平行） |
 |------|------|------|
-| 0 | Repo 初始化 | T01 |
-| 1 | Spike + 基礎骨架 | T02 ✅ T03 ✅ T04 T05 T06 T07 T08 |
+| 0 | Repo 初始化 | T01 ✅ |
+| 1 | Spike + 基礎骨架 | T02 ✅ T03 ✅ T04 T05 ✅ T06 ✅ T07 ✅ T08 ✅ |
 | 2 | Spike 收尾 + 純邏輯模組 | T09 T10 T11 T12 T13 T14 T15 |
 | 3 | ⛳ Spike Gate + 平台層 | T16 T17 T18 T19 T20 T21 T22 |
 | 4 | 偵測 / 規則 / Orchestrator | T23 T24 T26 T27 |
@@ -23,16 +23,16 @@
 ```mermaid
 flowchart LR
   subgraph W0["Wave 0"]
-    T01["T01 Repo bootstrap"]
+    T01["T01 ✅ Repo bootstrap"]
   end
   subgraph W1["Wave 1"]
     T02["T02 ✅ Spike S1：tools/lid-probe"]
     T03["T03 ✅ Spike S2：tools/accel-probe"]
     T04["T04 Spike S4：Focus 狀態 POC"]
-    T05["T05 Spike S5：cpal 閒置耗電 POC"]
-    T06["T06 spank-core 領域型別"]
-    T07["T07 CI 骨架"]
-    T08["T08 Tauri v2 + Next.js 骨架"]
+    T05["T05 ✅ Spike S5：cpal 閒置耗電 POC"]
+    T06["T06 ✅ spank-core 領域型別"]
+    T07["T07 ✅ CI 骨架"]
+    T08["T08 ✅ Tauri v2 + Next.js 骨架"]
   end
   subgraph W2["Wave 2"]
     T09["T09 Spike S3：簽章 .app 內感測器存取 POC"]
@@ -168,7 +168,12 @@ flowchart LR
   T35 --> T44
   T28 --> T44
   style T03 fill:#d4edda
+  style T05 fill:#d4edda
+  style T06 fill:#d4edda
+  style T07 fill:#d4edda
   style T02 fill:#d4edda
+  style T08 fill:#d4edda
+  style T01 fill:#d4edda
 ```
 
 **Critical path**：T01 → T03 → T09 → T16 → T24 → T30 → T36 → T43 → T44
@@ -177,14 +182,14 @@ flowchart LR
 
 | 任務 | Wave | 依賴 |
 |------|------|------|
-| T01 Repo bootstrap | 0 | — |
+| T01 ✅ Repo bootstrap | 0 | — |
 | T02 ✅ Spike S1：tools/lid-probe | 1 | T01 |
 | T03 ✅ Spike S2：tools/accel-probe | 1 | T01 |
 | T04 Spike S4：Focus 狀態 POC | 1 | T01 |
-| T05 Spike S5：cpal 閒置耗電 POC | 1 | T01 |
-| T06 spank-core 領域型別 | 1 | T01 |
-| T07 CI 骨架 | 1 | T01 |
-| T08 Tauri v2 + Next.js 骨架 | 1 | T01 |
+| T05 ✅ Spike S5：cpal 閒置耗電 POC | 1 | T01 |
+| T06 ✅ spank-core 領域型別 | 1 | T01 |
+| T07 ✅ CI 骨架 | 1 | T01 |
+| T08 ✅ Tauri v2 + Next.js 骨架 | 1 | T01 |
 | T09 Spike S3：簽章 .app 內感測器存取 POC | 2 | T03, T08 |
 | T10 tools/trace-recorder + 初始 traces | 2 | T02, T03 |
 | T11 Lid detector 狀態機（spank-core） | 2 | T06 |
@@ -226,7 +231,7 @@ flowchart LR
 
 ### T01 Repo bootstrap
 - 依賴：—
-- 狀態：部分完成 — 已有 Cargo workspace（`tools/*`）與 `.gitignore`；尚缺 git 身分切換、LICENSE、README、rust-toolchain、pre-commit。
+- 狀態：✅ 完成（2026-10-24）：workspace、LICENSE、README、rust-toolchain、rustfmt、.editorconfig、pre-commit（fmt + clippy）、個人 git 身分
 - 內容：`git-user personal`；`.gitignore`（target、node_modules、.next、out、`.claude/worktrees`、`*.trace.ndjson` 大檔走 LFS）；
   `LICENSE`（MIT）；`README.md`；根 `Cargo.toml` workspace；`rust-toolchain.toml`（stable）；`.editorconfig`；pre-commit（fmt/clippy）。
 - 完成條件：`cargo build --workspace` 通過（空 workspace + tools）；git author 為個人帳號。
@@ -247,26 +252,31 @@ flowchart LR
 
 ### T04 Spike S4：Focus 狀態 POC
 - 依賴：T01
+- 狀態：⚠️ 部分完成（2026-10-24）：授權可取得，但 ad-hoc 簽章下 isFocused 不隨勿擾變化 → 併入 T09 以 Developer ID + entitlement 重測（見 spike-report S4）
 - 內容：Rust + objc2 呼叫 `INFocusStatusCenter`，請求授權並讀 `isFocused`（需在 .app bundle 內執行）。
 - 完成條件：spike report S4：可行 / 不可行 + 需要的 Info.plist key。
 
 ### T05 Spike S5：cpal 閒置耗電 POC
 - 依賴：T01
+- 狀態：✅ 完成（2026-10-24）：stream 建立後保持 paused、按需 play（見 spike-report S5）
 - 內容：常駐 output stream（輸出靜音）vs 按需開 stream；量測 CPU / 能源影響與首音延遲。
 - 完成條件：spike report S5：選定策略。
 
 ### T06 `spank-core` 領域型別
 - 依賴：T01
+- 狀態：✅ 完成（2026-10-24）：20 個單元測試，line coverage 98.7%
 - 內容：`EventKind`、`TriggerEvent`、`Profile`、`EventBinding`、`LidConfig`、`SlapConfig`、`MuteRules`、`Priority`；serde；預設值。
 - 完成條件：單元測試覆蓋 serde round-trip 與預設值。
 
 ### T07 CI 骨架
 - 依賴：T01
+- 狀態：✅ 完成（2026-10-24）：`.github/workflows/ci.yml` + `deny.toml`；本機 fmt / clippy / test / llvm-cov / cargo-deny 皆通過（尚無 remote，未在 GitHub 上跑過）
 - 內容：`.github/workflows/ci.yml`：fmt、clippy `-D warnings`、test、`cargo llvm-cov`（先不設門檻）、`cargo deny`；pnpm lint/test（UI 建好後啟用）。
 - 完成條件：PR 上 CI 綠燈。
 
 ### T08 Tauri v2 + Next.js 骨架
 - 依賴：T01
+- 狀態：✅ 完成（2026-10-24）：tray-only 12 MB、Dock 圖示隨設定視窗出現 / 消失（見 spike-report T08）。登入時啟動外掛已註冊，實際啟用交給 T14 / T38
 - 內容：`apps/desktop`：Tauri v2、Next.js `output: "export"`、TypeScript、pnpm；tray icon + 基本選單（設定…、結束）；`LSUIElement`；關閉視窗即銷毀 WebView、ActivationPolicy 切換；login item（`tauri-plugin-autostart` 或 SMAppService mainApp）。
 - 完成條件：`pnpm tauri dev` 可跑；關閉視窗後 Dock 圖示消失、tray 仍在；閒置記憶體記錄於 spike report。
 
@@ -274,7 +284,7 @@ flowchart LR
 
 ### T09 Spike S3：簽章 .app 內感測器存取 POC
 - 依賴：T03、T08
-- 內容：在 T08 的 Tauri App 內（ad-hoc 與 Developer ID 簽章、Hardened Runtime 開啟）重跑 lid 輪詢與加速度計讀取；從 Finder 雙擊與登入項目啟動各測一次（排除 Terminal 繼承的權限）；確認是否需要任何 entitlement 或 TCC 提示。
+- 內容：在 T08 的 Tauri App 內（ad-hoc 與 Developer ID 簽章、Hardened Runtime 開啟）重跑 lid 輪詢與加速度計讀取；以 Developer ID + Communication Notifications entitlement 重測 Focus `isFocused`（T04 未完成部分）；從 Finder 雙擊與登入項目啟動各測一次（排除 Terminal 繼承的權限）；確認是否需要任何 entitlement 或 TCC 提示。
 - 完成條件：spike report S3；ADR-0014 狀態改為 Accepted（或退回 ADR-0003 helper 備案）。
 
 ### T10 `tools/trace-recorder` + 初始 traces

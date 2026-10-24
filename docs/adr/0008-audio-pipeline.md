@@ -16,7 +16,9 @@
 
 ### 播放
 
-- 使用 `cpal`（或 `rodio` on cpal），輸出到系統預設裝置。
+- 使用 `cpal`，輸出到系統預設裝置。
+- **Stream 生命週期（Spike S5）**：啟動時建立 output stream 並保持 **paused**（常駐輸出會讓 coreaudiod 吃 ~12% CPU）；
+  觸發時 `play()`（實測 20–40 ms），播完 500 ms 後 `pause()`；預設輸出裝置變更時重建。
 - 目前 Profile 用到的音效 **預先解碼到記憶體**，觸發延遲目標 < 50 ms。
 - **單聲部 + 優先權中斷**：`Combo > Hard > Overbent > Medium > Opened > Closing > Light`。
   高優先權事件以 50 ms fade-out 中斷目前音效；同級或較低則丟棄。

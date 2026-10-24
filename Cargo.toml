@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["tools/lid-probe", "tools/accel-probe"]
+members = ["crates/*", "apps/desktop/src-tauri", "tools/lid-probe", "tools/accel-probe", "tools/audio-probe", "tools/focus-probe"]
 
 [workspace.package]
 edition = "2024"
@@ -12,3 +12,12 @@ publish = false
 io-kit-sys = "0.5"
 core-foundation = "0.10"
 core-foundation-sys = "0.8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+
+[workspace.lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }

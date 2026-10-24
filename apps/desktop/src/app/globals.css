@@ -1,0 +1,15 @@
+/* Placeholder styling until the Claude Design UI lands (docs/ui-design-prompt.md). */
+:root {
+  color-scheme: light dark;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", sans-serif;
+}
+body {
+  margin: 0;
+  padding: 24px;
+  background: Canvas;
+  color: CanvasText;
+}
+pre {
+  font-size: 12px;
+  overflow: auto;
+}
