@@ -1,5 +1,5 @@
-import { PagePlaceholder } from "@/components/PagePlaceholder";
+import { SensorsPage } from "@/screens/SensorsPage";
 
 export default function Page() {
-  return <PagePlaceholder task="T37" />;
+  return <SensorsPage />;
 }

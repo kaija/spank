@@ -4,7 +4,8 @@
 //! - [`trace`]: the NDJSON trace format v1 (`fixtures/traces/README.md`) and [`TraceReplay`].
 //! - [`parse`]: pure decoders for the HID reports.
 //! - [`poll`]: adaptive lid polling rate (5 Hz idle, 30 Hz while moving).
-//! - `macos` (macOS only): [`IoHidLid`] and [`IoHidAccel`], the real sensors on `05AC:8104`.
+//! - `macos` (macOS only): [`IoHidLid`] and [`IoHidAccel`], the real sensors on `05AC:8104`, and
+//!   [`InputMonitor`] (keyboard / trackpad activity for precise typing mode, needs Input Monitoring).
 //!
 //! The FFI layer is kept thin: report decoding lives in [`parse`] so it can be unit-tested, and
 //! the accelerometer callback only pushes into a lock-free ring buffer (a panic inside an
@@ -19,7 +20,10 @@ pub mod trace;
 mod macos;
 
 #[cfg(target_os = "macos")]
-pub use macos::{IoHidAccel, IoHidLid, accel_driver_present, capabilities, reset_accel_properties};
+pub use macos::{
+    InputMonitor, IoHidAccel, IoHidLid, accel_driver_present, capabilities, input_access,
+    request_input_access, reset_accel_properties,
+};
 pub use poll::LidPollSchedule;
 pub use replay::{SensorEvent, TraceReplay};
 pub use spank_core::{AccelSample, LidSample};

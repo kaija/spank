@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Release entitlements (T40, spike-report S4). The communication-notifications capability is
+  restricted: it only launches with the matching provisioning profile embedded as
+  Contents/embedded.provisionprofile (tauri.release.conf.json). Without it, Focus status reads
+  as "not focused" forever. Not used for dev builds.
+-->
+<plist version="1.0">
+<dict>
+  <key>com.apple.application-identifier</key>
+  <string>H2ZM466J6A.dev.spank.app</string>
+  <key>com.apple.developer.team-identifier</key>
+  <string>H2ZM466J6A</string>
+  <key>com.apple.developer.usernotifications.communication</key>
+  <true/>
+</dict>
+</plist>

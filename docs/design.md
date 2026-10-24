@@ -221,15 +221,20 @@ Profile ▸  ✓ 毀滅 / 哀哀叫 / 經典 / …自訂
 
 實作在 `apps/desktop/src-tauri/src/commands.rs`；前端經 `src/backend/`（`Backend` 介面，App 內為 `tauriBackend`，瀏覽器預覽與測試為 `createMockBackend`）呼叫。
 
-- 狀態 / 設定：`get_state`（`RuntimeState`）、`get_config`、`set_paused`、`set_mute_rules`、`set_slap_enabled`
+- 狀態 / 設定：`app_info`、`get_state`（`RuntimeState`）、`get_config`、`set_paused`、`set_mute_rules`、`set_slap_enabled`、`set_lid_config`、`set_slap_config`、`set_app_volume`、`set_language`、`set_launch_at_login`、`set_auto_check_updates`
 - Profiles：`list_profiles`、`create_profile`、`duplicate_profile`、`save_profile`、`rename_profile`、`delete_profile`、`set_active_profile`
 - 音效庫：`list_sounds`、`sound_peaks`（波形縮圖）、`import_sound(path)`（`ImportOutcome`）、`rename_sound`、`delete_sound`（同時從自訂 Profile 移除）、`preview_sound`、`stop_preview`、`preview_event`、`reveal_sound`
 - 音效包：`import_pack`（`PackImported`）、`export_pack`
 - 專注模式：`request_focus_authorization`、`open_focus_settings`
-- 待實作：`get_sensor_caps`、`set_lid_config`、`set_slap_config`、`start_calibration`、`finish_calibration`、`copy_diagnostics`（T36–T38）
+- Onboarding / 校準（T36）：`open_calibration`（開校準視窗）、`start_calibration`、`calibration_step(step, reset)`、`cancel_calibration`、`finish_calibration`（寫 `calibration.json`、套用門檻並啟用拍打）、`get_calibration`、`complete_onboarding`（關閉精靈視窗）
+- 感測器頁：`set_accel_monitor(on)`（即時波形）；能力狀態在 `RuntimeState.caps` / `input_access`
+- 精準打字（T39）：`request_input_monitoring`、`open_input_monitoring_settings`
+- 一般頁（T38）：`diagnostics`、`copy_diagnostics`、`open_log_folder`
 
-Events：`engine_state`（`RuntimeState`，任何狀態變化）、`trigger_fired`（`FiredEvent`）、`profiles_changed`、`library_changed`；
-待實作：`calibration_sample`（校準時 50 Hz）。
+Events：`engine_state`（`RuntimeState`，任何狀態變化）、`trigger_fired`（`FiredEvent`）、`config_changed`（`AppConfig`）、`profiles_changed`、`library_changed`、
+`calibration`（`CalibrationProgress`）、`accel_level`（每 ~50 ms 一個 g 值，只在校準中或感測器頁開著時送）。
+
+視窗：`settings`（設定）與 `onboarding`（首次啟動的 `onboarding/` 或只校準的 `calibrate/`，560 × 440）；任一視窗開著時顯示 Dock 圖示。
 
 內建音效與 Profile 以 `.spankpack` 放在 bundle 資源 `builtin/`（來源 `assets/sounds/builtin/`），啟動時載入成唯讀 Profile（`builtin.*`）與記憶體內音效。
 

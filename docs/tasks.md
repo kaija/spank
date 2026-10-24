@@ -6,13 +6,16 @@
 
 ## 開發狀態（2026-10-24）
 
-- **進度**：Wave 0–5 實作完成（T20、T31–T34 待手動驗證），branch `claude/wave-3-4-b3266e`（尚無 remote，未 push、CI 未在 GitHub 上跑過）。
-- **App 現況**：選單列 App 可運作：螢幕開合音效、自動靜音、Tray 選單、Profiles／音效庫／自動靜音三個設定頁、內建三個 Profile。拍打預設關閉，要等 T36 校準精靈才在 UI 開啟。感測器頁、一般頁仍是施工中畫面（T37、T38）。
+- **進度**：Wave 0–6 實作完成（T20、T31–T34、T36–T40 待手動驗證），branch `claude/wave-5-and-6-89137a`（含 `claude/wave-3-4-b3266e` 的 Wave 3–5；尚無 remote，未 push、CI／Release workflow 未在 GitHub 上跑過）。
+- **App 現況**：選單列 App：螢幕開合音效、拍打（校準後啟用）、自動靜音、精準打字模式、Tray 選單、五個設定頁、首次啟動 Onboarding 與校準精靈、內建三個 Profile、log 檔（`~/Library/Logs/dev.spank.app/spank.log`）。
 - **待使用者手動驗證**（🟡）：
   - T20：`cargo run -p spank-sysmon --example sysmon-watch`，逐項切換麥克風／相機／音量／靜音／鎖定／睡眠。
-  - T31–T34：`open target/release/bundle/macos/Spank.app`（先 `pnpm --dir apps/desktop tauri build --bundles app`），試 Tray 選單與三個設定頁。
-- **下一步**：Wave 6 可開始的任務（依賴皆已完成）：T36、T37、T38、T40；T39 依賴 T20（待驗證）。
-- **已知限制**：內建人聲是合成的卡通音；T23 參數只用一台 M4 Air、一位使用者的 trace 調過；`cargo fuzz` 需 nightly，尚未跑過。
+  - T31–T34、T37、T38：`pnpm --dir apps/desktop tauri build --bundles app` 後 `open target/release/bundle/macos/Spank.app`，試 Tray 選單與五個設定頁。
+  - T36：在全新使用者帳號（或刪掉 `~/Library/Application Support/dev.spank.app/config.json`）啟動，走完 Onboarding；校準後拍打 → 哀叫。
+  - T39：感測器頁打開精準打字模式 → 系統詢問「輸入監控」→ 允許後打字不觸發拍打；拒絕時頁面提示並照常用訊號濾波。`cargo run -p spank-sensors --example input-check -- --request`。
+  - T40：設定 `docs/release.md` 的 Secrets、push remote 後推 tag，確認 DMG 在乾淨機器上無 Gatekeeper 警告。
+- **下一步**：Wave 7（T41 updater、T42 檢查清單、T43 文件）。
+- **已知限制**：內建人聲是合成的卡通音；T23 參數只用一台 M4 Air、一位使用者的 trace 調過；`cargo fuzz` 需 nightly，尚未跑過；一般頁的「檢查更新」按鈕留給 T41。
 
 ## 總覽
 
@@ -476,30 +479,31 @@ flowchart LR
 
 ### T36 Onboarding + 校準精靈
 - 依賴：T23、T30
+- 狀態：🟡 實作完成（2026-10-24）：`spank-core::calibration::Calibrator`（輕/中/重各一下，每級須比前一級強 1.2×，否則「太輕／太大力」；10 秒逾時；打字 5 秒取 p95 當 noise floor；門檻取相鄰兩級的幾何平均，輕拍門檻保持在打字震動之上）接入 orchestrator（校準時加速度計照開、不播音效）；`onboarding/`、`calibrate/` 兩個路由共用 `OnboardingWizard`（6 步，照 mockup），App 首次啟動自動開、中途關閉也算完成；`finish_calibration` 寫 `calibration.json` 並啟用拍打；Rust 7 + Vitest 7 個測試。**待使用者以全新帳號手動走完並真機拍打驗證**
 - 內容：design §11（不需管理員密碼 / 系統設定核准）；輕/中/重 + 打字 5 秒；寫 `calibration.json`；可重新校準。
 - 完成條件：全新使用者帳號上手動走完流程；真機端到端：拍打 → 哀叫。
-- 備註（W3–5）：App runtime 已在 `engine.rs`，校準需要的即時樣本可由 core thread 轉發。校準結果要滿足 `SlapConfig::validate`（`0 < trigger_g ≤ light < medium < hard`）；預設 0.15 / 0.3 / 0.5 g。可直接用 `ImpactExtractor` 取得每下的 `peak_g` 與 noise floor。
 
 ### T37 UI：感測器頁
 - 依賴：T27、T30、T15
+- 狀態：🟡 實作完成（2026-10-24）：`src/screens/SensorsPage.tsx`（即時角度儀，三個門檻圓點可拖曳／方向鍵，滑桿同步，進階遲滯／冷卻，無效組合不存；拍打開關（未校準時改開校準精靈）、即時波形（`accel_level` 事件，只在頁面開著時送）、三級門檻、校準日期、靈敏度 0.5×–2×（以校準值為基準）、重新校準；精準打字模式與權限提示；感測器能力）；`set_lid_config`／`set_slap_config`／`set_accel_monitor`；Vitest 5 個測試。**待使用者在 App 內手動驗證**
 - 內容：即時角度、門檻滑桿、拍打靈敏度、重新校準、精準打字模式開關、能力狀態。
 - 完成條件：手動驗證。
-- 備註（W5）：即時角度與能力狀態已在 `RuntimeState`（`lid_angle`、`caps`、`lid_running`、`accel_running`），隨 `engine_state` 事件更新；要新增 `set_lid_config`／`set_slap_config` command（照 `set_mute_rules` 的寫法用 `AppState::update_config`）。頁面目前是 `PagePlaceholder`。
 
 ### T38 UI：一般頁
 - 依賴：T30、T15
+- 狀態：🟡 實作完成（2026-10-24）：`src/screens/GeneralPage.tsx`（登入時啟動（autostart 外掛，release build 啟動時同步設定；dev 不會自動註冊）、App 音量、語言（整個 UI 與 Tray 立即切換）、自動檢查更新開關、版本、複製診斷資訊（機型／系統／感測器與權限狀態，`pbcopy`）、打開 log 資料夾、隱私說明）；未接終端機時 stderr 寫入 `~/Library/Logs/dev.spank.app/spank.log`（> 1 MB 輪替）；新增 `config_changed` 事件；Vitest 3 個測試。**待使用者在 App 內手動驗證**
 - 內容：登入時啟動、App 音量、語言、複製診斷資訊、log 位置。
 - 完成條件：手動驗證。
-- 備註（W5）：`AppConfig` 已有 `launch_at_login`、`app_volume`、`language`；autostart 外掛已註冊但從未依設定啟用。`I18nProvider` 的 `setting` 還沒接到 `AppConfig.language`；Tray 已依 `language` 切換。頁面目前是 `PagePlaceholder`。
 
 ### T39 精準打字模式（Input Monitoring）
 - 依賴：T23、T20
+- 狀態：🟡 實作完成（2026-10-24）：`spank-sensors::InputMonitor`（IOHIDManager 監聽鍵盤／滑鼠／觸控板，只記錄按鍵或按鈕「何時」變化，不讀是哪個鍵）、`input_access()`（`IOHIDCheckAccess`）、`request_input_access()`；engine 只在「精準打字開 + 加速度計運作 + 已授權」時啟動，未授權時每 5 秒重查；拒絕時不啟動 → 照常用 T23 的訊號濾波（已在本機確認：未授權時 `IOHIDManagerOpen` 回 `kIOReturnNotPermitted`）。`examples/input-check.rs`。**待使用者授權後真機驗證打字不觸發拍打**
 - 內容：IOHIDManager 監聽鍵盤 / 觸控板活動（只取「有輸入」時間戳，不記錄按鍵內容）；權限請求；接入 suppression gate。
 - 完成條件：權限拒絕時自動退回訊號濾波。
-- 備註（W3–4）：接入點已有：`Orchestrator::on_input_activity(at_ms)` + `SlapConfig.precise_typing` 閘（+300 ms）。打字的訊號濾波已由 T23 的噪音門檻處理。
 
 ### T40 簽章 / 公證 Release workflow
 - 依賴：T09、T07
+- 狀態：🟡 實作完成（2026-10-24）：`.github/workflows/release.yml`（tag `v*` → 驗版本 → 測試 → 暫時 keychain 匯入憑證 → 還原 profile／API key → `tools/release.sh --notarize` → 草稿 Release）；`tools/release.sh`（tauri build + `tauri.release.conf.json` 內嵌 profile 與 `Spank.entitlements` → 驗證 → notarytool／stapler（app 與 DMG）→ spctl）；Secrets 見 `docs/release.md`。本機已用 Developer ID 跑過簽章部分；**公證與乾淨機器安裝需設定 Secrets 並推 tag 後驗證**
 - 內容：內嵌 Developer ID provisioning profile（`Contents/embedded.provisionprofile`，CI 由 Secret 還原）與 entitlements（`application-identifier`、`team-identifier`、`usernotifications.communication`，見 spike-report S4）；`release.yml`：Developer ID 簽章、hardened runtime、entitlements、`notarytool`、`stapler`、DMG、GitHub Release；Secrets 文件化。
 - 完成條件：tag 產出可在乾淨機器上安裝、無 Gatekeeper 警告的 DMG。
 
@@ -515,6 +519,7 @@ flowchart LR
 - 內容：`docs/release-checklist.md`；功耗觀察（ADR-0013）；錯誤處理與 log；fuzz 跑一輪；無障礙基本檢查。
 - 完成條件：checklist 全數通過。
 - 備註（W3–5）：待辦清單要包含：T20 逐項切換驗證（`sysmon-watch`）、T31–T34 手動驗證、`cargo +nightly fuzz run read_pack`（spank-pack）、播放中切換輸出裝置（`AudioPlayer` 會在下次播放時重建 stream，尚未在真機測過）、其他機型重錄 trace 驗證 T23 參數。
+- 備註（W6）：再加上：Onboarding 全新帳號走一次、真機拍打校準、精準打字授權／拒絕兩種情況、release DMG 在乾淨機器安裝、log 檔輪替、語言切換後 Tray 與設定頁一致。
 
 ### T43 文件
 - 依賴：T36、T38

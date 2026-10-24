@@ -23,6 +23,30 @@ export const tauriBackend: Backend = {
   getConfig: () => invoke("get_config"),
   setMuteRules: (rules) => invoke("set_mute_rules", { rules }),
   setPaused: (paused) => invoke("set_paused", { paused }),
+  appInfo: () => invoke("app_info"),
+
+  setLidConfig: (lid) => invoke("set_lid_config", { lid }),
+  setSlapConfig: (slap) => invoke("set_slap_config", { slap }),
+  setSlapEnabled: (enabled) => invoke("set_slap_enabled", { enabled }),
+  setAppVolume: (volume) => invoke("set_app_volume", { volume }),
+  setLanguage: (language) => invoke("set_language", { language }),
+  setLaunchAtLogin: (enabled) => invoke("set_launch_at_login", { enabled }),
+  setAutoCheckUpdates: (enabled) => invoke("set_auto_check_updates", { enabled }),
+
+  getCalibration: () => invoke("get_calibration"),
+  openCalibration: () => invoke("open_calibration"),
+  startCalibration: () => invoke("start_calibration"),
+  calibrationStep: (step, reset) => invoke("calibration_step", { step, reset }),
+  cancelCalibration: () => invoke("cancel_calibration"),
+  finishCalibration: () => invoke("finish_calibration"),
+  setAccelMonitor: (on) => invoke("set_accel_monitor", { on }),
+  completeOnboarding: () => invoke("complete_onboarding"),
+
+  requestInputMonitoring: () => invoke("request_input_monitoring"),
+  openInputMonitoringSettings: () => invoke("open_input_monitoring_settings"),
+
+  copyDiagnostics: () => invoke("copy_diagnostics"),
+  openLogFolder: () => invoke("open_log_folder"),
 
   listProfiles: () => invoke("list_profiles"),
   createProfile: (name) => invoke("create_profile", { name }),

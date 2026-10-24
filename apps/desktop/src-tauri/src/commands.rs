@@ -1,14 +1,15 @@
-//! Tauri commands for the settings UI (design §10.3). Every command returns `Result<_, String>`
-//! so errors reach the UI as messages. Changes are announced with events:
-//! `profiles_changed`, `library_changed` (no payload), plus the engine's `engine_state` and
-//! `trigger_fired`.
+//! Tauri commands for the settings UI and the onboarding wizard (design §10.3). Every command
+//! returns `Result<_, String>` so errors reach the UI as messages. Changes are announced with
+//! events: `config_changed` (`AppConfig`), `profiles_changed`, `library_changed` (no payload),
+//! plus the engine's `engine_state`, `trigger_fired`, `calibration` and `accel_level`.
 
 use crate::engine::EngineCmd;
 use crate::state::{AppState, CmdResult, err};
 use serde::Serialize;
 use spank_core::{
-    AppConfig, EventKind, FocusAuthorization, ImportOutcome, MuteRules, PackImported, Profile, ProfileId,
-    RuntimeState, SoundEntry, SoundId, SoundSource,
+    AppConfig, CalStep, Calibration, EventKind, FocusAuthorization, ImportOutcome, InputAccess, Language,
+    LidConfig, MuteRules, PackImported, Profile, ProfileId, RuntimeState, SlapConfig, SoundEntry, SoundId,
+    SoundSource,
 };
 use spank_pack::ExportMeta;
 use std::collections::BTreeMap;
@@ -67,6 +68,194 @@ pub fn set_mute_rules(state: State<'_, AppState>, rules: MuteRules) -> CmdResult
 #[tauri::command]
 pub fn set_slap_enabled(state: State<'_, AppState>, enabled: bool) -> CmdResult<AppConfig> {
     state.update_config(|c| c.slap.enabled = enabled)
+}
+
+#[tauri::command]
+pub fn set_lid_config(state: State<'_, AppState>, lid: LidConfig) -> CmdResult<AppConfig> {
+    lid.validate().map_err(err)?;
+    state.update_config(|c| c.lid = lid)
+}
+
+#[tauri::command]
+pub fn set_slap_config(state: State<'_, AppState>, slap: SlapConfig) -> CmdResult<AppConfig> {
+    slap.validate().map_err(err)?;
+    state.update_config(|c| c.slap = slap)
+}
+
+#[tauri::command]
+pub fn set_app_volume(state: State<'_, AppState>, volume: f32) -> CmdResult<AppConfig> {
+    state.update_config(|c| c.app_volume = volume.clamp(0.0, 1.0))
+}
+
+#[tauri::command]
+pub fn set_language(state: State<'_, AppState>, language: Language) -> CmdResult<AppConfig> {
+    state.update_config(|c| c.language = language)
+}
+
+#[tauri::command]
+pub fn set_auto_check_updates(state: State<'_, AppState>, enabled: bool) -> CmdResult<AppConfig> {
+    state.update_config(|c| c.auto_check_updates = enabled)
+}
+
+/// Register / unregister the login item, then remember the choice.
+pub fn apply_launch_at_login(app: &AppHandle, enabled: bool) -> CmdResult<()> {
+    use tauri_plugin_autostart::ManagerExt;
+    let m = app.autolaunch();
+    if m.is_enabled().unwrap_or(!enabled) == enabled {
+        return Ok(());
+    }
+    if enabled { m.enable() } else { m.disable() }.map_err(err)
+}
+
+#[tauri::command]
+pub fn set_launch_at_login(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    enabled: bool,
+) -> CmdResult<AppConfig> {
+    apply_launch_at_login(&app, enabled)?;
+    state.update_config(|c| c.launch_at_login = enabled)
+}
+
+// ---- onboarding & calibration (T36) -----------------------------------------------------------
+
+#[tauri::command]
+pub fn get_calibration(state: State<'_, AppState>) -> CmdResult<Option<Calibration>> {
+    Ok(state.store.load_calibration().map_err(err)?.value)
+}
+
+#[tauri::command]
+pub fn open_calibration(app: AppHandle) {
+    crate::window::open_wizard(&app, crate::window::Wizard::Calibration);
+}
+
+#[tauri::command]
+pub fn start_calibration(state: State<'_, AppState>) {
+    state.engine.send(EngineCmd::StartCalibration);
+}
+
+#[tauri::command]
+pub fn calibration_step(state: State<'_, AppState>, step: CalStep, reset: bool) {
+    state.engine.send(EngineCmd::CalibrationStep { step, reset });
+}
+
+#[tauri::command]
+pub fn cancel_calibration(state: State<'_, AppState>) {
+    state.engine.send(EngineCmd::CancelCalibration);
+}
+
+/// End the wizard: save `calibration.json`, apply the new levels and turn slaps on.
+#[tauri::command]
+pub async fn finish_calibration(app: AppHandle) -> CmdResult<AppConfig> {
+    tauri::async_runtime::spawn_blocking(move || -> CmdResult<AppConfig> {
+        let state = app.state::<AppState>();
+        let (tx, rx) = std::sync::mpsc::channel();
+        state.engine.send(EngineCmd::FinishCalibration(tx));
+        let (calibration, slap) = rx
+            .recv_timeout(std::time::Duration::from_secs(3))
+            .map_err(|_| "the engine did not answer".to_owned())??;
+        state.store.save_calibration(&calibration).map_err(err)?;
+        state.update_config(|c| {
+            c.slap.levels = slap.levels;
+            c.slap.trigger_g = slap.trigger_g;
+            c.slap.enabled = true;
+        })
+    })
+    .await
+    .map_err(err)?
+}
+
+/// The live acceleration waveform on the Sensors page (event `accel_level`).
+#[tauri::command]
+pub fn set_accel_monitor(state: State<'_, AppState>, on: bool) {
+    state.engine.send(EngineCmd::Monitor(on));
+}
+
+/// Last onboarding step: remember it and close the wizard window.
+#[tauri::command]
+pub fn complete_onboarding(state: State<'_, AppState>, window: tauri::WebviewWindow) -> CmdResult<()> {
+    if !state.config().onboarding_done {
+        state.update_config(|c| c.onboarding_done = true)?;
+    }
+    window.close().map_err(err)
+}
+
+// ---- precise typing (T39) ---------------------------------------------------------------------
+
+/// Ask for Input Monitoring (system prompt the first time). Resolves with the current state.
+#[tauri::command]
+pub async fn request_input_monitoring(app: AppHandle) -> CmdResult<InputAccess> {
+    let access = tauri::async_runtime::spawn_blocking(|| {
+        spank_sensors::request_input_access();
+        spank_sensors::input_access()
+    })
+    .await
+    .map_err(err)?;
+    app.state::<AppState>().engine.send(EngineCmd::CheckInputAccess);
+    Ok(access)
+}
+
+/// Open System Settings › Privacy & Security › Input Monitoring.
+#[tauri::command]
+pub fn open_input_monitoring_settings() -> CmdResult<()> {
+    open_url("x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent")
+}
+
+// ---- diagnostics & logs (T38) -----------------------------------------------------------------
+
+fn diagnostics_text(app: &AppHandle, state: &AppState) -> String {
+    let calibrated = state.store.load_calibration().is_ok_and(|c| c.value.is_some());
+    crate::diag::report(
+        &app.package_info().version.to_string(),
+        &crate::diag::Machine::current(),
+        &state.engine.state(),
+        &state.config(),
+        calibrated,
+    )
+}
+
+#[tauri::command]
+pub fn diagnostics(app: AppHandle, state: State<'_, AppState>) -> String {
+    diagnostics_text(&app, &state)
+}
+
+/// Put the diagnostics text on the clipboard and return it.
+#[tauri::command]
+pub fn copy_diagnostics(app: AppHandle, state: State<'_, AppState>) -> CmdResult<String> {
+    use std::io::Write;
+    let text = diagnostics_text(&app, &state);
+    let mut child = std::process::Command::new("pbcopy")
+        .stdin(std::process::Stdio::piped())
+        .spawn()
+        .map_err(err)?;
+    child
+        .stdin
+        .take()
+        .ok_or("pbcopy has no stdin")?
+        .write_all(text.as_bytes())
+        .map_err(err)?;
+    child.wait().map_err(err)?;
+    Ok(text)
+}
+
+/// Show the log folder in Finder (created if missing).
+#[tauri::command]
+pub fn open_log_folder() -> CmdResult<()> {
+    let dir = crate::diag::log_dir(crate::BUNDLE_ID).ok_or("no home directory")?;
+    std::fs::create_dir_all(&dir).map_err(err)?;
+    std::process::Command::new("open")
+        .arg(&dir)
+        .spawn()
+        .map(|_| ())
+        .map_err(err)
+}
+
+fn open_url(url: &str) -> CmdResult<()> {
+    std::process::Command::new("open")
+        .arg(url)
+        .spawn()
+        .map(|_| ())
+        .map_err(err)
 }
 
 // ---- profiles ---------------------------------------------------------------------------------
@@ -428,11 +617,7 @@ pub async fn request_focus_authorization(app: AppHandle) -> CmdResult<FocusAutho
 /// Open System Settings › Privacy & Security › Focus.
 #[tauri::command]
 pub fn open_focus_settings() -> CmdResult<()> {
-    std::process::Command::new("open")
-        .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_Focus")
-        .spawn()
-        .map(|_| ())
-        .map_err(err)
+    open_url("x-apple.systempreferences:com.apple.preference.security?Privacy_Focus")
 }
 
 #[cfg(test)]

@@ -53,13 +53,16 @@ export function Switch({
   );
 }
 
-/** 0–100 slider with a "NN%" readout. `onCommit` fires on release (to avoid a save per pixel). */
+/** Slider (0–100 by default) with a readout ("NN%"). `onCommit` fires on release (to avoid a save per pixel). */
 export function Slider({
   value,
   onChange,
   onCommit,
   label,
   disabled,
+  min = 0,
+  max = 100,
+  step = 1,
   format = (v) => `${Math.round(v)}%`,
 }: {
   value: number;
@@ -67,20 +70,24 @@ export function Slider({
   onCommit?: (v: number) => void;
   label: string;
   disabled?: boolean;
+  min?: number;
+  max?: number;
+  step?: number;
   format?: (v: number) => string;
 }) {
+  const fill = max > min ? ((value - min) / (max - min)) * 100 : 0;
   return (
     <div className={s.sliderRow}>
       <input
         type="range"
-        min={0}
-        max={100}
-        step={1}
+        min={min}
+        max={max}
+        step={step}
         value={value}
         disabled={disabled}
         aria-label={label}
         className={s.slider}
-        style={{ "--fill": `${value}%` } as CSSProperties}
+        style={{ "--fill": `${fill}%` } as CSSProperties}
         onChange={(e) => onChange(Number(e.target.value))}
         onPointerUp={(e) => onCommit?.(Number((e.target as HTMLInputElement).value))}
         onKeyUp={(e) => onCommit?.(Number((e.target as HTMLInputElement).value))}

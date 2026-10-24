@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
-import { BackendProvider, useRuntimeState } from "@/backend/BackendProvider";
+import { useRuntimeState } from "@/backend/BackendProvider";
 import { SettingsShell, type ShellStatus } from "./SettingsShell";
 
 function LiveShell({ children }: { children: ReactNode }) {
@@ -14,11 +14,7 @@ function LiveShell({ children }: { children: ReactNode }) {
   return <SettingsShell status={status}>{children}</SettingsShell>;
 }
 
-/** Settings window frame wired to the app (or the in-memory backend in a browser). */
+/** Settings window frame wired to the app (the `BackendProvider` lives in the root layout). */
 export function SettingsFrame({ children }: { children: ReactNode }) {
-  return (
-    <BackendProvider>
-      <LiveShell>{children}</LiveShell>
-    </BackendProvider>
-  );
+  return <LiveShell>{children}</LiveShell>;
 }

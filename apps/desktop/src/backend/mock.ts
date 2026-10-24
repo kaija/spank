@@ -1,19 +1,72 @@
 import type { AppConfig } from "@/bindings/AppConfig";
+import type { CalStep } from "@/bindings/CalStep";
+import type { Calibration } from "@/bindings/Calibration";
+import type { CalibrationProgress } from "@/bindings/CalibrationProgress";
 import type { EventKind } from "@/bindings/EventKind";
 import type { ImportOutcome } from "@/bindings/ImportOutcome";
+import type { InputAccess } from "@/bindings/InputAccess";
 import type { Profile } from "@/bindings/Profile";
 import type { RuntimeState } from "@/bindings/RuntimeState";
 import type { SoundEntry } from "@/bindings/SoundEntry";
 import { EVENT_KINDS } from "@/lib/events";
 import type { Backend, BackendEvents, FileDrop } from "./types";
 
-/** In-memory backend for `pnpm dev` in a plain browser and for component tests. */
-export function createMockBackend(seed: Partial<MockSeed> = {}): Backend & { emit: MockEmit; data: MockSeed } {
+/**
+ * In-memory backend for `pnpm dev` in a plain browser and for component tests.
+ * With `demo`, it also fakes the hardware: a live waveform while monitoring, and a slap shortly
+ * after each calibration step starts (so the wizard can be walked through in a browser).
+ */
+export function createMockBackend(
+  seed: Partial<MockSeed> = {},
+  opts: { demo?: boolean } = {},
+): Backend & { emit: MockEmit; data: MockSeed } {
   const data: MockSeed = { ...defaultSeed(), ...structuredClone(seed) };
   const listeners = new Map<string, Set<(p: unknown) => void>>();
   const drops = new Set<(d: FileDrop) => void>();
   const emit: MockEmit = (event, payload) => listeners.get(event)?.forEach((cb) => cb(payload));
   const changed = (e: "profiles_changed" | "library_changed") => emit(e, null);
+  const config = () => {
+    const c = structuredClone(data.config);
+    emit("config_changed", structuredClone(c));
+    return c;
+  };
+  const state = () => emit("engine_state", structuredClone(data.state));
+  const progress = (p: CalibrationProgress) => {
+    data.calProgress = p;
+    emit("calibration", structuredClone(p));
+  };
+  let demoTimer: ReturnType<typeof setTimeout> | undefined;
+  let waveTimer: ReturnType<typeof setInterval> | undefined;
+  let monitoring = false;
+  /** Demo waveform while the Sensors page watches (slaps on) or the wizard calibrates. */
+  const syncWave = () => {
+    clearInterval(waveTimer);
+    if (!opts.demo || !(data.state.calibrating || (monitoring && data.config.slap.enabled))) return;
+    let t = 0;
+    waveTimer = setInterval(() => {
+      t += 1;
+      const hit = data.state.calibrating ? 0 : t % 61 === 0 ? 0.85 : t % 23 === 0 ? 0.4 : t % 13 === 0 ? 0.2 : 0;
+      emit("accel_level", hit || 0.01 + Math.random() * 0.02);
+    }, 50);
+  };
+  const demoSlap = (step: CalStep) => {
+    clearTimeout(demoTimer);
+    if (!opts.demo || !data.calProgress) return;
+    if (step === "typing") {
+      demoTimer = setTimeout(() => {
+        const p = data.calProgress;
+        if (p?.step === "typing") progress({ ...p, typing_g: 0.03, status: { status: "success", peak_g: 0.03 } });
+      }, 5000);
+      return;
+    }
+    const peak = { light: 0.18, medium: 0.42, hard: 0.95 }[step];
+    demoTimer = setTimeout(() => {
+      const p = data.calProgress;
+      if (p?.step !== step) return;
+      emit("accel_level", peak);
+      progress({ ...p, [`${step}_g`]: peak, status: { status: "success", peak_g: peak } });
+    }, 1800);
+  };
   let seq = 0;
   const find = (id: string) => {
     const p = data.profiles.find((x) => x.id === id);
@@ -37,13 +90,144 @@ export function createMockBackend(seed: Partial<MockSeed> = {}): Backend & { emi
     },
     async setMuteRules(rules) {
       data.config.mute = structuredClone(rules);
-      return structuredClone(data.config);
+      return config();
     },
     async setPaused(paused) {
       data.config.paused = paused;
       data.state.paused = paused;
-      emit("engine_state", structuredClone(data.state));
-      return structuredClone(data.config);
+      state();
+      return config();
+    },
+    async appInfo() {
+      return { version: "0.1.0", defaultConfig: defaultConfig() };
+    },
+    async setLidConfig(lid) {
+      data.config.lid = structuredClone(lid);
+      return config();
+    },
+    async setSlapConfig(slap) {
+      data.config.slap = structuredClone(slap);
+      data.state.accel_running = slap.enabled;
+      state();
+      syncWave();
+      return config();
+    },
+    async setSlapEnabled(enabled) {
+      data.config.slap.enabled = enabled;
+      data.state.accel_running = enabled;
+      state();
+      syncWave();
+      return config();
+    },
+    async setAppVolume(volume) {
+      data.config.app_volume = Math.min(1, Math.max(0, volume));
+      return config();
+    },
+    async setLanguage(language) {
+      data.config.language = language;
+      return config();
+    },
+    async setLaunchAtLogin(enabled) {
+      data.config.launch_at_login = enabled;
+      return config();
+    },
+    async setAutoCheckUpdates(enabled) {
+      data.config.auto_check_updates = enabled;
+      return config();
+    },
+    async getCalibration() {
+      return structuredClone(data.calibration);
+    },
+    async openCalibration() {
+      data.log.push("open-calibration");
+    },
+    async startCalibration() {
+      data.state.calibrating = true;
+      state();
+      syncWave();
+      progress({
+        step: "light",
+        status: { status: "waiting" },
+        light_g: null,
+        medium_g: null,
+        hard_g: null,
+        typing_g: null,
+      });
+      demoSlap("light");
+    },
+    async calibrationStep(step, reset) {
+      data.log.push(`cal-step:${step}${reset ? ":reset" : ""}`);
+      const p = data.calProgress;
+      if (!p) return;
+      const next = { ...p, step };
+      if (step === "typing") {
+        if (reset || p.typing_g === null) {
+          next.typing_g = null;
+          next.status = { status: "recording", progress: 0 };
+        } else next.status = { status: "success", peak_g: p.typing_g };
+      } else {
+        const key = `${step}_g` as const;
+        if (reset) next[key] = null;
+        const v = next[key];
+        next.status = v === null ? { status: "waiting" } : { status: "success", peak_g: v };
+      }
+      progress(next);
+      if (next.status.status !== "success") demoSlap(step);
+    },
+    async cancelCalibration() {
+      clearTimeout(demoTimer);
+      data.calProgress = null;
+      data.state.calibrating = false;
+      state();
+      syncWave();
+    },
+    async finishCalibration() {
+      const p = data.calProgress;
+      if (!p || p.light_g === null || p.medium_g === null || p.hard_g === null)
+        throw new Error("calibration is missing a slap");
+      const levels = {
+        light_g: +(p.light_g * 0.6).toFixed(3),
+        medium_g: +Math.sqrt(p.light_g * p.medium_g).toFixed(3),
+        hard_g: +Math.sqrt(p.medium_g * p.hard_g).toFixed(3),
+      };
+      data.calibration = { levels, noise_floor_g: p.typing_g ?? 0, calibrated_unix_ms: Date.now() };
+      data.config.slap = {
+        ...data.config.slap,
+        levels,
+        trigger_g: Math.min(0.15, levels.light_g),
+        enabled: true,
+      };
+      data.calProgress = null;
+      data.state.calibrating = false;
+      data.state.accel_running = true;
+      state();
+      syncWave();
+      return config();
+    },
+    async setAccelMonitor(on) {
+      data.log.push(`monitor:${on}`);
+      monitoring = on;
+      syncWave();
+    },
+    async completeOnboarding() {
+      data.config.onboarding_done = true;
+      data.log.push("onboarding-done");
+      config();
+    },
+    async requestInputMonitoring() {
+      data.state.input_access = data.inputAnswer;
+      state();
+      return data.inputAnswer;
+    },
+    async openInputMonitoringSettings() {
+      data.log.push("input-settings");
+    },
+    async copyDiagnostics() {
+      data.log.push("diagnostics");
+      return "Spank 0.1.0\nmacOS 15.0\nMac: Mac16,12 (Apple M4)";
+    },
+    async openLogFolder() {
+      data.log.push("log-folder");
     },
     async listProfiles() {
       return structuredClone(data.profiles);
@@ -143,6 +327,12 @@ export function createMockBackend(seed: Partial<MockSeed> = {}): Backend & { emi
     },
     async previewEvent(kind: EventKind) {
       data.log.push(`event:${kind}`);
+      // Like the engine: a preview is reported as a fired event.
+      const sound = data.profiles.find((p) => p.id === data.config.active_profile)?.mapping[kind]?.sounds[0];
+      emit("trigger_fired", {
+        event: { kind, at_ms: Date.now(), meta: { type: "none" } },
+        result: sound ? { type: "played", sound } : { type: "no_sound" },
+      });
     },
     async revealSound(id) {
       data.log.push(`reveal:${id}`);
@@ -199,6 +389,11 @@ export type MockSeed = {
   pickFiles: string[];
   pickPack: string | null;
   focusAnswer: RuntimeState["focus_authorization"];
+  /** What `requestInputMonitoring` answers. */
+  inputAnswer: InputAccess;
+  calibration: Calibration | null;
+  /** The running calibration wizard, if any. */
+  calProgress: CalibrationProgress | null;
   /** Calls that have no visible effect (previews, reveal…), for tests. */
   log: string[];
   /** Set by `onFileDrop`; tests call it to simulate dropping files on the window. */
@@ -237,6 +432,32 @@ function profile(id: string, name: string, builtin: boolean, map: Partial<Record
   return p;
 }
 
+/** `AppConfig::default()`. */
+export function defaultConfig(): AppConfig {
+  return {
+    schema_version: 1,
+    active_profile: "builtin.destruction",
+    app_volume: 0.8,
+    paused: false,
+    launch_at_login: true,
+    language: "system",
+    auto_check_updates: true,
+    onboarding_done: false,
+    lid: { open_min_deg: 10, close_threshold_deg: 20, overbend_threshold_deg: 120, hysteresis_deg: 5, cooldown_ms: 3000 },
+    slap: {
+      enabled: false,
+      highpass_hz: 2,
+      trigger_g: 0.15,
+      refractory_ms: 150,
+      levels: { light_g: 0.15, medium_g: 0.3, hard_g: 0.5 },
+      combo_window_ms: 5000,
+      combo_count: 3,
+      precise_typing: false,
+    },
+    mute: { meeting: true, focus: true, follow_system: true, quiet_hours_enabled: true, quiet_hours: [] },
+  };
+}
+
 function defaultSeed(): MockSeed {
   return {
     state: {
@@ -249,32 +470,15 @@ function defaultSeed(): MockSeed {
       caps: { lid: { state: "available" }, accel: { state: "available" } },
       focus_authorization: "not_determined",
       audio_ok: true,
+      calibrating: false,
+      input_access: "unknown",
+      input_running: false,
     },
     config: {
-      schema_version: 1,
+      ...defaultConfig(),
       active_profile: "user-office",
-      app_volume: 0.8,
-      paused: false,
-      launch_at_login: true,
-      language: "system",
-      auto_check_updates: true,
-      onboarding_done: false,
-      lid: { open_min_deg: 10, close_threshold_deg: 20, overbend_threshold_deg: 120, hysteresis_deg: 5, cooldown_ms: 3000 },
-      slap: {
-        enabled: false,
-        highpass_hz: 2,
-        trigger_g: 0.15,
-        refractory_ms: 150,
-        levels: { light_g: 0.15, medium_g: 0.3, hard_g: 0.5 },
-        combo_window_ms: 5000,
-        combo_count: 3,
-        precise_typing: false,
-      },
       mute: {
-        meeting: true,
-        focus: true,
-        follow_system: true,
-        quiet_hours_enabled: true,
+        ...defaultConfig().mute,
         quiet_hours: [
           { start: "12:30", end: "13:30", label: "午休" },
           { start: "23:00", end: "07:30", label: "睡覺" },
@@ -345,6 +549,9 @@ function defaultSeed(): MockSeed {
     pickFiles: [],
     pickPack: null,
     focusAnswer: "authorized",
+    inputAnswer: "granted",
+    calibration: null,
+    calProgress: null,
     log: [],
   };
 }

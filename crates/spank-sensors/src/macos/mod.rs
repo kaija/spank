@@ -2,9 +2,11 @@
 
 mod accel;
 mod ffi;
+mod input;
 mod lid;
 
 pub use accel::{IoHidAccel, accel_driver_present, reset_accel_properties};
+pub use input::{InputMonitor, input_access, request_input_access};
 pub use lid::IoHidLid;
 
 use spank_core::{Capability, SensorCaps};

@@ -118,6 +118,8 @@ pub struct ImpactExtractor {
     last_accepted: Option<(u64, f32)>,
     window: Option<Window>,
     stats: ExtractorStats,
+    /// Largest `m` since the last [`ImpactExtractor::take_peak`] (live waveform).
+    peak_since_take: f32,
 }
 
 impl ImpactExtractor {
@@ -144,7 +146,13 @@ impl ImpactExtractor {
             last_accepted: None,
             window: None,
             stats: ExtractorStats::default(),
+            peak_since_take: 0.0,
         }
+    }
+
+    /// Largest high-passed |a| (g) seen since the previous call, for the live waveform.
+    pub fn take_peak(&mut self) -> f32 {
+        std::mem::take(&mut self.peak_since_take)
     }
 
     pub fn params(&self) -> &ImpactParams {
@@ -188,6 +196,7 @@ impl ImpactExtractor {
         let m = (hx * hx + hy * hy + hz * hz).sqrt();
         let idx = self.n;
         self.n += 1;
+        self.peak_since_take = self.peak_since_take.max(m);
 
         if idx < self.warmup {
             self.warm_sum += m as f64;
@@ -403,6 +412,15 @@ mod tests {
         });
         let (out, x) = run(&s);
         assert_eq!(out.len(), 5, "{:?}", x.stats());
+    }
+
+    #[test]
+    fn take_peak_reports_and_clears() {
+        let s = signal(3.0, |t| [0.0, 0.0, ring(t, 1.5, 0.5, 30.0)]);
+        let (_, mut x) = run(&s);
+        let p = x.take_peak();
+        assert!(p > 0.3 && p < 0.6, "{p}");
+        assert_eq!(x.take_peak(), 0.0);
     }
 
     #[test]

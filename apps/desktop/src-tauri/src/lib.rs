@@ -6,8 +6,11 @@
 //! - Closing the last window never quits the app; only the tray's Quit does.
 //! - [`engine`] runs the sensors, the orchestrator and playback on a core thread (T30);
 //!   [`commands`] are the settings UI's backend.
+//! - First launch opens the onboarding wizard (T36); closing it counts as done.
+//! - Launched outside a terminal, stderr goes to `~/Library/Logs/<bundle id>/spank.log` ([`diag`]).
 
 mod commands;
+mod diag;
 mod engine;
 mod state;
 mod tray;
@@ -36,6 +39,11 @@ fn install_panic_hook() {
 fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(target_os = "macos")]
     app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+    if let Some(dir) = diag::log_dir(BUNDLE_ID)
+        && let Err(e) = diag::redirect_stderr(&dir)
+    {
+        eprintln!("spank: could not open the log file: {e}");
+    }
 
     let root = Store::default_root(BUNDLE_ID).ok_or("no Application Support directory")?;
     let store = Store::open(root)?;
@@ -71,6 +79,12 @@ fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
             EngineEvent::Fired(f) => {
                 let _ = handle.emit("trigger_fired", &f);
             }
+            EngineEvent::Calibration(p) => {
+                let _ = handle.emit("calibration", &p);
+            }
+            EngineEvent::AccelLevel(g) => {
+                let _ = handle.emit("accel_level", g);
+            }
         },
     );
     engine.send(EngineCmd::FocusAuthorization(commands::focus_auth_now()));
@@ -81,7 +95,16 @@ fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         let _ = tx.send(EngineCmd::Sys(s));
     });
 
+    // Login item follows the config, but never from dev builds (CLAUDE.md: no implicit login items).
+    if !cfg!(debug_assertions)
+        && let Err(e) = commands::apply_launch_at_login(app.handle(), config.launch_at_login)
+    {
+        eprintln!("spank: could not update the login item: {e}");
+    }
+    let first_run = !config.onboarding_done;
+
     app.manage(AppState {
+        app: app.handle().clone(),
         store,
         builtin,
         profiles,
@@ -91,6 +114,9 @@ fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     });
 
     tray::create(app.handle())?;
+    if first_run {
+        window::open_wizard(app.handle(), window::Wizard::Onboarding);
+    }
     if std::env::args().any(|a| a == OPEN_SETTINGS_ARG) {
         window::open_settings(app.handle());
     }
@@ -114,6 +140,25 @@ pub fn run() {
             commands::set_paused,
             commands::set_mute_rules,
             commands::set_slap_enabled,
+            commands::set_lid_config,
+            commands::set_slap_config,
+            commands::set_app_volume,
+            commands::set_language,
+            commands::set_auto_check_updates,
+            commands::set_launch_at_login,
+            commands::get_calibration,
+            commands::open_calibration,
+            commands::start_calibration,
+            commands::calibration_step,
+            commands::cancel_calibration,
+            commands::finish_calibration,
+            commands::set_accel_monitor,
+            commands::complete_onboarding,
+            commands::request_input_monitoring,
+            commands::open_input_monitoring_settings,
+            commands::diagnostics,
+            commands::copy_diagnostics,
+            commands::open_log_folder,
             commands::list_profiles,
             commands::create_profile,
             commands::duplicate_profile,
@@ -154,8 +199,22 @@ pub fn run() {
             label,
             event: tauri::WindowEvent::Destroyed,
             ..
-        } if label == window::SETTINGS_LABEL => {
-            window::on_settings_destroyed(app);
+        } => {
+            if let Some(state) = app.try_state::<AppState>() {
+                match label.as_str() {
+                    // The page may not get to unmount: stop the live waveform here.
+                    window::SETTINGS_LABEL => state.engine.send(EngineCmd::Monitor(false)),
+                    // Closing onboarding half-way counts as done; Sensors then shows "not calibrated".
+                    window::ONBOARDING_LABEL => {
+                        state.engine.send(EngineCmd::CancelCalibration);
+                        if !state.config().onboarding_done {
+                            let _ = state.update_config(|c| c.onboarding_done = true);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            window::on_window_destroyed(app, &label);
         }
         _ => {}
     });

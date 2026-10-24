@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { AppConfig } from "@/bindings/AppConfig";
+import type { Calibration } from "@/bindings/Calibration";
 import type { Profile } from "@/bindings/Profile";
 import type { RuntimeState } from "@/bindings/RuntimeState";
 import type { SoundEntry } from "@/bindings/SoundEntry";
@@ -13,7 +14,9 @@ const BackendContext = createContext<Backend | null>(null);
 
 /** Real backend inside the app, an in-memory one in a plain browser (`pnpm dev`) — or whatever a test passes. */
 export function BackendProvider({ backend, children }: { backend?: Backend; children: ReactNode }) {
-  const [value] = useState<Backend>(() => backend ?? (inTauri() ? tauriBackend : createMockBackend()));
+  const [value] = useState<Backend>(
+    () => backend ?? (inTauri() ? tauriBackend : createMockBackend({}, { demo: true })),
+  );
   return <BackendContext.Provider value={value}>{children}</BackendContext.Provider>;
 }
 
@@ -66,7 +69,19 @@ export function useRuntimeState(): RuntimeState | undefined {
 
 export const useProfiles = () => useLive<Profile[]>((b) => b.listProfiles(), ["profiles_changed"]);
 export const useSounds = () => useLive<SoundEntry[]>((b) => b.listSounds(), ["library_changed"]);
-export const useConfig = () => useLive<AppConfig>((b) => b.getConfig(), ["engine_state", "profiles_changed"]);
+export const useConfig = () => useLive<AppConfig>((b) => b.getConfig(), ["config_changed", "profiles_changed"]);
+export const useCalibration = () => useLive<Calibration | null>((b) => b.getCalibration(), ["config_changed"]);
+
+/** Last `n` values of the live acceleration waveform (`accel_level`), oldest first. */
+export function useAccelWave(n: number, enabled = true): number[] {
+  const backend = useBackend();
+  const [wave, setWave] = useState<number[]>(() => Array(n).fill(0));
+  useEffect(() => {
+    if (!enabled) return;
+    return backend.on("accel_level", (g) => setWave((w) => [...w.slice(w.length - n + 1), g]));
+  }, [backend, n, enabled]);
+  return wave;
+}
 
 /** Sound id → display name (built-in names are translated by the caller). */
 export function useSoundIndex(sounds: SoundEntry[] | undefined) {

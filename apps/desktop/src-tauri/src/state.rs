@@ -1,7 +1,7 @@
 //! App-wide state shared by Tauri commands, the tray and the engine.
 //!
-//! `config` is the source of truth for settings: a command changes it, saves `config.json`, then
-//! sends the new copy to the engine. Profiles and sounds live in the store; built-ins come from the
+//! `config` is the source of truth for settings: a command changes it, saves `config.json`, sends
+//! the new copy to the engine and announces it with the `config_changed` event. Profiles and sounds live in the store; built-ins come from the
 //! bundled `.spankpack` files.
 
 use crate::engine::{Engine, EngineCmd, Resolver, SoundData};
@@ -9,8 +9,12 @@ use spank_core::{AppConfig, Profile, ProfileId, SoundEntry, SoundId, SoundSource
 use spank_pack::BuiltinSet;
 use spank_store::{Profiles, Store, StoreError};
 use std::sync::{Arc, Mutex};
+use tauri::{AppHandle, Emitter};
+
+pub const CONFIG_CHANGED: &str = "config_changed";
 
 pub struct AppState {
+    pub app: AppHandle,
     pub store: Store,
     pub builtin: Arc<BuiltinSet>,
     pub profiles: Profiles,
@@ -51,6 +55,8 @@ impl AppState {
         *guard = next.clone();
         drop(guard);
         self.engine.send(EngineCmd::Config(next.clone()));
+        let _ = self.app.emit(CONFIG_CHANGED, &next);
+        crate::tray::refresh(&self.app);
         Ok(next)
     }
 

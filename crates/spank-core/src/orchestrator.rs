@@ -11,10 +11,12 @@
 //! start/stop, UI notifications). Playback goes through the [`Player`] trait so tests can use a fake.
 //!
 //! Sensors run only while awake, unlocked and not paused (ADR-0013); the accelerometer also needs
-//! slaps enabled. After a wake the lid is read once even if the screen is locked, so `LidOpened`
+//! slaps enabled, or the calibration wizard running (which works even while paused and never
+//! plays slap sounds). After a wake the lid is read once even if the screen is locked, so `LidOpened`
 //! plays when the lid opens, not when the user unlocks.
 
-use crate::config::{AppConfig, TimeOfDay};
+use crate::calibration::{CalError, CalStep, CalibrationProgress, Calibrator};
+use crate::config::{AppConfig, Calibration, SlapConfig, TimeOfDay};
 use crate::event::{EventKind, EventMeta, Priority, TriggerEvent};
 use crate::impact::{ImpactExtractor, ImpactParams};
 use crate::lid::LidDetector;
@@ -90,9 +92,23 @@ pub enum FireResult {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Output {
     Sensor(SensorCommand),
-    Fired { event: TriggerEvent, result: FireResult },
-    SlapSuppressed { at_ms: u64, reason: SuppressReason },
+    Fired {
+        event: TriggerEvent,
+        result: FireResult,
+    },
+    SlapSuppressed {
+        at_ms: u64,
+        reason: SuppressReason,
+    },
     MuteChanged(MuteStatus),
+    /// Calibration wizard state changed.
+    Calibration(CalibrationProgress),
+    /// Largest high-passed |a| (g) in the last accelerometer batch, while the live waveform is
+    /// watched ([`Orchestrator::set_monitor`]) or calibrating.
+    AccelPeak {
+        at_ms: u64,
+        peak_g: f32,
+    },
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -113,6 +129,8 @@ pub struct Orchestrator {
     sensors: SensorState,
     awaiting_wake: bool,
     last_input_ms: Option<u64>,
+    calibrator: Option<Calibrator>,
+    monitor: bool,
 }
 
 impl Orchestrator {
@@ -127,6 +145,8 @@ impl Orchestrator {
             sensors: SensorState::default(),
             awaiting_wake: false,
             last_input_ms: None,
+            calibrator: None,
+            monitor: false,
             accel_rate_hz,
             cfg,
             profile,
@@ -174,6 +194,60 @@ impl Orchestrator {
         self.sensors.accel
     }
 
+    pub fn calibrating(&self) -> bool {
+        self.calibrator.is_some()
+    }
+
+    // ---- calibration & live waveform ----------------------------------------------------
+
+    /// Start (or restart) the calibration wizard at the light step. Slaps stop playing until
+    /// it is finished or cancelled.
+    pub fn start_calibration(&mut self, now_ms: u64) -> Vec<Output> {
+        let c = Calibrator::new(&self.cfg.slap, self.accel_rate_hz, now_ms);
+        let mut out = vec![Output::Calibration(c.progress())];
+        self.calibrator = Some(c);
+        self.sync_sensors(&mut out);
+        out
+    }
+
+    /// Move the wizard to `step`; `reset` discards that step's earlier result (retry).
+    pub fn calibration_step(&mut self, step: CalStep, reset: bool, now_ms: u64) -> Vec<Output> {
+        match self.calibrator.as_mut() {
+            Some(c) => {
+                c.set_step(step, reset, now_ms);
+                vec![Output::Calibration(c.progress())]
+            }
+            None => Vec::new(),
+        }
+    }
+
+    /// End the wizard and return the result. The caller saves it and applies the slap config.
+    pub fn finish_calibration(
+        &mut self,
+        now_unix_ms: u64,
+    ) -> Result<(Calibration, SlapConfig, Vec<Output>), CalError> {
+        let Some(c) = self.calibrator.as_ref() else {
+            return Err(CalError::Missing(CalStep::Light));
+        };
+        let (calibration, slap) = c.result(&self.cfg.slap, now_unix_ms)?;
+        Ok((calibration, slap, self.cancel_calibration()))
+    }
+
+    pub fn cancel_calibration(&mut self) -> Vec<Output> {
+        let mut out = Vec::new();
+        if self.calibrator.take().is_some() {
+            // The slap extractor missed the samples the wizard used.
+            self.impacts.reset();
+            self.sync_sensors(&mut out);
+        }
+        out
+    }
+
+    /// Report [`Output::AccelPeak`] for every batch (the settings window's live waveform).
+    pub fn set_monitor(&mut self, on: bool) {
+        self.monitor = on;
+    }
+
     // ---- inputs -------------------------------------------------------------------------
 
     pub fn on_lid(&mut self, s: LidSample, player: &mut impl Player) -> Vec<Output> {
@@ -197,11 +271,26 @@ impl Orchestrator {
 
     pub fn on_accel(&mut self, batch: &[AccelSample], player: &mut impl Player) -> Vec<Output> {
         let mut out = Vec::new();
-        if !self.sensors.accel {
+        if !self.sensors.accel || batch.is_empty() {
+            return out;
+        }
+        let at_ms = batch[batch.len() - 1].at_ms;
+        if let Some(c) = self.calibrator.as_mut() {
+            if c.push(batch) {
+                out.push(Output::Calibration(c.progress()));
+            }
+            out.push(Output::AccelPeak {
+                at_ms,
+                peak_g: c.take_peak(),
+            });
             return out;
         }
         let mut candidates = Vec::new();
         self.impacts.extend(batch, &mut candidates);
+        let peak_g = self.impacts.take_peak();
+        if self.monitor {
+            out.push(Output::AccelPeak { at_ms, peak_g });
+        }
         for c in candidates {
             let pb = player.status();
             let gates = GateSignals {
@@ -308,9 +397,10 @@ impl Orchestrator {
     fn desired(&self) -> SensorState {
         let sys = self.mute.sys();
         let running = !self.cfg.paused && !sys.asleep;
+        let calibrating = self.calibrator.is_some() && !sys.asleep && !sys.locked;
         SensorState {
             lid: running && (!sys.locked || self.awaiting_wake),
-            accel: running && !sys.locked && self.cfg.slap.enabled,
+            accel: calibrating || (running && !sys.locked && self.cfg.slap.enabled),
         }
     }
 
@@ -715,6 +805,82 @@ mod tests {
                 }]
             ),
             "{out:?}"
+        );
+    }
+
+    fn calibration(out: &[Output]) -> Option<crate::calibration::CalibrationProgress> {
+        out.iter().rev().find_map(|o| match o {
+            Output::Calibration(p) => Some(p.clone()),
+            _ => None,
+        })
+    }
+
+    #[test]
+    fn calibration_runs_accel_without_playing() {
+        use crate::calibration::{CalStatus, CalStep};
+        // Slaps disabled and paused: the wizard still turns the accelerometer on.
+        let (mut o, _) = orch(AppConfig {
+            paused: true,
+            ..Default::default()
+        });
+        let out = o.start_calibration(0);
+        assert_eq!(sensors(&out), vec![SensorCommand::StartAccel]);
+        assert_eq!(calibration(&out).unwrap().status, CalStatus::Waiting);
+        assert!(o.calibrating());
+
+        let mut p = FakePlayer::default();
+        let mut outs = Vec::new();
+        for (step, t0, amp) in [
+            (CalStep::Light, 0, 0.15),
+            (CalStep::Medium, 3000, 0.4),
+            (CalStep::Hard, 6000, 1.0),
+        ] {
+            outs.extend(o.calibration_step(step, false, t0));
+            for b in accel(t0, 3000, &[(t0 + 1500, amp)]).chunks(40) {
+                outs.extend(o.on_accel(b, &mut p));
+            }
+            let progress = calibration(&outs).unwrap();
+            assert_eq!(progress.step, step);
+            assert!(
+                matches!(progress.status, CalStatus::Success { .. }),
+                "{progress:?}"
+            );
+        }
+        assert!(p.requests.is_empty(), "calibration never plays");
+        assert!(fired(&outs).is_empty());
+        assert!(
+            outs.iter()
+                .any(|x| matches!(x, Output::AccelPeak { peak_g, .. } if *peak_g > 0.5))
+        );
+
+        let (cal, slap, out) = o.finish_calibration(7).unwrap();
+        assert_eq!(sensors(&out), vec![SensorCommand::StopAccel]);
+        assert!(!o.calibrating());
+        assert_eq!(cal.levels, slap.levels);
+        assert!(o.finish_calibration(7).is_err());
+        assert!(o.calibration_step(CalStep::Light, false, 0).is_empty());
+    }
+
+    #[test]
+    fn cancel_and_monitor() {
+        let (mut o, _) = orch(slap_cfg());
+        let mut p = FakePlayer::default();
+        // Accel already running for slaps: starting the wizard doesn't restart it.
+        assert!(sensors(&o.start_calibration(0)).is_empty());
+        assert!(sensors(&o.cancel_calibration()).is_empty());
+        assert!(o.cancel_calibration().is_empty());
+
+        let batch = accel(0, 100, &[]);
+        assert!(
+            !o.on_accel(&batch, &mut p)
+                .iter()
+                .any(|x| matches!(x, Output::AccelPeak { .. }))
+        );
+        o.set_monitor(true);
+        assert!(
+            o.on_accel(&batch, &mut p)
+                .iter()
+                .any(|x| matches!(x, Output::AccelPeak { .. }))
         );
     }
 

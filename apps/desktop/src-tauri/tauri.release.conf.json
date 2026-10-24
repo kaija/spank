@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "bundle": {
+    "macOS": {
+      "entitlements": "Spank.entitlements",
+      "files": {
+        "embedded.provisionprofile": "../../../signing/Spank_Developer_ID.provisionprofile"
+      }
+    }
+  }
+}

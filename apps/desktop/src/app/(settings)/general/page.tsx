@@ -1,5 +1,5 @@
-import { PagePlaceholder } from "@/components/PagePlaceholder";
+import { GeneralPage } from "@/screens/GeneralPage";
 
 export default function Page() {
-  return <PagePlaceholder task="T38" />;
+  return <GeneralPage />;
 }

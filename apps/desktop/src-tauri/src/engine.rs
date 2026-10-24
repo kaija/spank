@@ -5,6 +5,11 @@
 //! - Accelerometer: `IoHidAccel` runs its own CFRunLoop thread; we drain its ring buffer every
 //!   ~50 ms (ADR-0013) and feed the batch to the orchestrator.
 //! - Sensors start and stop only when the orchestrator says so (sleep, lock, pause, slaps off).
+//! - Precise typing (T39): while the accelerometer runs and the setting is on, an `InputMonitor`
+//!   reports keyboard / click times to the orchestrator's typing gate. It needs Input Monitoring;
+//!   without it nothing starts and detection keeps its signal-based typing filter.
+//! - Calibration (T36) and the live waveform: the orchestrator reports `Calibration` progress and
+//!   per-batch `AccelPeak`s, which leave as events.
 //! - System signals, settings and previews arrive as [`EngineCmd`]s; state changes and fired events
 //!   leave through the sink as [`EngineEvent`]s.
 //!
@@ -13,11 +18,11 @@
 
 use spank_audio::{AudioPlayer, SoundBank};
 use spank_core::{
-    AppConfig, Capability, EventKind, FireResult, FiredEvent, FocusAuthorization, Orchestrator, Output,
-    PlayOutcome, PlayRequest, PlaybackStatus, Player, Priority, Profile, RuntimeState, SensorCommand,
-    SoundId, SysSignal, TimeOfDay,
+    AppConfig, CalStep, Calibration, CalibrationProgress, Capability, EventKind, FireResult, FiredEvent,
+    FocusAuthorization, InputAccess, Orchestrator, Output, PlayOutcome, PlayRequest, PlaybackStatus, Player,
+    Priority, Profile, RuntimeState, SensorCommand, SlapConfig, SoundId, SysSignal, TimeOfDay,
 };
-use spank_sensors::{ACCEL_NOMINAL_HZ, AccelSource, IoHidAccel, IoHidLid, LidPollSchedule};
+use spank_sensors::{ACCEL_NOMINAL_HZ, AccelSource, InputMonitor, IoHidAccel, IoHidLid, LidPollSchedule};
 use std::path::PathBuf;
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
@@ -30,6 +35,10 @@ const ACCEL_BATCH: Duration = Duration::from_millis(50);
 const MUTE_TICK: Duration = Duration::from_secs(20);
 /// Previews beat every event (combo is 7).
 const PREVIEW_PRIORITY: Priority = Priority(u8::MAX);
+/// While precise typing waits for Input Monitoring, re-check the permission this often.
+const INPUT_ACCESS_RECHECK: Duration = Duration::from_secs(5);
+
+pub type CalibrationReply = mpsc::Sender<Result<(Calibration, SlapConfig), String>>;
 
 /// Where a sound's audio comes from.
 pub enum SoundData {
@@ -49,12 +58,27 @@ pub enum EngineCmd {
     PreviewSound(SoundId),
     StopPreview,
     FocusAuthorization(FocusAuthorization),
+    StartCalibration,
+    CalibrationStep {
+        step: CalStep,
+        reset: bool,
+    },
+    /// Ends the wizard; replies with the result (or why there is none).
+    FinishCalibration(CalibrationReply),
+    CancelCalibration,
+    /// Live waveform for the settings window.
+    Monitor(bool),
+    /// Input Monitoring may have changed (e.g. right after asking).
+    CheckInputAccess,
     Shutdown,
 }
 
 pub enum EngineEvent {
     State(RuntimeState),
     Fired(FiredEvent),
+    Calibration(CalibrationProgress),
+    /// Largest |a| (g, gravity removed) of the last ~50 ms.
+    AccelLevel(f32),
 }
 
 pub struct Engine {
@@ -141,6 +165,13 @@ impl Audio {
     }
 }
 
+fn unix_ms() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0)
+}
+
 /// Local wall-clock time of day (quiet hours are in local time).
 pub fn local_time_of_day() -> TimeOfDay {
     let now = std::time::SystemTime::now()
@@ -166,6 +197,8 @@ struct Core {
     lid_sched: LidPollSchedule,
     next_lid_poll: Instant,
     accel: Option<IoHidAccel>,
+    input: Option<InputMonitor>,
+    next_access_check: Instant,
     batch: Vec<spank_core::AccelSample>,
     last_mute_tick: Instant,
     state: RuntimeState,
@@ -196,6 +229,7 @@ impl Core {
             paused: config.paused,
             active_profile: profile.id.clone(),
             audio_ok: matches!(audio, Audio::Real(_)),
+            input_access: spank_sensors::input_access(),
             ..shared.lock().map(|s| s.clone()).unwrap_or_default()
         };
         let orch = Orchestrator::new(config, profile, ACCEL_NOMINAL_HZ, local_time_of_day());
@@ -208,6 +242,8 @@ impl Core {
             lid_sched: LidPollSchedule::new(),
             next_lid_poll: Instant::now(),
             accel: None,
+            input: None,
+            next_access_check: Instant::now() + INPUT_ACCESS_RECHECK,
             batch: Vec::with_capacity(256),
             last_mute_tick: Instant::now(),
             state,
@@ -236,12 +272,22 @@ impl Core {
                 Err(mpsc::RecvTimeoutError::Timeout) => {}
             }
             self.poll_sensors();
+            if Instant::now() >= self.next_access_check {
+                self.next_access_check = Instant::now() + INPUT_ACCESS_RECHECK;
+                if self.orch.config().slap.precise_typing && self.state.input_access != InputAccess::Granted {
+                    self.state.input_access = spank_sensors::input_access();
+                    self.sync_input();
+                }
+            }
             if self.last_mute_tick.elapsed() >= MUTE_TICK {
                 self.last_mute_tick = Instant::now();
                 let out = self.orch.on_tick(local_time_of_day());
                 self.handle(out);
             }
             self.publish();
+        }
+        if let Some(i) = self.input.take() {
+            i.stop();
         }
         if let Some(a) = self.accel.take() {
             a.stop();
@@ -312,6 +358,33 @@ impl Core {
                 }
             }
             EngineCmd::FocusAuthorization(a) => self.state.focus_authorization = a,
+            EngineCmd::StartCalibration => {
+                let out = self.orch.start_calibration(self.now_ms());
+                self.handle(out);
+            }
+            EngineCmd::CalibrationStep { step, reset } => {
+                let out = self.orch.calibration_step(step, reset, self.now_ms());
+                self.handle(out);
+            }
+            EngineCmd::FinishCalibration(reply) => {
+                let r = match self.orch.finish_calibration(unix_ms()) {
+                    Ok((cal, slap, out)) => {
+                        self.handle(out);
+                        Ok((cal, slap))
+                    }
+                    Err(e) => Err(e.to_string()),
+                };
+                let _ = reply.send(r);
+            }
+            EngineCmd::CancelCalibration => {
+                let out = self.orch.cancel_calibration();
+                self.handle(out);
+            }
+            EngineCmd::Monitor(on) => self.orch.set_monitor(on),
+            EngineCmd::CheckInputAccess => {
+                self.state.input_access = spank_sensors::input_access();
+                self.sync_input();
+            }
             EngineCmd::Shutdown => {}
         }
     }
@@ -366,7 +439,31 @@ impl Core {
         }
     }
 
+    /// Watch keyboard / trackpad activity only while it can matter: precise typing on, slaps
+    /// being detected, and Input Monitoring granted.
+    fn sync_input(&mut self) {
+        let want = self.orch.config().slap.precise_typing
+            && self.accel.is_some()
+            && !self.orch.calibrating()
+            && self.state.input_access == InputAccess::Granted;
+        if want && self.input.is_none() {
+            match InputMonitor::start(self.epoch) {
+                Ok(m) => self.input = Some(m),
+                Err(e) => {
+                    eprintln!("spank: input monitor failed to start: {e}");
+                    self.state.input_access = spank_sensors::input_access();
+                }
+            }
+        } else if !want && let Some(m) = self.input.take() {
+            m.stop();
+        }
+        self.state.input_running = self.input.is_some();
+    }
+
     fn poll_sensors(&mut self) {
+        if let Some(t) = self.input.as_ref().and_then(|m| m.last_input_ms()) {
+            self.orch.on_input_activity(t);
+        }
         if let Some(a) = self.accel.as_mut() {
             self.batch.clear();
             a.drain(&mut self.batch);
@@ -408,11 +505,15 @@ impl Core {
                 }
                 Output::MuteChanged(m) => self.state.mute = m,
                 Output::SlapSuppressed { .. } => {}
+                Output::Calibration(p) => (self.sink)(EngineEvent::Calibration(p)),
+                Output::AccelPeak { peak_g, .. } => (self.sink)(EngineEvent::AccelLevel(peak_g)),
             }
         }
         self.state.paused = self.orch.paused();
         self.state.lid_running = self.lid.is_some();
         self.state.accel_running = self.accel.is_some();
+        self.state.calibrating = self.orch.calibrating();
+        self.sync_input();
     }
 
     fn sensor(&mut self, c: SensorCommand) {

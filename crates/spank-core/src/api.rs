@@ -19,6 +19,18 @@ pub enum FocusAuthorization {
     Authorized,
 }
 
+/// Input Monitoring permission (precise typing mode, T39).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[serde(rename_all = "snake_case")]
+pub enum InputAccess {
+    /// Never asked.
+    #[default]
+    Unknown,
+    Granted,
+    Denied,
+}
+
 /// Snapshot of the running engine (`get_state`, event `engine_state`).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(ts_rs::TS))]
@@ -33,6 +45,11 @@ pub struct RuntimeState {
     pub focus_authorization: FocusAuthorization,
     /// False when no audio output device could be opened.
     pub audio_ok: bool,
+    /// The calibration wizard is running (slaps don't play).
+    pub calibrating: bool,
+    pub input_access: InputAccess,
+    /// Keyboard / trackpad activity is being watched (precise typing on and permitted).
+    pub input_running: bool,
 }
 
 impl Default for RuntimeState {
@@ -47,6 +64,9 @@ impl Default for RuntimeState {
             caps: SensorCaps::default(),
             focus_authorization: FocusAuthorization::default(),
             audio_ok: true,
+            calibrating: false,
+            input_access: InputAccess::default(),
+            input_running: false,
         }
     }
 }
@@ -95,6 +115,7 @@ mod tests {
         let j = serde_json::to_value(&s).unwrap();
         assert_eq!(j["focus_authorization"], "not_determined");
         assert_eq!(j["active_profile"], "builtin.destruction");
+        assert_eq!(j["input_access"], "unknown");
         let o = ImportOutcome::Failed {
             reason: "too_large".into(),
             message: "x".into(),

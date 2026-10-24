@@ -6,6 +6,7 @@
 //! - [`lid`]: lid angle event state machine (ADR-0005)
 //! - [`slap`]: slap suppression, levels and combos (ADR-0006)
 //! - [`impact`]: accelerometer → impact candidates (ADR-0006, T23)
+//! - [`calibration`]: slap calibration wizard → strength levels (ADR-0006, T36)
 //! - [`mute`]: auto-mute evaluator (ADR-0007)
 //! - [`orchestrator`]: events → mute → profile → playback (design §4.3)
 //! - [`sample`], [`sys`]: sensor samples and system signals
@@ -14,6 +15,7 @@
 #![forbid(unsafe_code)]
 
 pub mod api;
+pub mod calibration;
 pub mod config;
 pub mod event;
 pub mod impact;
@@ -26,7 +28,8 @@ pub mod slap;
 pub mod sound;
 pub mod sys;
 
-pub use api::{FiredEvent, FocusAuthorization, ImportOutcome, PackImported, RuntimeState};
+pub use api::{FiredEvent, FocusAuthorization, ImportOutcome, InputAccess, PackImported, RuntimeState};
+pub use calibration::{CalError, CalStatus, CalStep, CalibrationProgress, Calibrator};
 pub use config::{
     AppConfig, Calibration, ConfigError, Language, LidConfig, MuteRules, QuietHours, SlapConfig, SlapLevels,
     TimeOfDay,
@@ -72,5 +75,6 @@ mod ts_export {
         ImportOutcome::export_all(&cfg).unwrap();
         PackImported::export_all(&cfg).unwrap();
         EventMeta::export_all(&cfg).unwrap();
+        CalibrationProgress::export_all(&cfg).unwrap();
     }
 }
