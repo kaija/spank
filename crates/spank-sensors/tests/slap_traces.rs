@@ -67,6 +67,13 @@ fn slap_precision_and_recall_on_m4air_traces() {
     ));
     let report = report.join("\n");
     println!("{report}");
+    // CI (T28) saves this as an artifact and adds it to the job summary.
+    if let Some(path) = std::env::var_os("SPANK_TRACE_REPORT") {
+        let md = format!(
+            "## Slap detection on recorded traces\n\nTarget: precision ≥ {MIN_PRECISION}, recall ≥ {MIN_RECALL}\n\n```\n{report}\n```\n"
+        );
+        std::fs::write(path, md).expect("write trace report");
+    }
     assert!(
         precision >= MIN_PRECISION && recall >= MIN_RECALL,
         "slap detection below target:\n{report}"

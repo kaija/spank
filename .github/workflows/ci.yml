@@ -42,6 +42,18 @@ jobs:
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: cargo test
         run: cargo test --workspace
+      - name: Trace replay gate (slap precision / recall)
+        env:
+          SPANK_TRACE_REPORT: ${{ runner.temp }}/trace-report.md
+        run: |
+          cargo test -p spank-sensors --test slap_traces -- --nocapture
+          cat "$SPANK_TRACE_REPORT" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trace-report
+          path: ${{ runner.temp }}/trace-report.md
+          if-no-files-found: ignore
       - name: TypeScript bindings are up to date
         run: |
           cargo test -p spank-core --features ts export_bindings
@@ -50,8 +62,8 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-llvm-cov
-      - name: Coverage (report only; 80% gate added in T28)
-        run: cargo llvm-cov -p spank-core -p spank-store -p spank-audio -p spank-pack -p spank-sensors -p spank-sysmon --summary-only
+      - name: Coverage (≥ 80% lines)
+        run: cargo llvm-cov -p spank-core -p spank-store -p spank-audio -p spank-pack -p spank-sensors -p spank-sysmon --summary-only --fail-under-lines 80
 
   deny:
     name: Dependency policy (cargo-deny)

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "@/ui/Icon";
 import type { IconName } from "@/ui/iconPaths";
 import styles from "./SettingsShell.module.css";
@@ -22,6 +23,15 @@ export type PageId = (typeof PAGES)[number]["id"];
 export function pageFromPath(pathname: string | null): PageId {
   const seg = (pathname ?? "").split("/").find(Boolean);
   return PAGES.find((p) => p.id === seg)?.id ?? PAGES[0].id;
+}
+
+const HEADER_ACTIONS_ID = "settings-header-actions";
+
+/** Lets a page put buttons in the shell's header (e.g. import / export on the library page). */
+export function HeaderActions({ children }: { children: ReactNode }) {
+  const [target, setTarget] = useState<HTMLElement | null>(null);
+  useEffect(() => setTarget(document.getElementById(HEADER_ACTIONS_ID)), []);
+  return target ? createPortal(children, target) : null;
 }
 
 export type ShellStatus = { kind: "running" } | { kind: "paused" } | { kind: "muted"; reason: string };
@@ -70,7 +80,9 @@ export function SettingsShell({ children, status = { kind: "running" }, headerAc
       <div className={styles.main}>
         <header className={styles.header} data-tauri-drag-region>
           <h1 className={styles.title}>{t(`nav.${current}`)}</h1>
-          {headerActions && <div className={styles.headerActions}>{headerActions}</div>}
+          <div id={HEADER_ACTIONS_ID} className={styles.headerActions}>
+            {headerActions}
+          </div>
         </header>
         <main className={styles.content}>{children}</main>
       </div>

@@ -1,5 +1,5 @@
-import { PagePlaceholder } from "@/components/PagePlaceholder";
+import { ProfilesPage } from "@/screens/ProfilesPage";
 
 export default function Page() {
-  return <PagePlaceholder task="T32" />;
+  return <ProfilesPage />;
 }

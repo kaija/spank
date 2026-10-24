@@ -17,13 +17,24 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["app", "dmg"],
+    "targets": [
+      "app",
+      "dmg"
+    ],
     "category": "Utility",
     "copyright": "© 2026 kaija — MIT",
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns"
+    ],
     "macOS": {
       "minimumSystemVersion": "14.0",
       "hardenedRuntime": true
+    },
+    "resources": {
+      "../../../assets/sounds/builtin/": "builtin/"
     }
   }
 }

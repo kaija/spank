@@ -1,0 +1,17 @@
+[package]
+name = "gen-builtin-sounds"
+description = "T35: synthesize the built-in sounds and write the three built-in .spankpack files."
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+publish.workspace = true
+
+[dependencies]
+spank-core = { path = "../../crates/spank-core" }
+spank-audio = { path = "../../crates/spank-audio" }
+spank-pack = { path = "../../crates/spank-pack" }
+fastrand = "2"
+sha2 = "0.11"
+
+[lints]
+workspace = true

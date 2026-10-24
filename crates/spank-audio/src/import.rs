@@ -50,6 +50,8 @@ pub struct ImportedSound {
     pub trimmed_leading_ms: u32,
     /// True if the sound was cut to [`MAX_DURATION_MS`].
     pub truncated: bool,
+    /// Length after trimming leading silence, before the 10 s cap.
+    pub original_ms: u32,
     pub gain_db: f64,
     /// Loudness after normalization. Below the target when true-peak limiting kicked in.
     pub loudness_lufs: f64,
@@ -171,6 +173,7 @@ pub fn process(samples: Vec<f32>, channels: usize, rate: u32) -> Result<Imported
     // Cap the length.
     let max_samples = (MAX_DURATION_MS as usize * SAMPLE_RATE as usize / 1000) * channels;
     let truncated = samples.len() > max_samples;
+    let original_ms = ((samples.len() / channels) as u64 * 1000 / SAMPLE_RATE as u64) as u32;
     samples.truncate(max_samples);
 
     // Loudness normalization with a true-peak ceiling.
@@ -194,6 +197,7 @@ pub fn process(samples: Vec<f32>, channels: usize, rate: u32) -> Result<Imported
         source_rate: rate,
         trimmed_leading_ms,
         truncated,
+        original_ms,
         gain_db,
         loudness_lufs: loudness + gain_db,
         true_peak_dbtp: peak_dbtp + gain_db,

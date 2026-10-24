@@ -4,4 +4,8 @@ import type { TimeOfDay } from "./TimeOfDay";
 /**
  * A quiet-hours range. `end < start` means it crosses midnight.
  */
-export type QuietHours = { start: TimeOfDay, end: TimeOfDay, };
+export type QuietHours = { start: TimeOfDay, end: TimeOfDay, 
+/**
+ * User's name for the range, e.g. "午休".
+ */
+label: string, };

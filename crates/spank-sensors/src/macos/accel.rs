@@ -176,16 +176,20 @@ impl IoHidAccel {
         self.shutdown();
     }
 
+    /// Idempotent: `stop()` runs it, then `Drop` runs it again.
     fn shutdown(&mut self) {
         self.shared.stop.store(true, Ordering::Release);
+        let Some(t) = self.thread.take() else {
+            return;
+        };
         if self.runloop != 0 {
-            // SAFETY: CFRunLoopStop is thread-safe; the run loop lives until the thread exits,
-            // and we join it right after.
+            // SAFETY: CFRunLoopStop is thread-safe, and the run loop is alive: its thread only
+            // exits after seeing `stop`, and we join it right after. Never called again after
+            // the join (the thread handle is gone), so we never touch a freed run loop.
             unsafe { CFRunLoopStop(self.runloop as CFRunLoopRef) };
+            self.runloop = 0;
         }
-        if let Some(t) = self.thread.take() {
-            let _ = t.join();
-        }
+        let _ = t.join();
     }
 }
 

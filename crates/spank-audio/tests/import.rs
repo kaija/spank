@@ -201,3 +201,13 @@ fn wav_round_trip_and_hash() {
     assert!(again.gain_db.abs() < 0.5);
     assert_eq!(again.trimmed_leading_ms, 0);
 }
+
+#[test]
+fn encode_wav_matches_write_wav() {
+    let s = spank_audio::import::process([0.1, -0.2, 0.3, 0.0].repeat(12_000), 1, 48_000).unwrap();
+    let bytes = spank_audio::encode_wav(&s);
+    let dir = tempfile::tempdir().unwrap();
+    let p = dir.path().join("x.wav");
+    spank_audio::write_wav(&s, &p).unwrap();
+    assert_eq!(std::fs::read(&p).unwrap(), bytes);
+}

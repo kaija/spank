@@ -19,4 +19,4 @@ pub use mixer::{Clip, MixOutcome, Mixer};
 pub use player::{AudioPlayer, OutputFormat, PlayerError};
 
 pub use import::{ImportError, ImportedSound, import_file};
-pub use wav::{read_wav, sha256_file, write_wav};
+pub use wav::{decode_wav, encode_wav, read_wav, sha256_file, write_wav};

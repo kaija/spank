@@ -1,5 +1,5 @@
-import { PagePlaceholder } from "@/components/PagePlaceholder";
+import { LibraryPage } from "@/screens/LibraryPage";
 
 export default function Page() {
-  return <PagePlaceholder task="T33" />;
+  return <LibraryPage />;
 }

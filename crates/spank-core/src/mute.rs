@@ -141,6 +141,7 @@ mod tests {
         QuietHours {
             start: t(a),
             end: t(b),
+            label: String::new(),
         }
     }
 

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/*", "apps/desktop/src-tauri", "tools/lid-probe", "tools/accel-probe", "tools/audio-probe", "tools/focus-probe", "tools/trace-recorder"]
+members = ["crates/*", "apps/desktop/src-tauri", "tools/lid-probe", "tools/accel-probe", "tools/audio-probe", "tools/focus-probe", "tools/trace-recorder", "tools/gen-builtin-sounds"]
 
 [workspace.package]
 edition = "2024"

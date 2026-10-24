@@ -56,13 +56,17 @@ enum Ctl {
         priority: Priority,
         gain: f32,
     },
+    Stop,
     Shutdown,
 }
 
-struct Cmd {
-    clip: Arc<Clip>,
-    priority: Priority,
-    gain: f32,
+enum Cmd {
+    Play {
+        clip: Arc<Clip>,
+        priority: Priority,
+        gain: f32,
+    },
+    Stop,
 }
 
 /// Output format of the current stream.
@@ -141,6 +145,11 @@ impl AudioPlayer {
         }
     }
 
+    /// Stop whatever is playing (e.g. the user pressed stop on a preview).
+    pub fn stop(&self) {
+        let _ = self.tx.send(Ctl::Stop);
+    }
+
     /// Delay between the last request and the audio callback that started it.
     pub fn last_start_delay(&self) -> Option<Duration> {
         match self.status.last_start_delay_us.load(Ordering::Acquire) {
@@ -209,13 +218,18 @@ fn build(status: &Arc<Status>) -> Result<Output, PlayerError> {
             move |data: &mut [f32], _| {
                 // Real-time: no locks, no allocation (dropping a finished clip's Arc may free).
                 while let Ok(c) = rx.pop() {
-                    if mixer.request(c.clip, c.priority, c.gain) != MixOutcome::Busy {
-                        let req = st.requested_at_us.load(Ordering::Acquire);
-                        st.last_start_delay_us
-                            .store(st.now_us().saturating_sub(req), Ordering::Release);
+                    match c {
+                        Cmd::Play { clip, priority, gain } => {
+                            if mixer.request(clip, priority, gain) != MixOutcome::Busy {
+                                let req = st.requested_at_us.load(Ordering::Acquire);
+                                st.last_start_delay_us
+                                    .store(st.now_us().saturating_sub(req), Ordering::Release);
+                            }
+                            st.playing.store(true, Ordering::Release);
+                            st.pending.fetch_sub(1, Ordering::AcqRel);
+                        }
+                        Cmd::Stop => mixer.stop(),
                     }
-                    st.playing.store(true, Ordering::Release);
-                    st.pending.fetch_sub(1, Ordering::AcqRel);
                 }
                 mixer.render(data);
                 let active = mixer.is_active();
@@ -262,12 +276,17 @@ fn control_thread(
                     status.pending.fetch_sub(1, Ordering::AcqRel);
                     continue;
                 };
-                if o.cmds.push(Cmd { clip, priority, gain }).is_err() {
+                if o.cmds.push(Cmd::Play { clip, priority, gain }).is_err() {
                     status.pending.fetch_sub(1, Ordering::AcqRel);
                     continue;
                 }
                 if !running && o.stream.play().is_ok() {
                     running = true;
+                }
+            }
+            Ok(Ctl::Stop) => {
+                if let Some(o) = out.as_mut() {
+                    let _ = o.cmds.push(Cmd::Stop);
                 }
             }
             Ok(Ctl::Shutdown) | Err(mpsc::RecvTimeoutError::Disconnected) => break,

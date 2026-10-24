@@ -83,6 +83,20 @@ impl SoundBank {
         self.insert(id, Clip::new(samples, channels, rate))
     }
 
+    /// Decode WAV bytes (built-in sounds ship inside `.spankpack` files) into the bank.
+    pub fn load_wav_bytes(&mut self, id: SoundId, bytes: &[u8]) -> Result<(), BankError> {
+        let (samples, channels, rate) = crate::wav::decode_wav(bytes).map_err(|source| BankError::Read {
+            id: id.0.clone(),
+            source,
+        })?;
+        self.insert(id, Clip::new(samples, channels, rate))
+    }
+
+    /// Drop every sound not in `keep`.
+    pub fn retain(&mut self, keep: &[&SoundId]) {
+        self.clips.retain(|k, _| keep.contains(&k));
+    }
+
     /// Keep exactly `ids`: drop the rest, load missing ones with `path_of`. Errors for individual
     /// sounds are collected so one bad file doesn't block the profile.
     pub fn sync<'a>(
@@ -127,6 +141,7 @@ mod tests {
             source_rate: 48_000,
             trimmed_leading_ms: 0,
             truncated: false,
+            original_ms: (frames * 1000 / 48_000) as u32,
             gain_db: 0.0,
             loudness_lufs: -16.0,
             true_peak_dbtp: -1.0,
@@ -158,6 +173,18 @@ mod tests {
 
         let errs = bank.sync(&["x".into()], |_| None);
         assert_eq!(errs.len(), 1);
+        assert!(bank.is_empty());
+    }
+
+    #[test]
+    fn load_from_bytes_and_retain() {
+        let dir = tempfile::tempdir().unwrap();
+        let p = wav(dir.path(), "a", 480);
+        let mut bank = SoundBank::default();
+        bank.load_wav_bytes("a".into(), &std::fs::read(&p).unwrap())
+            .unwrap();
+        assert!(bank.load_wav_bytes("b".into(), b"junk").is_err());
+        bank.retain(&[]);
         assert!(bank.is_empty());
     }
 

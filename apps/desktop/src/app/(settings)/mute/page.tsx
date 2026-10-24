@@ -1,5 +1,5 @@
-import { PagePlaceholder } from "@/components/PagePlaceholder";
+import { MutePage } from "@/screens/MutePage";
 
 export default function Page() {
-  return <PagePlaceholder task="T34" />;
+  return <MutePage />;
 }

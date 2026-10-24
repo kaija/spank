@@ -218,11 +218,14 @@ impl<'de> Deserialize<'de> for TimeOfDay {
 }
 
 /// A quiet-hours range. `end < start` means it crosses midnight.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(ts_rs::TS))]
 pub struct QuietHours {
     pub start: TimeOfDay,
     pub end: TimeOfDay,
+    /// User's name for the range, e.g. "午休".
+    #[serde(default)]
+    pub label: String,
 }
 
 /// Automatic mute rules (ADR-0007). Any active rule mutes playback.
@@ -352,6 +355,7 @@ mod tests {
         c.mute.quiet_hours.push(QuietHours {
             start: "23:00".parse().unwrap(),
             end: "07:30".parse().unwrap(),
+            label: String::new(),
         });
         c.language = Language::ZhHant;
         let json = serde_json::to_string_pretty(&c).unwrap();
@@ -447,7 +451,11 @@ mod tests {
     fn mute_rules_reject_empty_range() {
         let t: TimeOfDay = "10:00".parse().unwrap();
         let m = MuteRules {
-            quiet_hours: vec![QuietHours { start: t, end: t }],
+            quiet_hours: vec![QuietHours {
+                start: t,
+                end: t,
+                label: String::new(),
+            }],
             ..Default::default()
         };
         assert!(m.validate().is_err());

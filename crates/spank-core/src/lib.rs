@@ -13,6 +13,7 @@
 
 #![forbid(unsafe_code)]
 
+pub mod api;
 pub mod config;
 pub mod event;
 pub mod impact;
@@ -25,6 +26,7 @@ pub mod slap;
 pub mod sound;
 pub mod sys;
 
+pub use api::{FiredEvent, FocusAuthorization, ImportOutcome, PackImported, RuntimeState};
 pub use config::{
     AppConfig, Calibration, ConfigError, Language, LidConfig, MuteRules, QuietHours, SlapConfig, SlapLevels,
     TimeOfDay,
@@ -65,5 +67,10 @@ mod ts_export {
         SensorCommand::export_all(&cfg).unwrap();
         SysState::export_all(&cfg).unwrap();
         SensorCaps::export_all(&cfg).unwrap();
+        RuntimeState::export_all(&cfg).unwrap();
+        FiredEvent::export_all(&cfg).unwrap();
+        ImportOutcome::export_all(&cfg).unwrap();
+        PackImported::export_all(&cfg).unwrap();
+        EventMeta::export_all(&cfg).unwrap();
     }
 }

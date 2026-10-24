@@ -11,8 +11,10 @@
 
 #![forbid(unsafe_code)]
 
+pub mod builtin;
 pub mod manifest;
 
+pub use builtin::{BuiltinSet, load_builtin};
 pub use manifest::{Manifest, ManifestSound, PackEvent, SCHEMA_VERSION};
 
 use sha2::{Digest, Sha256};
@@ -116,7 +118,7 @@ fn check_id(id: &str) -> Result<(), PackError> {
 }
 
 /// Duration of a WAV after checking it is 48 kHz, 1–2 channels, ≤ 10 s.
-fn wav_duration_ms(file: &str, bytes: &[u8]) -> Result<u32, PackError> {
+pub(crate) fn wav_duration_ms(file: &str, bytes: &[u8]) -> Result<u32, PackError> {
     let err = |msg: String| PackError::Sound {
         file: file.to_owned(),
         msg,
@@ -374,18 +376,29 @@ pub struct ExportMeta {
     pub license: String,
 }
 
-/// Build a pack from a profile and the sounds it uses.
+/// Build a pack from a profile and the sounds it uses (user sounds from the store).
 pub fn export_pack(store: &Store, profile: &Profile, meta: ExportMeta) -> Result<Pack, PackError> {
-    check_id(&meta.id)?;
     let index = store.load_sound_index()?.value;
+    export_pack_with(profile, meta, |id| {
+        let entry = index.get(id)?.clone();
+        let bytes = std::fs::read(store.sound_file(id).ok()?).ok()?;
+        Some((entry, bytes))
+    })
+}
+
+/// Build a pack, looking up each sound's library entry and WAV bytes with `lookup`
+/// (so built-in sounds can be exported too).
+pub fn export_pack_with(
+    profile: &Profile,
+    meta: ExportMeta,
+    lookup: impl Fn(&SoundId) -> Option<(SoundEntry, Vec<u8>)>,
+) -> Result<Pack, PackError> {
+    check_id(&meta.id)?;
     let mut sounds = BTreeMap::new();
     let mut entries = Vec::new();
     let mut file_of: BTreeMap<SoundId, String> = BTreeMap::new();
     for id in profile.referenced_sounds() {
-        let entry = index
-            .get(id)
-            .ok_or_else(|| StoreError::NotFound(format!("sound {}", id.0)))?;
-        let bytes = std::fs::read(store.sound_file(id)?)?;
+        let (entry, bytes) = lookup(id).ok_or_else(|| StoreError::NotFound(format!("sound {}", id.0)))?;
         let file = format!("sounds/{}.wav", id.0);
         let suggested = profile
             .mapping

@@ -636,6 +636,7 @@ mod tests {
         cfg.mute.quiet_hours = vec![QuietHours {
             start: "13:00".parse().unwrap(),
             end: "14:00".parse().unwrap(),
+            label: String::new(),
         }];
         let (mut o, _) = orch(cfg);
         assert!(o.on_tick("12:59".parse().unwrap()).is_empty());
@@ -732,6 +733,7 @@ mod tests {
             quiet_hours: vec![QuietHours {
                 start: "11:00".parse().unwrap(),
                 end: "13:00".parse().unwrap(),
+                label: String::new(),
             }],
             ..MuteRules::default()
         };

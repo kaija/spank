@@ -1,0 +1,215 @@
+/* mockup/Settings Window.dc.html — AUTO MUTE */
+.page {
+  height: 100%;
+  overflow: auto;
+  padding: 14px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.banner {
+  --banner-color: var(--color-success);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-success-light);
+  border: 1px solid rgba(31, 157, 107, 0.2);
+}
+.banner[data-muted] {
+  --banner-color: var(--color-warning);
+  background: var(--color-warning-light);
+  border-color: rgba(192, 122, 18, 0.2);
+}
+.bannerTitle {
+  font-weight: var(--fw-semibold);
+}
+.bannerSub {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.anyRule {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.card,
+.quiet {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-secondary);
+}
+.rule {
+  padding: 11px 16px;
+}
+.rule + .rule {
+  border-top: 1px solid var(--color-border);
+}
+.ruleHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.ruleIcon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+}
+.ruleName {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-weight: var(--fw-semibold);
+}
+.ruleDesc {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.perm {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 10px 0 0 40px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-light);
+}
+.perm[data-tone="danger"] {
+  background: var(--color-danger-light);
+}
+.perm[data-tone="neutral"] {
+  background: var(--color-bg-tertiary);
+}
+.permText {
+  flex: 1;
+  min-width: 180px;
+  font-size: 12px;
+}
+
+.quiet {
+  padding: 12px 16px 14px;
+  transition: opacity var(--transition-fast);
+}
+.quietHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.quietTitle {
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
+}
+.faint {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.timeline {
+  position: relative;
+  height: 26px;
+  border-radius: 6px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+}
+.piece {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: var(--fw-semibold);
+  color: var(--color-accent);
+  background: var(--color-accent-light);
+  border: 1px solid var(--color-accent-glow);
+  border-radius: 4px;
+}
+.piece[data-cut="right"] {
+  border-radius: 4px 0 0 4px;
+}
+.piece[data-cut="left"] {
+  border-radius: 0 4px 4px 0;
+}
+.now {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--color-danger);
+}
+.ticks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+}
+.ranges {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+.range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+}
+.label {
+  width: 84px;
+  font-size: 12px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  outline: none;
+  user-select: text;
+}
+.label:focus {
+  border-color: var(--color-accent);
+}
+.time {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 4px 6px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 6px;
+  background: var(--color-bg);
+}
+.len {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.trash {
+  margin-left: auto;
+  display: flex;
+  padding: 4px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+.trash:hover {
+  color: var(--color-danger);
+}

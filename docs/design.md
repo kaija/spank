@@ -217,13 +217,21 @@ Profile ▸  ✓ 毀滅 / 哀哀叫 / 經典 / …自訂
 5. **一般**：登入時啟動、App 音量、語言、更新、複製診斷資訊。
 6. **Onboarding / 校準精靈**（首次啟動與啟用拍打時）。
 
-### 10.3 前後端介面（Tauri commands，以 `tauri-specta` 產生 TS 型別）
+### 10.3 前後端介面（Tauri commands，型別由 ts-rs 產生到 `apps/desktop/src/bindings`）
 
-`get_state`, `list_profiles`, `save_profile`, `delete_profile`, `set_active_profile`,
-`import_sound(path)`, `delete_sound`, `preview_sound`, `import_pack`, `export_pack`,
-`get_sensor_caps`, `set_lid_config`, `set_slap_config`, `start_calibration`, `finish_calibration`,
-`set_mute_rules`, `set_slap_enabled`, `copy_diagnostics`。
-Events：`lid_angle`（設定頁開啟時 10 Hz）、`trigger_fired`、`mute_changed`、`calibration_sample`（校準時 50 Hz）。
+實作在 `apps/desktop/src-tauri/src/commands.rs`；前端經 `src/backend/`（`Backend` 介面，App 內為 `tauriBackend`，瀏覽器預覽與測試為 `createMockBackend`）呼叫。
+
+- 狀態 / 設定：`get_state`（`RuntimeState`）、`get_config`、`set_paused`、`set_mute_rules`、`set_slap_enabled`
+- Profiles：`list_profiles`、`create_profile`、`duplicate_profile`、`save_profile`、`rename_profile`、`delete_profile`、`set_active_profile`
+- 音效庫：`list_sounds`、`sound_peaks`（波形縮圖）、`import_sound(path)`（`ImportOutcome`）、`rename_sound`、`delete_sound`（同時從自訂 Profile 移除）、`preview_sound`、`stop_preview`、`preview_event`、`reveal_sound`
+- 音效包：`import_pack`（`PackImported`）、`export_pack`
+- 專注模式：`request_focus_authorization`、`open_focus_settings`
+- 待實作：`get_sensor_caps`、`set_lid_config`、`set_slap_config`、`start_calibration`、`finish_calibration`、`copy_diagnostics`（T36–T38）
+
+Events：`engine_state`（`RuntimeState`，任何狀態變化）、`trigger_fired`（`FiredEvent`）、`profiles_changed`、`library_changed`；
+待實作：`calibration_sample`（校準時 50 Hz）。
+
+內建音效與 Profile 以 `.spankpack` 放在 bundle 資源 `builtin/`（來源 `assets/sounds/builtin/`），啟動時載入成唯讀 Profile（`builtin.*`）與記憶體內音效。
 
 ## 11. Onboarding 流程
 
