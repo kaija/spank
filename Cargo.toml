@@ -1,0 +1,14 @@
+[workspace]
+resolver = "3"
+members = ["tools/lid-probe", "tools/accel-probe"]
+
+[workspace.package]
+edition = "2024"
+license = "MIT"
+version = "0.0.0"
+publish = false
+
+[workspace.dependencies]
+io-kit-sys = "0.5"
+core-foundation = "0.10"
+core-foundation-sys = "0.8"

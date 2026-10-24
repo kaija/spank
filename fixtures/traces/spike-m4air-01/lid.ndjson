@@ -1,0 +1,77 @@
+uid=501 (0 = root)
+{"header":true,"t0_unix_ms":1792817401616.5}
+IOHIDManagerOpen -> 0x00000000 (kIOReturnSuccess)
+found 1 lid-angle device(s)
+dev[0] product=None transport=Some("SPU") maxInput=Some(8) maxFeature=Some(1) reportInterval=Some(8000)
+IOHIDDeviceOpen -> 0x00000000 (kIOReturnSuccess)
+
+== input-report listening for 68s (move the lid!) ==
+{"src":"input","t":0.7668,"report_id":1,"angle":108}
+{"src":"input","t":1.7668,"report_id":1,"angle":108}
+{"src":"input","t":2.7667,"report_id":1,"angle":108}
+{"src":"input","t":3.7668,"report_id":1,"angle":108}
+{"src":"input","t":4.7668,"report_id":1,"angle":108}
+{"src":"input","t":5.7668,"report_id":1,"angle":108}
+{"src":"input","t":6.7668,"report_id":1,"angle":108}
+{"src":"input","t":7.7668,"report_id":1,"angle":108}
+{"src":"input","t":8.7668,"report_id":1,"angle":108}
+{"src":"input","t":9.7668,"report_id":1,"angle":108}
+{"src":"input","t":10.7668,"report_id":1,"angle":107}
+{"src":"input","t":11.7668,"report_id":1,"angle":108}
+{"src":"input","t":12.7668,"report_id":1,"angle":108}
+{"src":"input","t":13.7668,"report_id":1,"angle":108}
+{"src":"input","t":14.7668,"report_id":1,"angle":108}
+{"src":"input","t":15.7668,"report_id":1,"angle":108}
+{"src":"input","t":16.7668,"report_id":1,"angle":108}
+{"src":"input","t":17.7668,"report_id":1,"angle":108}
+{"src":"input","t":18.7668,"report_id":1,"angle":108}
+{"src":"input","t":19.7668,"report_id":1,"angle":108}
+{"src":"input","t":20.7668,"report_id":1,"angle":108}
+{"src":"input","t":21.7668,"report_id":1,"angle":108}
+{"src":"input","t":22.7668,"report_id":1,"angle":107}
+{"src":"input","t":23.7668,"report_id":1,"angle":107}
+{"src":"input","t":24.7668,"report_id":1,"angle":108}
+{"src":"input","t":25.7668,"report_id":1,"angle":108}
+{"src":"input","t":26.7668,"report_id":1,"angle":108}
+{"src":"input","t":27.7668,"report_id":1,"angle":107}
+{"src":"input","t":28.7668,"report_id":1,"angle":107}
+{"src":"input","t":29.7668,"report_id":1,"angle":108}
+{"src":"input","t":30.8069,"report_id":1,"angle":108}
+{"src":"input","t":31.7674,"report_id":1,"angle":108}
+{"src":"input","t":32.7668,"report_id":1,"angle":108}
+{"src":"input","t":33.7668,"report_id":1,"angle":107}
+{"src":"input","t":34.7668,"report_id":1,"angle":107}
+{"src":"input","t":35.7668,"report_id":1,"angle":108}
+{"src":"input","t":36.7668,"report_id":1,"angle":108}
+{"src":"input","t":37.7668,"report_id":1,"angle":108}
+{"src":"input","t":38.7668,"report_id":1,"angle":108}
+{"src":"input","t":39.7668,"report_id":1,"angle":108}
+{"src":"input","t":40.7673,"report_id":1,"angle":108}
+{"src":"input","t":41.7668,"report_id":1,"angle":108}
+{"src":"input","t":42.7674,"report_id":1,"angle":108}
+{"src":"input","t":43.7668,"report_id":1,"angle":108}
+{"src":"input","t":44.7668,"report_id":1,"angle":108}
+{"src":"input","t":45.7668,"report_id":1,"angle":108}
+{"src":"input","t":46.7667,"report_id":1,"angle":108}
+{"src":"input","t":47.7668,"report_id":1,"angle":107}
+{"src":"input","t":48.7668,"report_id":1,"angle":107}
+{"src":"input","t":49.7668,"report_id":1,"angle":108}
+{"src":"input","t":50.7668,"report_id":1,"angle":108}
+{"src":"input","t":51.7668,"report_id":1,"angle":108}
+{"src":"input","t":52.7668,"report_id":1,"angle":108}
+{"src":"input","t":53.7668,"report_id":1,"angle":108}
+{"src":"input","t":54.7668,"report_id":1,"angle":108}
+{"src":"input","t":55.7668,"report_id":1,"angle":108}
+{"src":"input","t":56.7668,"report_id":1,"angle":107}
+{"src":"input","t":57.7668,"report_id":1,"angle":83}
+{"src":"input","t":58.7668,"report_id":1,"angle":31}
+{"src":"input","t":59.7668,"report_id":1,"angle":14}
+{"src":"input","t":60.7668,"report_id":1,"angle":14}
+{"src":"input","t":61.7668,"report_id":1,"angle":75}
+{"src":"input","t":62.7668,"report_id":1,"angle":102}
+{"src":"input","t":63.7668,"report_id":1,"angle":123}
+{"src":"input","t":64.7668,"report_id":1,"angle":125}
+{"src":"input","t":65.7668,"report_id":1,"angle":125}
+{"src":"input","t":66.7668,"report_id":1,"angle":125}
+{"src":"input","t":67.7668,"report_id":1,"angle":125}
+input reports received: 68 (1.0 Hz)

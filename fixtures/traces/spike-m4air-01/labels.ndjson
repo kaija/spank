@@ -1,0 +1,9 @@
+{"label":"idle","start_unix_ms":1792817401854.1,"end_unix_ms":1792817407948.3}
+{"label":"typing","start_unix_ms":1792817407982.9,"end_unix_ms":1792817416106.5}
+{"label":"trackpad","start_unix_ms":1792817416138.4,"end_unix_ms":1792817422249.8}
+{"label":"slap_light","start_unix_ms":1792817422286.0,"end_unix_ms":1792817430366.4}
+{"label":"slap_medium","start_unix_ms":1792817430402.4,"end_unix_ms":1792817438660.2}
+{"label":"slap_hard","start_unix_ms":1792817438698.3,"end_unix_ms":1792817446828.5}
+{"label":"slap_combo","start_unix_ms":1792817446864.8,"end_unix_ms":1792817452981.9}
+{"label":"lid_move","start_unix_ms":1792817453018.5,"end_unix_ms":1792817465194.5}
+{"label":"idle_end","start_unix_ms":1792817465230.2,"end_unix_ms":1792817469312.3}
