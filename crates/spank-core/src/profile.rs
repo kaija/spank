@@ -4,10 +4,12 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
 #[serde(transparent)]
 pub struct SoundId(pub String);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
 #[serde(transparent)]
 pub struct ProfileId(pub String);
 
@@ -25,6 +27,7 @@ impl From<&str> for SoundId {
 
 /// Sounds bound to one event. One is picked at random on each trigger.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
 #[serde(default)]
 pub struct EventBinding {
     pub enabled: bool,
@@ -49,6 +52,7 @@ impl EventBinding {
 
 /// A full event → sounds mapping (ADR-0007).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
 pub struct Profile {
     pub id: ProfileId,
     pub name: String,

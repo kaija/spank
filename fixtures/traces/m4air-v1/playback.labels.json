@@ -1,0 +1,7 @@
+{
+  "labels": [
+    {"label":"playback_idle","start":0.504,"end":8.632},
+    {"label":"playback_slap","start":8.632,"end":21.241},
+    {"label":"idle_end","start":21.241,"end":24.247}
+  ]
+}

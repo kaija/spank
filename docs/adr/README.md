@@ -18,4 +18,4 @@
 | [0011](0011-update-and-telemetry.md) | 更新與遙測：Tauri updater、無遙測 | Accepted |
 | [0012](0012-licensing-and-naming.md) | 授權與命名：MIT 開源、spank 為代號 | Accepted |
 | [0013](0013-power-policy.md) | 功耗策略：Best effort + 睡眠/鎖定暫停 | Accepted |
-| [0014](0014-in-app-accelerometer.md) | 加速度計直接在 App 內讀取（不需 root） | Accepted（待 T09 確認） |
+| [0014](0014-in-app-accelerometer.md) | 加速度計直接在 App 內讀取（不需 root） | Accepted |

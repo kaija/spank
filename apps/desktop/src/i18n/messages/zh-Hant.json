@@ -1,0 +1,23 @@
+{
+  "app": {
+    "name": "Spank",
+    "settingsWindow": "{appName} 設定"
+  },
+  "nav": {
+    "label": "設定頁面",
+    "profiles": "Profiles",
+    "library": "音效庫",
+    "sensors": "感測器",
+    "mute": "自動靜音",
+    "general": "一般"
+  },
+  "status": {
+    "running": "運作中",
+    "paused": "已暫停",
+    "muted": "已靜音 — {reason}"
+  },
+  "placeholder": {
+    "title": "這一頁還在施工中",
+    "body": "會在 {task} 依照設計稿實作。"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "labels": [
+    {"label":"lid_overbend","start":0.505,"end":12.510},
+    {"label":"lid_close_open","start":12.510,"end":24.515},
+    {"label":"lid_fast","start":24.516,"end":32.518}
+  ]
+}

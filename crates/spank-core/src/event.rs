@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 /// Everything that can trigger a sound.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
 #[serde(rename_all = "snake_case")]
 pub enum EventKind {
     /// System woke with the lid open (ADR-0005).
@@ -65,6 +66,7 @@ impl Priority {
 
 /// Extra data that came with an event.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum EventMeta {
     None,
@@ -74,6 +76,7 @@ pub enum EventMeta {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
 pub struct TriggerEvent {
     pub kind: EventKind,
     /// Monotonic timestamp in milliseconds (source-defined epoch).

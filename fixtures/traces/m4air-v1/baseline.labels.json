@@ -1,0 +1,12 @@
+{
+  "labels": [
+    {"label":"idle","start":0.505,"end":5.507},
+    {"label":"typing","start":5.507,"end":13.512},
+    {"label":"trackpad","start":13.512,"end":19.517},
+    {"label":"slap_light","start":19.517,"end":27.519},
+    {"label":"slap_medium","start":27.519,"end":35.524},
+    {"label":"slap_hard","start":35.524,"end":43.529},
+    {"label":"slap_combo","start":43.529,"end":49.534},
+    {"label":"lid_move","start":49.534,"end":61.535}
+  ]
+}

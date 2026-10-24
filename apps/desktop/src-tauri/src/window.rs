@@ -13,12 +13,18 @@ pub fn open_settings(app: &AppHandle) {
     #[cfg(target_os = "macos")]
     let _ = app.set_activation_policy(tauri::ActivationPolicy::Regular);
 
-    let built = WebviewWindowBuilder::new(app, SETTINGS_LABEL, WebviewUrl::App("index.html".into()))
+    let builder = WebviewWindowBuilder::new(app, SETTINGS_LABEL, WebviewUrl::App("index.html".into()))
         .title("Spank")
         .inner_size(760.0, 520.0)
         .min_inner_size(640.0, 440.0)
-        .center()
-        .build();
+        .center();
+    // Native traffic lights float over the sidebar (mockup/Settings Window.dc.html); the sidebar
+    // top and page header are drag regions (`data-tauri-drag-region`).
+    #[cfg(target_os = "macos")]
+    let builder = builder
+        .title_bar_style(tauri::TitleBarStyle::Overlay)
+        .hidden_title(true);
+    let built = builder.build();
     match built {
         Ok(w) => {
             let _ = w.set_focus();

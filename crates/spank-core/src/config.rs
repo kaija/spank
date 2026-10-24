@@ -17,6 +17,7 @@ impl ConfigError {
 
 /// Lid angle event thresholds (ADR-0005).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
 #[serde(default)]
 pub struct LidConfig {
     /// On wake, play `LidOpened` only if the lid is above this angle.
@@ -69,6 +70,7 @@ impl LidConfig {
 
 /// Peak thresholds (in g, gravity removed) for each slap level. Set by calibration (ADR-0006).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
 #[serde(default)]
 pub struct SlapLevels {
     pub light_g: f32,
@@ -87,8 +89,19 @@ impl Default for SlapLevels {
     }
 }
 
+/// Result of the slap calibration wizard (`calibration.json`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+pub struct Calibration {
+    pub levels: SlapLevels,
+    /// Typical high-passed |a| (g) while typing, learned during calibration.
+    pub noise_floor_g: f32,
+    pub calibrated_unix_ms: u64,
+}
+
 /// Slap detection settings (ADR-0006). Opt-in: disabled until the user enables it.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
 #[serde(default)]
 pub struct SlapConfig {
     pub enabled: bool,
@@ -150,6 +163,8 @@ impl SlapConfig {
 
 /// Wall-clock time of day, serialized as "HH:MM".
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(type = "string"))]
 pub struct TimeOfDay {
     pub hour: u8,
     pub minute: u8,
@@ -203,6 +218,7 @@ impl<'de> Deserialize<'de> for TimeOfDay {
 
 /// A quiet-hours range. `end < start` means it crosses midnight.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
 pub struct QuietHours {
     pub start: TimeOfDay,
     pub end: TimeOfDay,
@@ -210,6 +226,7 @@ pub struct QuietHours {
 
 /// Automatic mute rules (ADR-0007). Any active rule mutes playback.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
 #[serde(default)]
 pub struct MuteRules {
     pub meeting: bool,
@@ -241,6 +258,7 @@ impl MuteRules {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
 #[serde(rename_all = "kebab-case")]
 pub enum Language {
     #[default]
@@ -251,6 +269,7 @@ pub enum Language {
 
 /// Top-level `config.json` (design §9).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
 #[serde(default)]
 pub struct AppConfig {
     pub schema_version: u32,

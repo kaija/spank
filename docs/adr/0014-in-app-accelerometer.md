@@ -1,6 +1,6 @@
 # ADR-0014：加速度計直接在 App 內讀取（不需 root）
 
-- 狀態：Accepted（前提：T09 在簽章 + Hardened Runtime 的 .app 內驗證通過）
+- 狀態：Accepted（T09 已驗證：ad-hoc 與 Developer ID 簽章 + Hardened Runtime 的 .app 皆可讀取，見 spike-report S3）
 - 日期：2026-10-24
 - 取代：[ADR-0003](0003-privileged-helper-for-accelerometer.md)
 

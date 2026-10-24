@@ -9,8 +9,8 @@
 | Wave | 主題 | 任務（同 Wave 可平行） |
 |------|------|------|
 | 0 | Repo 初始化 | T01 ✅ |
-| 1 | Spike + 基礎骨架 | T02 ✅ T03 ✅ T04 T05 ✅ T06 ✅ T07 ✅ T08 ✅ |
-| 2 | Spike 收尾 + 純邏輯模組 | T09 T10 T11 T12 T13 T14 T15 |
+| 1 | Spike + 基礎骨架 | T02 ✅ T03 ✅ T04 ✅ T05 ✅ T06 ✅ T07 ✅ T08 ✅ |
+| 2 | Spike 收尾 + 純邏輯模組 | T09 ✅ T10 ✅ T11 ✅ T12 ✅ T13 ✅ T14 ✅ T15 ✅ |
 | 3 | ⛳ Spike Gate + 平台層 | T16 T17 T18 T19 T20 T21 T22 |
 | 4 | 偵測 / 規則 / Orchestrator | T23 T24 T26 T27 |
 | 5 | 感測整合、UI 頁面、CI gate | T28 T30 T31 T32 T33 T34 T35 |
@@ -28,20 +28,20 @@ flowchart LR
   subgraph W1["Wave 1"]
     T02["T02 ✅ Spike S1：tools/lid-probe"]
     T03["T03 ✅ Spike S2：tools/accel-probe"]
-    T04["T04 Spike S4：Focus 狀態 POC"]
+    T04["T04 ✅ Spike S4：Focus 狀態 POC"]
     T05["T05 ✅ Spike S5：cpal 閒置耗電 POC"]
     T06["T06 ✅ spank-core 領域型別"]
     T07["T07 ✅ CI 骨架"]
     T08["T08 ✅ Tauri v2 + Next.js 骨架"]
   end
   subgraph W2["Wave 2"]
-    T09["T09 Spike S3：簽章 .app 內感測器存取 POC"]
-    T10["T10 tools/trace-recorder + 初始 traces"]
-    T11["T11 Lid detector 狀態機（spank-core）"]
-    T12["T12 Slap classifier + suppression（純邏輯）"]
-    T13["T13 Sound importer（spank-audio）"]
-    T14["T14 Config store"]
-    T15["T15 Next.js i18n + UI 基礎"]
+    T09["T09 ✅ Spike S3：簽章 .app 內感測器存取 POC"]
+    T10["T10 ✅ tools/trace-recorder + 初始 traces"]
+    T11["T11 ✅ Lid detector 狀態機（spank-core）"]
+    T12["T12 ✅ Slap classifier + suppression（純邏輯）"]
+    T13["T13 ✅ Sound importer（spank-audio）"]
+    T14["T14 ✅ Config store"]
+    T15["T15 ✅ Next.js i18n + UI 基礎"]
   end
   subgraph W3["Wave 3"]
     T16["T16 Spike 報告與 ADR 更新"]
@@ -170,10 +170,18 @@ flowchart LR
   style T01 fill:#d4edda
   style T02 fill:#d4edda
   style T03 fill:#d4edda
+  style T04 fill:#d4edda
   style T05 fill:#d4edda
   style T06 fill:#d4edda
   style T07 fill:#d4edda
   style T08 fill:#d4edda
+  style T09 fill:#d4edda
+  style T10 fill:#d4edda
+  style T11 fill:#d4edda
+  style T12 fill:#d4edda
+  style T13 fill:#d4edda
+  style T14 fill:#d4edda
+  style T15 fill:#d4edda
 ```
 
 **Critical path**：T01 → T03 → T09 → T16 → T24 → T30 → T36 → T43 → T44
@@ -185,18 +193,18 @@ flowchart LR
 | T01 ✅ Repo bootstrap | 0 | — |
 | T02 ✅ Spike S1：tools/lid-probe | 1 | T01 |
 | T03 ✅ Spike S2：tools/accel-probe | 1 | T01 |
-| T04 Spike S4：Focus 狀態 POC | 1 | T01 |
+| T04 ✅ Spike S4：Focus 狀態 POC | 1 | T01 |
 | T05 ✅ Spike S5：cpal 閒置耗電 POC | 1 | T01 |
 | T06 ✅ spank-core 領域型別 | 1 | T01 |
 | T07 ✅ CI 骨架 | 1 | T01 |
 | T08 ✅ Tauri v2 + Next.js 骨架 | 1 | T01 |
-| T09 Spike S3：簽章 .app 內感測器存取 POC | 2 | T03, T08 |
-| T10 tools/trace-recorder + 初始 traces | 2 | T02, T03 |
-| T11 Lid detector 狀態機（spank-core） | 2 | T06 |
-| T12 Slap classifier + suppression（純邏輯） | 2 | T06 |
-| T13 Sound importer（spank-audio） | 2 | T06 |
-| T14 Config store | 2 | T06 |
-| T15 Next.js i18n + UI 基礎 | 2 | T08 |
+| T09 ✅ Spike S3：簽章 .app 內感測器存取 POC | 2 | T03, T08 |
+| T10 ✅ tools/trace-recorder + 初始 traces | 2 | T02, T03 |
+| T11 ✅ Lid detector 狀態機（spank-core） | 2 | T06 |
+| T12 ✅ Slap classifier + suppression（純邏輯） | 2 | T06 |
+| T13 ✅ Sound importer（spank-audio） | 2 | T06 |
+| T14 ✅ Config store | 2 | T06 |
+| T15 ✅ Next.js i18n + UI 基礎 | 2 | T08 |
 | T16 Spike 報告與 ADR 更新 | 3 | T02, T03, T04, T05, T09, T10 |
 | T17 IoHidLid source（spank-sensors） | 3 | T02, T06 |
 | T18 Trace 格式 + TraceReplay source | 3 | T06, T10 |
@@ -252,7 +260,7 @@ flowchart LR
 
 ### T04 Spike S4：Focus 狀態 POC
 - 依賴：T01
-- 狀態：⚠️ 部分完成（2026-10-24）：授權可取得，但 ad-hoc 簽章下 isFocused 不隨勿擾變化 → 併入 T09 以 Developer ID + entitlement 重測（見 spike-report S4）
+- 狀態：✅ 完成（2026-10-24，併 T09）：Focus 狀態需 Communication Notifications provisioning profile，否則 isFocused 恆為 false（見 spike-report S4）
 - 內容：Rust + objc2 呼叫 `INFocusStatusCenter`，請求授權並讀 `isFocused`（需在 .app bundle 內執行）。
 - 完成條件：spike report S4：可行 / 不可行 + 需要的 Info.plist key。
 
@@ -284,37 +292,44 @@ flowchart LR
 
 ### T09 Spike S3：簽章 .app 內感測器存取 POC
 - 依賴：T03、T08
+- 狀態：✅ 完成（2026-10-24）：ad-hoc 與 Developer ID 簽章 .app 皆可讀兩個感測器（`tools/run-as-app.sh`）；Focus 見 S4
 - 內容：在 T08 的 Tauri App 內（ad-hoc 與 Developer ID 簽章、Hardened Runtime 開啟）重跑 lid 輪詢與加速度計讀取；以 Developer ID + Communication Notifications entitlement 重測 Focus `isFocused`（T04 未完成部分）；從 Finder 雙擊與登入項目啟動各測一次（排除 Terminal 繼承的權限）；確認是否需要任何 entitlement 或 TCC 提示。
 - 完成條件：spike report S3；ADR-0014 狀態改為 Accepted（或退回 ADR-0003 helper 備案）。
 
 ### T10 `tools/trace-recorder` + 初始 traces
 - 依賴：T02、T03
+- 狀態：✅ 完成（2026-10-24）：`tools/trace-recorder`、格式 v1（fixtures/traces/README.md）、`fixtures/traces/m4air-v1/` 6 個情境 24 個標註片段
 - 內容：同時錄 lid + accel 到 NDJSON（ADR-0010 格式）；鍵盤快捷鍵即時標註；錄製場景：靜置、打字、觸控板、輕/中/重拍、連拍、開合、掰過頭、放桌上、走路攜帶、播放音樂。
 - 狀態：部分完成 — `fixtures/traces/spike-m4air-01`（9 個標註片段：靜置、打字、觸控板、輕/中/重拍、連拍、開合）。尚缺：放桌上、走路攜帶、喇叭播放音樂、掰過頭、外接鍵盤。
 - 完成條件：`fixtures/traces/` 至少 10 段標註 trace。
 
 ### T11 Lid detector 狀態機（`spank-core`）
 - 依賴：T06
+- 狀態：✅ 完成（2026-10-24）：`spank-core::lid::LidDetector`，13 個測試，line coverage 100%
 - 內容：design §4.1；hysteresis、cooldown、`lid_moving` 旗標、wake 事件處理。
 - 完成條件：以合成資料單元測試所有轉換與邊界。
 
 ### T12 Slap classifier + suppression（純邏輯）
 - 依賴：T06
+- 狀態：✅ 完成（2026-10-24）：`spank-core::slap::SlapClassifier`（閘 → 分級 → 連擊），10 個測試
 - 內容：design §4.2 第 2–3 步：分級、連擊、cooldown、各 suppression gate（輸入為 `ImpactCandidate` 與 gate 訊號）。
 - 完成條件：合成資料單元測試；門檻參數先用 placeholder。
 
 ### T13 Sound importer（`spank-audio`）
 - 依賴：T06
+- 狀態：✅ 完成（2026-10-24）：`spank-audio`（6 種格式、-16 ± 0.5 LUFS、≤ -1 dBTP、>2 聲道混為 mono），11 個測試
 - 內容：symphonia decode、rubato resample、去前導靜音、ebur128 正規化、true-peak 限制、長度/大小限制、WAV 輸出、sha256。
 - 完成條件：各格式 fixture 測試；輸出響度 -16 ± 0.5 LUFS。
 
 ### T14 Config store
 - 依賴：T06
+- 狀態：✅ 完成（2026-10-24）：`spank-store`（atomic write、毀損檔隔離、schema migration、Profile / 音效索引 / 校準），22 個測試
 - 內容：design §9 目錄結構；atomic write；schema version + migration 框架；sound library index CRUD。
 - 完成條件：單元測試（temp dir）；毀損檔案時回復預設並備份。
 
 ### T15 Next.js i18n + UI 基礎
 - 依賴：T08
+- 狀態：✅ 完成（2026-10-24）：next-intl（zh-Hant / en）、設定視窗外框（overlay 標題列）、Inter 本地字型、Vitest、ts-rs 產生 TS 型別（取代 tauri-specta，後者仍為 RC）
 - 內容：`next-intl`（zh-Hant / en，跟隨系統語言）；layout、導覽、設計 token；`tauri-specta` 型別產生流程。
 - 完成條件：切換系統語言 UI 跟著變；Vitest 跑得起來。
 
@@ -361,6 +376,8 @@ flowchart LR
 ### T23 Impact feature extractor + 參數調校
 - 依賴：T12、T16、T18
 - 內容：design §4.2 第 1 步（高通、noise floor、開窗、特徵）；打字訊號特徵濾波；用 traces 調參數。
+  **T10 發現**：峰值門檻不足以區分大力打字（0.198 g）、拿起／放下／走路（0.25–0.35 g）與輕拍（0.21–0.24 g），需用波形特徵分類。
+  **待產品決策**：拍桌子（峰值 1.9 g）要不要算拍打。
 - 完成條件：trace 重播 precision ≥ 0.95、recall ≥ 0.90。
 
 ### T24 `IoHidAccel` source

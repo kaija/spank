@@ -1,15 +1,40 @@
-/* Placeholder styling until the Claude Design UI lands (docs/ui-design-prompt.md). */
-:root {
-  color-scheme: light dark;
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", sans-serif;
-}
-body {
+@import "../styles/tokens.css";
+
+*,
+*::before,
+*::after {
   margin: 0;
-  padding: 24px;
-  background: Canvas;
-  color: CanvasText;
+  padding: 0;
+  box-sizing: border-box;
 }
-pre {
-  font-size: 12px;
-  overflow: auto;
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-body);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  /* A settings window, not a document: no rubber-band scrolling or text selection on chrome. */
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }

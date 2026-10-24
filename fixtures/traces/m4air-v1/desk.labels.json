@@ -1,0 +1,8 @@
+{
+  "labels": [
+    {"label":"idle","start":0.500,"end":4.502},
+    {"label":"lift_set_down","start":4.502,"end":16.506},
+    {"label":"slide","start":16.506,"end":24.510},
+    {"label":"idle_end","start":24.510,"end":28.512}
+  ]
+}

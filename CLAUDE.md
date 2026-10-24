@@ -41,7 +41,8 @@ cargo test --workspace
 cargo test -p spank-core profile::tests::duplicate_is_writable   # single test
 cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all
-cargo llvm-cov -p spank-core --summary-only                      # coverage (target ≥ 80%)
+cargo llvm-cov -p spank-core -p spank-store -p spank-audio --summary-only   # coverage (target ≥ 80%)
+cargo test -p spank-core --features ts export_bindings           # regenerate apps/desktop/src/bindings (CI fails if stale)
 cargo deny check advisories bans licenses sources                # dependency policy (deny.toml)
 ```
 
@@ -49,9 +50,9 @@ cargo deny check advisories bans licenses sources                # dependency po
 
 ```bash
 pnpm --dir apps/desktop typecheck
+pnpm --dir apps/desktop test                                     # Vitest (jsdom)
+pnpm --dir apps/desktop exec vitest run src/i18n/locale.test.ts  # single test file
 ```
-
-There are no UI tests yet; Vitest arrives in T15.
 
 **App**
 
@@ -67,8 +68,10 @@ cargo run -p lid-probe -- --mode poll --secs 10 --interval-ms 50
 cargo run -p accel-probe -- --enable --secs 5                     # --ndjson to stream samples
 cargo run --release -p audio-probe -- cpu paused --secs 20        # or: latency --runs 10 --gap-ms 15000
 tools/focus-probe/bundle.sh --watch-secs 20                       # must run as a signed .app; writes target/focus-probe/output.txt
-tools/record-spike.sh fixtures/traces/<name>                      # interactive: prompts the user to slap / type / move the lid
-python3 -I tools/analyze-spike.py fixtures/traces/<name>
+cargo run --release -p trace-recorder -- --check                  # both sensors OK? prints JSON
+cargo run --release -p trace-recorder -- --scenario all --out fixtures/traces/<machine>-v1   # interactive, guides the user
+python3 -I tools/analyze-trace.py fixtures/traces/m4air-v1        # per-segment peaks / naive detector results
+tools/run-as-app.sh [--sign "Developer ID Application: …"] [--entitlements f] <pkg> -- <args>   # run a tool as a signed .app via LaunchServices
 ```
 
 CI (`.github/workflows/ci.yml`) runs on `macos-latest`: frontend typecheck and build, then fmt, clippy, test and coverage. cargo-deny runs as a separate Ubuntu job. The repo has no remote yet, so CI has never run on GitHub.
@@ -84,11 +87,18 @@ CI (`.github/workflows/ci.yml`) runs on `macos-latest`: frontend typecheck and b
   - Stop: set the properties back to 0, otherwise reporting keeps running.
   - **HID callbacks are `extern "C"`: a panic there aborts the process** (piping a probe into `head` crashed one this way). Callbacks should only push to a buffer; never `println!` or `unwrap` inside them.
 
-**Detection** (`spank-core`, pure logic, `#![forbid(unsafe_code)]`):
+**Crates:**
+- `spank-core`: pure logic, `#![forbid(unsafe_code)]`. `ts` feature exports TS types via ts-rs.
+- `spank-store`: on-disk layout of design §9. Atomic writes; corrupt files are renamed to `*.corrupt-<ms>` and replaced by defaults; `migrate.rs` holds config schema steps; ids double as file names, so `validate_id` guards them.
+- `spank-audio`: import pipeline (symphonia 0.6 → rubato 5 `Fft` → trim → ebur128). Clips < 400 ms are looped for loudness measurement; > 2 channels are mixed to mono. Fixtures and their ffmpeg commands are in `tests/fixtures/`.
+
+**Detection** (`spank-core`):
 - Slaps: per-axis 2 Hz high-pass → |a| > 0.2 g → 80 ms window → 300 ms refractory.
   - Measured: typing ≤ 0.09 g, slaps ≥ 0.34 g, combo slaps ~330 ms apart. A refractory > 300 ms would drop combos.
   - Light/medium/hard thresholds come from per-user calibration, because measured light and medium slaps were nearly identical.
-- Lid: event state machine (opened on wake / closing below a threshold / overbent) with hysteresis and cooldown (ADR-0005).
+- Lid: `lid::LidDetector` (opened on wake / closing below a threshold / overbent) with hysteresis and cooldown; it also reports `last_motion_ms` for the slap gate (ADR-0005).
+- Slap gates, levels and combos: `slap::SlapClassifier`. Gate order: disabled → lid moving (+500 ms) → own playback (+200 ms) → precise typing (+300 ms) → below light level.
+- **The peak threshold alone is not enough** (T10 traces): heavy typing reaches 0.198 g, lifting/carrying 0.25–0.35 g, light slaps 0.21–0.24 g, and hitting the table 1.9 g. T23 must classify on waveform features.
 - Playback priority order is in `EventKind::priority` (ADR-0008).
 - Defaults and validation live in `crates/spank-core/src/config.rs`.
 
@@ -102,13 +112,21 @@ CI (`.github/workflows/ci.yml`) runs on `macos-latest`: frontend typecheck and b
 - A second launch (single-instance plugin) or the `--open-settings` arg opens settings.
 - The autostart plugin is registered, but launch-at-login must only be enabled from config (T14/T38), never implicitly in dev.
 
-**Frontend** (`apps/desktop`): Next.js with `output: "export"` only (no SSR, API routes or image optimization). It talks to Rust through `invoke` (for example `app_info`, which returns `AppConfig::default()`). The planned command list is in design §10.3.
+**Frontend** (`apps/desktop`):
+- Next.js with `output: "export"` and `trailingSlash: true` only (no SSR, API routes or image optimization). Each route is `<route>/index.html`.
+- Settings pages live in the `src/app/(settings)/` route group wrapped by `SettingsShell` (sidebar + header from the mockup). `/` redirects client-side to `/profiles/`.
+- i18n is client-side `next-intl` (`src/i18n`): no i18n routing. Pages prerender in zh-Hant, then switch to `resolveLocale(setting, navigator.languages)`. Keep `messages/zh-Hant.json` and `en.json` key-identical (a test checks this).
+- Types shared with Rust come from `src/bindings/` (generated by ts-rs, do not edit). We use ts-rs because tauri-specta 2 is still a release candidate.
+- Styling: `src/styles/tokens.css` is copied from the mockup design system, plus the dark palette. Inter is bundled via `@fontsource-variable/inter` because remote fonts are blocked offline and by the CSP. Icons are in `src/ui/iconPaths.ts`, copied from `mockup/spank-icons.js`.
+- The window uses an overlay title bar (native traffic lights over the sidebar); elements with `data-tauri-drag-region` move the window.
+- It talks to Rust through `invoke` (e.g. `app_info`). The planned command list is in design §10.3.
 
-**Planned crates** (design §3): `spank-sensors`, `spank-audio`, `spank-sysmon`, `spank-pack`. They don't exist yet; the hardware code currently lives in `tools/*` probes (shared FFI helpers in `tools/common/iokit.rs`).
+**Planned crates** (design §3): `spank-sensors`, `spank-sysmon`, `spank-pack`. They don't exist yet. The hardware code currently lives in `tools/`: FFI helpers in `tools/common/iokit.rs`, and `LidReader` / `AccelStream` in `tools/common/sensors.rs`, which `spank-sensors` should start from.
 
 **Pinned versions:**
 - Tauri **2.x** (3.x is still alpha).
 - TypeScript **6.x**: TS 7 is the native port, and Next.js needs the JS compiler API.
+- pnpm 11 refuses unapproved install scripts. `allowBuilds` in `pnpm-workspace.yaml` denies the two we don't need (`@swc/core`, `@parcel/watcher`).
 
 ## UI mockups: `mockup/`
 
@@ -138,6 +156,5 @@ These are high-fidelity designs from Claude Design, generated from `docs/ui-desi
 - **Git:** use the personal identity (`git-user personal`; the script switches the global git and SSH config). Commit only when asked.
 - **Verifying UI:** don't take full-screen screenshots with `screencapture`; it captures the user's private windows. Ask the user to confirm what's visible instead.
 - **Detecting the Dock icon:** `lsappinfo`'s `ApplicationType` does not update after switching back to `Accessory`, so it can't verify Dock icon state.
-- **Open spike items** (T09):
-  - Re-verify sensor access inside a Developer ID–signed, hardened-runtime `.app`.
-  - Retest Focus status: `INFocusStatusCenter` authorizes, but `isFocused` stayed false under ad-hoc signing. It likely needs the Communication Notifications entitlement.
+- **Signing:** a Developer ID Application identity (team `H2ZM466J6A`) is in the keychain. Both ad-hoc and Developer ID–signed hardened-runtime `.app`s read both sensors (T09).
+- **Focus status:** `INFocusStatusCenter.isFocused` stays false without the Communication Notifications entitlement. That entitlement needs a provisioning profile; without one, AMFI kills the app at launch ("No matching profile found"). Whether to get one is the user's decision.

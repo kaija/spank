@@ -13,8 +13,8 @@
 | S2a | 加速度計是否需要 root？ | ✅ **不需要**（uid=501 可設定 driver property 並讀取） |
 | S2b | 報告格式 / 取樣率 | ✅ 22 bytes，x/y/z int32 LE @ 6/10/14，÷65536 = g，~796 Hz |
 | S2c | 拍打可否與打字等區分？ | ✅ 單一峰值門檻即可（見下表） |
-| S3 | 在簽章 + Hardened Runtime 的 .app 內是否同樣可行？ | ⏳ 待驗證（T09，改為「不含 helper」版本） |
-| S4 | `INFocusStatusCenter` 可由 objc2 呼叫？ | ⚠️ 授權可取得，但 `isFocused` 開啟勿擾時仍為 false（ad-hoc 簽章）→ T09 以 Developer ID + entitlement 再測 |
+| S3 | 在簽章 + Hardened Runtime 的 .app 內是否同樣可行？ | ✅ ad-hoc 與 Developer ID 簽章的 .app（經 LaunchServices 啟動）都能讀兩個感測器，不需 entitlement |
+| S4 | `INFocusStatusCenter` 可由 objc2 呼叫？ | ❌ ad-hoc 與 Developer ID 簽章下 `isFocused` 都恆為 false；加 Communication Notifications entitlement 需 provisioning profile（AMFI 拒絕啟動） |
 | S5 | cpal 常駐 stream 閒置耗電 | ✅ 常駐輸出會讓 coreaudiod 吃 ~12% CPU → **建立後保持 paused，需要時 resume** |
 | T08 | Tauri 選單列 App 閒置資源 | ✅ 只有 tray：phys_footprint 12 MB、CPU 0%；開過設定視窗後 26 MB |
 
@@ -60,13 +60,51 @@
 - 這次「輕」與「中」力道幾乎相同（0.37 vs 0.40）→ 分級必須靠個人校準，不能用固定值。
 - 只有一台機器、一位使用者、一段錄製；放桌上、走路攜帶、喇叭播放等情境尚未錄製（T10）。
 
+## S3 — 簽章 .app 內的感測器存取（T09，`tools/run-as-app.sh`）
+
+把 `trace-recorder --check` 包成 `.app`（Hardened Runtime、`LSUIElement`），用 `open` 經 LaunchServices 啟動（不繼承終端機權限）：
+
+| 簽章 | 加速度計 | 角度 | 備註 |
+|------|---------|------|------|
+| ad-hoc + Hardened Runtime | ✅ 799 Hz | ✅ | 無 entitlement、無 TCC 提示 |
+| Developer ID（H2ZM466J6A）+ Hardened Runtime + timestamp | ✅ 797 Hz | ✅ | 同上 |
+
+→ **ADR-0014 成立**：正式簽章的 App 不需 root、不需 entitlement 即可讀兩個感測器（M4 Air / macOS 26.6）。
+
+## T10 — 情境 trace（`fixtures/traces/m4air-v1/`，`tools/analyze-trace.py`）
+
+6 個情境、24 個標註片段，accel 796 Hz、lid 30 Hz、0 筆遺失。以目前的初始參數（2 Hz 高通、0.2 g、300 ms refractory）重播：
+
+| 片段 | max g | 觸發數 | 應為 |
+|------|------:|------:|------|
+| 輕拍 ×3 / 中拍 ×3 / 重拍 ×3 | 0.38 / 0.34 / 0.68 | 2 / 4 / 3 | 3 / 3 / 3 |
+| 連拍 ×5 | 0.58 | 4 | 5 |
+| 播放音效中拍 ×3 | 0.48 | 3 | 3 |
+| 一般打字 / 觸控板 / 慢慢開合 | 0.06 / 0.04 / 0.06 | 0 | 0 |
+| **大力快速打字** | **0.198** | 0 | 0（差 0.002 g 就誤判） |
+| 拿起放下 / 拿著走路 / 放回桌上 | 0.35 / 0.29 / 0.25 | 2 / 2 / 1 | 0 |
+| 螢幕掰過頭 / 快速開合 | 0.27 / 0.21 | 1 / 1 | 0（lid 移動閘會擋掉） |
+| **拍桌子（不是拍電腦）** | **1.91** | 3 | 產品決策 |
+| 音效播放中、不碰電腦 | 0.012 | 0 | 0 |
+
+### 結論
+
+- **單一峰值門檻不夠**：大力打字（0.198 g）與輕拍（0.21–0.24 g）幾乎重疊；拿起、放下、走路都超過 0.2 g。T23 必須用波形特徵（持續時間、高頻比例、主軸方向、前後靜止度）分類，不能只靠峰值。
+- **拍桌子的峰值（1.9 g）比拍電腦大得多**：要不要算「拍打」是產品決策（見 tasks T23）。
+- **喇叭播放幾乎沒有振動**（0.012 g）：播放抑制閘保留為保險即可。
+- 這次的輕拍比 spike 那次輕，校準（ADR-0006）仍是必要的。
+
 ## S4 — Focus 狀態（`tools/focus-probe`）
 
 - 以 `objc2-intents` 呼叫 `INFocusStatusCenter`，打包成 ad-hoc 簽章 + Hardened Runtime 的 `.app`，Info.plist 含 `NSFocusStatusUsageDescription`。
 - `requestAuthorizationWithCompletionHandler`：跳出系統授權視窗，使用者允許後回傳 `Authorized`（不需額外 entitlement）。
 - `focusStatus.isFocused`：回傳 `Some(false)`；**使用者開啟「勿擾模式」且「分享專注模式狀態」已開啟，20 秒內值都沒有變成 true**。
 - 推測：需要 Communication Notifications capability（`com.apple.developer.usernotifications.communication`，需 provisioning profile），或需在完整 `NSApplication` 環境下才會收到更新。
-- **決策**：T09 用 Developer ID + entitlement 重測；若仍無效，ADR-0007 的「專注模式」規則標示為不支援（其他三條規則不受影響）。
+- **T09 重測**：
+  - Developer ID 簽章（無 entitlement），使用者先開啟勿擾再啟動：授權 `Authorized`，`isFocused` 仍為 `Some(false)`。
+  - Developer ID + `com.apple.developer.usernotifications.communication`：AMFI 拒絕啟動（`No matching profile found`，需 provisioning profile）。
+- **結論**：在 macOS 上要讀到專注狀態，必須在 Apple Developer 網站為 App ID 啟用 Communication Notifications 並嵌入 Developer ID provisioning profile（是否支援 Developer ID 發佈仍待確認）。
+- **待決策**：(a) 申請 provisioning profile 再測；(b) v0.1 先把「專注模式」規則標示為不支援（其他三條規則不受影響）。
 
 ## S5 — 音訊輸出（`tools/audio-probe`，MacBook Air 喇叭，48 kHz / 2 ch）
 

@@ -6,9 +6,14 @@ license.workspace = true
 version.workspace = true
 publish.workspace = true
 
+[features]
+# Generate TypeScript bindings for the settings UI: `cargo test -p spank-core --features ts export_bindings`.
+ts = ["dep:ts-rs"]
+
 [dependencies]
 serde.workspace = true
 thiserror.workspace = true
+ts-rs = { version = "12", optional = true, features = ["no-serde-warnings"] }
 
 [dev-dependencies]
 serde_json.workspace = true

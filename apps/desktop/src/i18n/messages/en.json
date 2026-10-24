@@ -1,0 +1,23 @@
+{
+  "app": {
+    "name": "Spank",
+    "settingsWindow": "{appName} Settings"
+  },
+  "nav": {
+    "label": "Settings pages",
+    "profiles": "Profiles",
+    "library": "Sound library",
+    "sensors": "Sensors",
+    "mute": "Auto-mute",
+    "general": "General"
+  },
+  "status": {
+    "running": "Running",
+    "paused": "Paused",
+    "muted": "Muted — {reason}"
+  },
+  "placeholder": {
+    "title": "This page is under construction",
+    "body": "It will be built from the mockups in {task}."
+  }
+}

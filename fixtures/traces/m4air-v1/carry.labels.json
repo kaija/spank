@@ -1,0 +1,7 @@
+{
+  "labels": [
+    {"label":"idle","start":0.503,"end":3.508},
+    {"label":"carry_walk","start":3.508,"end":18.513},
+    {"label":"set_down","start":18.513,"end":24.514}
+  ]
+}

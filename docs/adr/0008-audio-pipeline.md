@@ -9,7 +9,7 @@
 
 - 接受 `wav` / `mp3` / `m4a` / `aac` / `flac` / `ogg`（`symphonia` 解碼）。
 - 限制：檔案 ≤ 5 MB、處理後長度 ≤ 10 秒（超過則截斷並提示）。
-- 處理流程：解碼 → 混為 mono 或保留 stereo → 重新取樣到 48 kHz（`rubato`）→ 去除前導靜音（< -50 dBFS）
+- 處理流程：解碼 → mono / stereo 保留，超過 2 聲道混為 mono（避免丟失中置聲道）→ 重新取樣到 48 kHz（`rubato`）→ 去除前導靜音（< -50 dBFS）
   → 響度正規化到 **-16 LUFS**（`ebur128`），並限制 true peak ≤ -1 dBTP → 存為 48 kHz f32/16-bit WAV。
 - 存放：`~/Library/Application Support/<bundle-id>/sounds/<uuid>.wav` + `sounds/index.json`（名稱、來源、長度、sha256、授權）。
 - 原始檔不保留。

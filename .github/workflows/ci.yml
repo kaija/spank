@@ -42,12 +42,16 @@ jobs:
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: cargo test
         run: cargo test --workspace
+      - name: TypeScript bindings are up to date
+        run: |
+          cargo test -p spank-core --features ts export_bindings
+          git diff --exit-code apps/desktop/src/bindings
 
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-llvm-cov
       - name: Coverage (report only; 80% gate added in T28)
-        run: cargo llvm-cov -p spank-core --summary-only
+        run: cargo llvm-cov -p spank-core -p spank-store -p spank-audio --summary-only
 
   deny:
     name: Dependency policy (cargo-deny)
