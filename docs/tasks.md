@@ -310,7 +310,7 @@ flowchart LR
 - 依賴：T02、T03
 - 狀態：✅ 完成（2026-10-24）：`tools/trace-recorder`、格式 v1（fixtures/traces/README.md）、`fixtures/traces/m4air-v1/` 6 個情境 24 個標註片段
 - 內容：同時錄 lid + accel 到 NDJSON（ADR-0010 格式）；鍵盤快捷鍵即時標註；錄製場景：靜置、打字、觸控板、輕/中/重拍、連拍、開合、掰過頭、放桌上、走路攜帶、播放音樂。
-- 狀態：部分完成 — `fixtures/traces/spike-m4air-01`（9 個標註片段：靜置、打字、觸控板、輕/中/重拍、連拍、開合）。尚缺：放桌上、走路攜帶、喇叭播放音樂、掰過頭、外接鍵盤。
+- 備註：尚未錄製外接鍵盤情境；其他機型的 trace 待社群提供（T43 CONTRIBUTING）。
 - 完成條件：`fixtures/traces/` 至少 10 段標註 trace。
 
 ### T11 Lid detector 狀態機（`spank-core`）
@@ -349,7 +349,6 @@ flowchart LR
 - 依賴：T02、T03、T04、T05、T09、T10
 - 狀態：✅ 完成（2026-10-24）：S1–S5、T09、T10 結果已寫入 spike-report 與 ADR-0003/0005/0006/0007/0008/0014；決策：不需 root、Focus 用 provisioning profile、拍桌子視同拍打
 - 內容：彙整 `docs/spike-report.md`；更新 ADR-0003（Accepted 或 Superseded）、ADR-0005 取樣方式、ADR-0006 參數初值、ADR-0007 Focus 可行性；必要時調整本任務清單。
-- 狀態：S1、S2 已完成並更新 ADR（0003 → 0014、0005、0006）；等待 S3、S4、S5。
 - 完成條件：使用者審閱同意。
 
 ### T17 `IoHidLid` source（`spank-sensors`）
@@ -394,8 +393,8 @@ flowchart LR
 - 依賴：T12、T16、T18
 - 狀態：✅ 完成（2026-10-24）：`spank-core::impact::ImpactExtractor`（高通 → `max(trigger, 12 × noise floor)` 開窗 → 平均頻率 ≥ 16 Hz、rebound 檢查）；預設 trigger 0.15 g、refractory 150 ms（連拍實測間隔 ~200 ms）；`m4air-v1` 23 個人工標註拍打：precision 1.00、recall 1.00（`spank-sensors/tests/slap_traces.rs`，標註在 `fixtures/traces/m4air-v1/expected.json`）。只有一台機器一位使用者，見 spike-report T23
 - 內容：design §4.2 第 1 步（高通、noise floor、開窗、特徵）；打字訊號特徵濾波；用 traces 調參數。
-  **T10 發現**：峰值門檻不足以區分大力打字（0.198 g）、拿起／放下／走路（0.25–0.35 g）與輕拍（0.21–0.24 g），需用波形特徵分類。
-  **決策**：拍桌子視同拍打（ADR-0006），T23 只需排除打字、拿起／放下、走路等非撞擊動作。
+  拍桌子視同拍打（ADR-0006），只需排除打字、拿起／放下、走路等非撞擊動作。
+- 備註：參數改動（含 ADR-0006 的 trigger 0.2 → 0.15 g、refractory 300 → 150 ms）後要重跑 `cargo test -p spank-sensors --test slap_traces -- --nocapture`；新 trace 要在 `expected.json` 標註拍打起點。
 - 完成條件：trace 重播 precision ≥ 0.95、recall ≥ 0.90。
 
 ### T24 `IoHidAccel` source
@@ -422,36 +421,43 @@ flowchart LR
 - 依賴：T23、T18、T07
 - 內容：CI 跑所有 trace 計算 precision/recall，低於門檻失敗；覆蓋率門檻設 80%。
 - 完成條件：CI 綠燈且有報表輸出。
+- 備註（W3–4）：`spank-sensors/tests/slap_traces.rs` 已在 `cargo test` 內以 precision ≥ 0.95、recall ≥ 0.90 擋下退步，並以 `--nocapture` 印出逐段報表。剩下：CI 把報表存成 artifact、llvm-cov 加 `--fail-under-lines 80`（目前 82%，含無法在 CI 跑的 FFI 檔）。
 
 ### T30 加速度計生命週期（App 內）
 - 依賴：T12、T24、T27
 - 內容：啟用 / 停用拍打、暫停 / 鎖定 / 睡眠時停止感測器、capability detection（property 失敗或無報告 → 標示不支援）、將 `ImpactCandidate` 接入 suppression → classifier → orchestrator。
 - 完成條件：`TraceReplay` 整合測試：重播拍打 trace 觸發正確事件序列；真機端到端於 T36 驗證。
+- 備註（W3–4）：`ImpactCandidate` → 抑制閘 → 分級 → 連擊 → 播放已在 `Orchestrator::on_accel` 串好，重播拍打 trace 的整合測試也有（`slap_traces`、`orchestrator_replay`）。剩下的是 App runtime：啟動時 `reset_accel_properties()`、執行 `Output::Sensor` 指令（`IoHidAccel::start`／`stop`、`IoHidLid` 依 `LidPollSchedule` 輪詢）、每 ~50 ms `drain` 餵給 orchestrator、`SysMonitor` 必須在主執行緒啟動、`AudioPlayer` 與感測器共用同一個 epoch `Instant`、panic hook 還原 property、`capabilities()` 結果給 UI。
 
 ### T31 Tray 選單完整版
 - 依賴：T27、T26
 - 內容：design §10.1；狀態 / 靜音原因顯示、Profile 切換、試聽、暫停。
 - 完成條件：手動驗證。
+- 備註（W3–4）：試聽用 `Orchestrator::preview`（忽略暫停與靜音）；狀態與靜音原因來自 `Output::MuteChanged`（`MuteStatus.reasons`）與 `Orchestrator::paused()`。
 
 ### T32 UI：Profiles 頁
 - 依賴：T21、T15
 - 內容：Profile 清單、事件對應編輯、拖放音效、試聽、啟用開關、音量。
 - 完成條件：Vitest 元件測試 + 手動驗證。
+- 備註（W3–4）：後端用 `spank-store::Profiles`（`list`／`create`／`duplicate`／`rename`／`delete`／`set_active`，內建 `builtin.*` 唯讀）；切換 Profile 後呼叫 `Orchestrator::set_profile` 並用 `SoundBank::sync` 預載。
 
 ### T33 UI：音效庫頁
 - 依賴：T13、T22、T15
 - 內容：拖放 / 選檔上傳、進度與錯誤訊息、波形預覽、改名、刪除、匯入 / 匯出 `.spankpack`。
 - 完成條件：Vitest + 手動驗證。
+- 備註（W3–4）：匯入／匯出用 `spank_pack::{read_pack_file, import_pack, export_pack, write_pack}`；錯誤訊息來自 `PackError`。
 
 ### T34 UI：自動靜音頁
 - 依賴：T26、T15
 - 內容：四條規則開關、安靜時段編輯器、Focus 權限請求流程。
 - 完成條件：Vitest + 手動驗證。
+- 備註（W3–4）：Focus 權限用 `spank_sysmon::request_focus_authorization`（Info.plist 要加 `NSFocusStatusUsageDescription`）；`MuteStatus.focus_unavailable` 為 true 時顯示「需正式簽章版本」（ADR-0007）。
 
 ### T35 內建 CC0 音效與 3 個 Profile
 - 依賴：T13、T22（以 `.spankpack` 形式打包內建音效）
 - 內容：挑選 CC0 音源、經 importer 正規化、`SOUNDS_LICENSE.md` 記錄來源、組成「毀滅」「哀哀叫」「經典」三個 Profile，總計 < 5 MB。
 - 完成條件：bundle 內含並在首次啟動載入。
+- 備註（W3–4）：內建 Profile 以 JSON 放在 bundle 資源目錄，由 `Profiles::load_builtin` 載入；id 必須以 `builtin.` 開頭，預設 active 為 `builtin.destruction`。音效需為 48 kHz、≤ 10 s 的 WAV（同 `.spankpack` 驗證規則）。
 
 ## Wave 6 — Onboarding、進階功能、發佈管線
 
@@ -459,6 +465,7 @@ flowchart LR
 - 依賴：T23、T30
 - 內容：design §11（不需管理員密碼 / 系統設定核准）；輕/中/重 + 打字 5 秒；寫 `calibration.json`；可重新校準。
 - 完成條件：全新使用者帳號上手動走完流程；真機端到端：拍打 → 哀叫。
+- 備註（W3–4）：校準結果要滿足 `SlapConfig::validate`（`0 < trigger_g ≤ light < medium < hard`）；預設 0.15 / 0.3 / 0.5 g。可直接用 `ImpactExtractor` 取得每下的 `peak_g` 與 noise floor。
 
 ### T37 UI：感測器頁
 - 依賴：T27、T30、T15
@@ -474,6 +481,7 @@ flowchart LR
 - 依賴：T23、T20
 - 內容：IOHIDManager 監聽鍵盤 / 觸控板活動（只取「有輸入」時間戳，不記錄按鍵內容）；權限請求；接入 suppression gate。
 - 完成條件：權限拒絕時自動退回訊號濾波。
+- 備註（W3–4）：接入點已有：`Orchestrator::on_input_activity(at_ms)` + `SlapConfig.precise_typing` 閘（+300 ms）。打字的訊號濾波已由 T23 的噪音門檻處理。
 
 ### T40 簽章 / 公證 Release workflow
 - 依賴：T09、T07
@@ -491,6 +499,7 @@ flowchart LR
 - 依賴：T31、T32、T33、T34、T36、T37、T38、T39
 - 內容：`docs/release-checklist.md`；功耗觀察（ADR-0013）；錯誤處理與 log；fuzz 跑一輪；無障礙基本檢查。
 - 完成條件：checklist 全數通過。
+- 備註（W3–4）：待辦清單要包含：T20 逐項切換驗證（`sysmon-watch`）、`cargo +nightly fuzz run read_pack`（spank-pack）、播放中切換輸出裝置（`AudioPlayer` 會在下次播放時重建 stream，尚未在真機測過）、其他機型重錄 trace 驗證 T23 參數。
 
 ### T43 文件
 - 依賴：T36、T38
