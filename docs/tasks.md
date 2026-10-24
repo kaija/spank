@@ -167,13 +167,13 @@ flowchart LR
   T43 --> T44
   T35 --> T44
   T28 --> T44
+  style T01 fill:#d4edda
+  style T02 fill:#d4edda
   style T03 fill:#d4edda
   style T05 fill:#d4edda
   style T06 fill:#d4edda
   style T07 fill:#d4edda
-  style T02 fill:#d4edda
   style T08 fill:#d4edda
-  style T01 fill:#d4edda
 ```
 
 **Critical path**：T01 → T03 → T09 → T16 → T24 → T30 → T36 → T43 → T44

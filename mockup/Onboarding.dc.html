@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/effects.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/css/base.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/css/components.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/css/ui.css">
+  <script src="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/_ds_bundle.js"></script>
+  <script src="spank-icons.js"></script>
+  <style>.switch-knob{display:block}</style>
+</helmet>
+<div role="dialog" aria-label="{{ winLabel }}" style="position:relative;width:100%;height:100%;min-height:420px;display:flex;flex-direction:column;background:var(--color-bg);color:var(--text-body);font-family:var(--font-sans);font-size:13px;line-height:1.5;border-radius:12px;overflow:hidden;border:1px solid var(--color-border-strong);box-shadow:var(--shadow-xl)">
+  <div style="flex:none;height:38px;display:flex;align-items:center;gap:8px;padding:0 14px">
+    <span aria-label="關閉" style="width:12px;height:12px;border-radius:999px;background:#ff5f57"></span>
+    <span style="width:12px;height:12px;border-radius:999px;background:var(--color-bg-tertiary)"></span>
+    <span style="width:12px;height:12px;border-radius:999px;background:var(--color-bg-tertiary)"></span>
+    <span style="margin-left:auto;font-size:11px;color:var(--text-faint)">{{ stepCount }}</span>
+  </div>
+
+  <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:4px 36px 0">
+    <!-- 0 welcome -->
+    <sc-if value="{{ s0 }}" hint-placeholder-val="{{ true }}">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px">
+        <div aria-hidden="true" style="position:relative;width:180px;height:120px;margin-bottom:8px">
+          <div style="position:absolute;left:34px;top:10px;width:112px;height:72px;border:2.5px solid var(--color-accent);border-radius:10px;display:flex;align-items:center;justify-content:center;gap:22px;color:var(--color-accent);font-size:22px;font-weight:700;letter-spacing:0">
+            <span>&gt;</span><span>&lt;</span>
+          </div>
+          <div style="position:absolute;left:18px;right:18px;top:88px;height:3px;background:var(--color-accent);border-radius:3px"></div>
+          <div style="position:absolute;right:6px;top:4px;width:22px;height:3px;background:var(--color-warning);border-radius:3px;transform:rotate(-30deg)"></div>
+          <div style="position:absolute;right:2px;top:16px;width:18px;height:3px;background:var(--color-warning);border-radius:3px;transform:rotate(-8deg)"></div>
+          <div style="position:absolute;right:8px;top:28px;width:14px;height:3px;background:var(--color-warning);border-radius:3px;transform:rotate(14deg)"></div>
+        </div>
+        <h1 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-0.02em">嗨，我是 {{ appName }}</h1>
+        <p style="margin:0;max-width:360px;color:var(--text-muted);font-size:14px">一個怕痛的 MacBook。打開螢幕、闔上、掰過頭、被拍，它都有話要說。</p>
+        <p style="margin:6px 0 0;font-size:12px;color:var(--text-faint)">不收集任何資料，所有偵測都在這台 Mac 上完成。</p>
+      </div>
+    </sc-if>
+
+    <!-- 1 angle -->
+    <sc-if value="{{ s1 }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+        <h1 style="margin:0;font-size:18px;font-weight:700;letter-spacing:-0.02em">動一下螢幕試試</h1>
+        <p style="margin:0;color:var(--text-muted)">把螢幕往下壓一點，再推回來。角度越過門檻時會播放示範音效。</p>
+        <div style="flex:1;display:flex;align-items:center;gap:24px;padding:8px 0">
+          <svg viewBox="0 0 240 150" width="240" height="150" role="img" aria-label="{{ angAria }}" style="flex:none;display:block">
+            <path d="M 216 130 A 96 96 0 0 0 24 130" style="fill:none;stroke:var(--color-border-strong);stroke-width:2;stroke-dasharray:2 5"></path>
+            <line x1="120" y1="130" x2="230" y2="130" style="stroke:var(--text-faint);stroke-width:7;stroke-linecap:round"></line>
+            <line x1="120" y1="130" x2="{{ lidX }}" y2="{{ lidY }}" style="stroke:var(--color-accent);stroke-width:7;stroke-linecap:round"></line>
+            <circle cx="120" cy="130" r="4.5" style="fill:var(--color-bg);stroke:var(--color-accent);stroke-width:2"></circle>
+          </svg>
+          <div style="flex:1;min-width:0">
+            <div role="status" aria-live="off" style="font-size:44px;font-weight:700;letter-spacing:-0.03em;line-height:1;font-variant-numeric:tabular-nums">{{ angText }}</div>
+            <div style="margin-top:6px;font-size:12px;color:var(--text-muted)">即時角度</div>
+            <div role="status" aria-live="polite" style="margin-top:14px;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:{{ fbBg }};color:{{ fbColor }};font-size:12px;font-weight:500">{{ fbIcon }}<span>{{ fbText }}</span></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;padding-bottom:4px">
+          <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" on-click="{{ demoPlay }}" hint-size="120px,30px">播放示範音效</x-import>
+          <span style="align-self:center;font-size:11px;color:var(--text-faint)">沒聲音？確認系統音量，或稍後在「感測器」頁調整門檻。</span>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- 2 profile -->
+    <sc-if value="{{ s2 }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+        <h1 style="margin:0;font-size:18px;font-weight:700;letter-spacing:-0.02em">選一個個性</h1>
+        <p style="margin:0;color:var(--text-muted)">之後隨時可以換，也可以複製一份自己改。</p>
+        <div role="radiogroup" aria-label="預設 Profile" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px">
+          <sc-for list="{{ cards }}" as="c" hint-placeholder-count="3">
+            <div role="radio" aria-checked="{{ c.sel }}" tabIndex="0" onClick="{{ c.pick }}" onKeyDown="{{ c.key }}" style="display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:12px;cursor:pointer;background:var(--color-bg);border:1px solid {{ c.border }};box-shadow:{{ c.shadow }};outline:none;transition:all 150ms ease">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:var(--color-accent-light);color:var(--color-accent)">{{ c.icon }}</span>
+                <span style="width:16px;height:16px;border-radius:999px;border:1.5px solid {{ c.radio }};display:flex;align-items:center;justify-content:center"><span style="width:8px;height:8px;border-radius:999px;background:{{ c.dot }}"></span></span>
+              </div>
+              <div style="font-size:14px;font-weight:600">{{ c.name }}</div>
+              <div style="font-size:12px;color:var(--text-muted);min-height:36px">{{ c.desc }}</div>
+              <button type="button" onClick="{{ c.play }}" aria-label="{{ c.playLabel }}" style="align-self:flex-start;display:flex;align-items:center;gap:6px;padding:4px 10px;font-family:inherit;font-size:12px;border:1px solid var(--color-border-strong);border-radius:999px;background:{{ c.playBg }};color:{{ c.playColor }};cursor:pointer">{{ c.playIcon }}<span>{{ c.playText }}</span></button>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- 3 tap intro -->
+    <sc-if value="{{ s3 }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px">
+        <span aria-hidden="true" style="display:flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:16px;background:var(--color-accent-light);color:var(--color-accent);margin-bottom:6px">{{ icHand }}</span>
+        <h1 style="margin:0;font-size:18px;font-weight:700;letter-spacing:-0.02em">要讓它怕痛嗎？</h1>
+        <p style="margin:0;max-width:380px;color:var(--text-muted)">拍一下筆電，它會依力道輕、中、重哀叫；短時間連續拍打會觸發連擊。接下來花 30 秒校準一下你的手勁。</p>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" on-click="{{ skipTap }}" hint-size="90px,32px">稍後再說</x-import>
+          <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" variant="primary" on-click="{{ next }}" hint-size="120px,32px">啟用並校準</x-import>
+        </div>
+        <p style="margin:4px 0 0;font-size:11px;color:var(--text-faint)">用的是內建的加速度計，不需要任何權限。</p>
+      </div>
+    </sc-if>
+
+    <!-- 4 calibration -->
+    <sc-if value="{{ s4 }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;gap:6px" role="list" aria-label="校準步驟">
+          <sc-for list="{{ calSteps }}" as="c" hint-placeholder-count="4">
+            <div role="listitem" aria-current="{{ c.current }}" style="flex:1;display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:999px;background:{{ c.bg }};color:{{ c.color }};font-size:12px;font-weight:500;min-width:0">
+              <span style="flex:none;display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:{{ c.numBg }};color:{{ c.numColor }};font-size:10px;font-weight:700">{{ c.num }}</span>
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.label }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div>
+          <h1 style="margin:4px 0 2px;font-size:18px;font-weight:700;letter-spacing:-0.02em">{{ cal.title }}</h1>
+          <p style="margin:0;color:var(--text-muted)">{{ cal.sub }}</p>
+        </div>
+        <div onClick="{{ simulate }}" role="img" aria-label="{{ cal.aria }}" style="position:relative;height:110px;border-radius:12px;background:var(--color-bg-secondary);border:1px solid {{ cal.border }};overflow:hidden;cursor:pointer;transition:border-color 150ms ease">
+          <svg viewBox="0 0 500 110" preserveAspectRatio="none" width="100%" height="110" aria-hidden="true" style="display:block">
+            <line x1="0" x2="500" y1="{{ cal.targetY }}" y2="{{ cal.targetY }}" style="stroke:{{ cal.lineColor }};stroke-width:1.5;stroke-dasharray:6 4;opacity:0.7"></line>
+            <polyline points="{{ wavePts }}" style="fill:none;stroke:{{ cal.waveColor }};stroke-width:1.5;vector-effect:non-scaling-stroke;stroke-linejoin:round"></polyline>
+          </svg>
+          <div style="position:absolute;left:12px;top:10px;display:flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;background:var(--color-bg);border:1px solid var(--color-border);font-size:11px;font-weight:600;color:{{ cal.pillColor }}">{{ cal.pillIcon }}<span>{{ cal.pill }}</span></div>
+          <span style="position:absolute;right:10px;bottom:8px;font-size:10px;color:var(--text-faint)">原型：點波形區模擬一次</span>
+        </div>
+        <sc-if value="{{ cal.typing }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <input aria-label="在這裡隨意打字" placeholder="在這裡隨意打字，例如：我保證不會再打你了" onKeyDown="{{ onType }}" style="width:100%;font-family:inherit;font-size:13px;padding:8px 12px;border:1px solid var(--color-border-strong);border-radius:8px;background:var(--color-bg);color:var(--text-body);outline:none">
+            <div style="height:4px;border-radius:999px;background:var(--color-bg-tertiary);overflow:hidden"><div style="height:100%;background:var(--color-accent);border-radius:999px;width:{{ typePct }}"></div></div>
+            <span style="font-size:11px;color:var(--text-faint)">只量鍵盤震動，不記錄打了什麼字。</span>
+          </div>
+        </sc-if>
+        <div role="status" aria-live="polite" style="display:flex;align-items:center;gap:10px;min-height:32px">
+          <sc-if value="{{ cal.hasMsg }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:{{ cal.msgBg }};color:{{ cal.msgColor }};font-size:12px;font-weight:500">{{ cal.msgIcon }}<span>{{ cal.msg }}</span></div>
+          </sc-if>
+          <sc-if value="{{ cal.canRetry }}" hint-placeholder-val="{{ false }}">
+            <button type="button" onClick="{{ retry }}" style="margin-left:auto;display:flex;align-items:center;gap:6px;padding:5px 12px;font-family:inherit;font-size:12px;font-weight:500;color:var(--color-accent);background:transparent;border:none;border-radius:999px;cursor:pointer">{{ icRefresh }}重來</button>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- 5 done -->
+    <sc-if value="{{ s5 }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px">
+        <div aria-hidden="true" style="position:relative;width:100%;max-width:400px;height:96px;margin-bottom:6px">
+          <div style="position:absolute;left:0;right:0;top:0;height:26px;display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:0 12px;border-radius:8px;background:var(--color-bg-secondary);border:1px solid var(--color-border);font-size:11.5px;color:var(--text-muted)">
+            <span style="display:flex;padding:2px 5px;border-radius:5px;color:var(--color-accent);background:var(--color-accent-light);box-shadow:0 0 0 2px var(--color-accent)">{{ icApp }}</span>
+            <span style="display:flex">{{ icWifi }}</span>
+            <span>14:05</span>
+          </div>
+          <div style="position:absolute;right:94px;top:32px;display:flex;flex-direction:column;align-items:center;color:var(--color-accent)">
+            <span style="display:flex">{{ icArrowUp }}</span>
+            <span style="margin-top:4px;padding:3px 10px;border-radius:999px;background:var(--color-accent);color:#fff;font-size:11px;font-weight:600;white-space:nowrap">我住這裡</span>
+          </div>
+        </div>
+        <h1 style="margin:0;font-size:18px;font-weight:700;letter-spacing:-0.02em">都設好了</h1>
+        <p style="margin:0;max-width:380px;color:var(--text-muted)">{{ appName }} 住在選單列，不佔 Dock。關掉這個視窗後它會繼續待命；想換 Profile 或暫停，點上面那個小筆電。</p>
+        <sc-if value="{{ tapSkipped }}" hint-placeholder-val="{{ false }}">
+          <p style="margin:0;font-size:12px;color:var(--text-faint)">拍打功能尚未啟用，可在「設定 › 感測器」打開。</p>
+        </sc-if>
+      </div>
+    </sc-if>
+  </div>
+
+  <footer style="flex:none;display:flex;align-items:center;gap:10px;padding:14px 20px 16px">
+    <div aria-hidden="true" style="display:flex;gap:6px">
+      <sc-for list="{{ dots }}" as="d" hint-placeholder-count="6">
+        <span style="width:{{ d.w }};height:6px;border-radius:999px;background:{{ d.bg }};transition:all 250ms ease"></span>
+      </sc-for>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <sc-if value="{{ canBack }}" hint-placeholder-val="{{ false }}">
+        <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" on-click="{{ back }}" hint-size="70px,32px">上一步</x-import>
+      </sc-if>
+      <sc-if value="{{ showNext }}" hint-placeholder-val="{{ true }}">
+        <button type="button" onClick="{{ next }}" disabled="{{ nextDisabled }}" style="padding:7px 18px;font-family:inherit;font-size:13px;font-weight:500;color:#fff;background:var(--color-accent);border:1px solid var(--color-accent);border-radius:999px;cursor:pointer;opacity:{{ nextOp }}">{{ nextLabel }}</button>
+      </sc-if>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:560,&quot;height&quot;:440},&quot;appName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Spank&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;step&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;min&quot;:0,&quot;max&quot;:5,&quot;tsType&quot;:&quot;number&quot;},&quot;calStep&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;min&quot;:0,&quot;max&quot;:3,&quot;tsType&quot;:&quot;number&quot;},&quot;calState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;waiting&quot;,&quot;detecting&quot;,&quot;success&quot;,&quot;fail&quot;,&quot;timeout&quot;],&quot;default&quot;:&quot;waiting&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  CAL = [['輕拍', 0.15, 0.12, 0.35], ['中拍', 0.5, 0.35, 0.72], ['重拍', 0.88, 0.72, 1], ['打字 5 秒', 0, 0, 0]];
+  state = { step: this.props.step ?? 0, t: 0, angle: 104, fired: false, profile: 'whine', playing: null, tapSkipped: false, calStep: this.props.calStep ?? 0, calState: this.props.calState || 'waiting', measured: [0.14, null, null], wave: Array(90).fill(0.02), typed: this.props.calState === 'success' && this.props.calStep === 3 ? 40 : 0 };
+  componentDidMount() {
+    this.iconPoll = setInterval(() => { if (window.SpankIcons) { clearInterval(this.iconPoll); this.forceUpdate(); } }, 100);
+    this.reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.timer = setInterval(() => this.tick(), this.reduce ? 450 : 70);
+    if (this.props.calState === 'success' || this.props.calState === 'detecting') this.spike(this.CAL[this.state.calStep][1], this.props.calState === 'success');
+    if (this.props.calState === 'fail') this.spike(0.62, true);
+  }
+  componentWillUnmount() { clearInterval(this.timer); clearInterval(this.iconPoll); clearTimeout(this.pt); clearTimeout(this.dt); }
+  ic(n, s, sw) { return React.createElement('svg', { width: s || 16, height: s || 16, viewBox: '0 0 24 24', fill: n === 'play' ? 'currentColor' : 'none', stroke: 'currentColor', strokeWidth: sw || 1.75, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true, style: { display: 'block', flex: 'none' }, dangerouslySetInnerHTML: { __html: (window.SpankIcons || {})[n] || '' } }); }
+  spike(v, keep) { const w = this.state.wave.slice(); for (let i = 0; i < 6; i++) w[60 + i] = v * Math.pow(0.55, i); this.setState({ wave: w }); }
+  tick() {
+    const s = this.state, upd = { t: s.t + 1 };
+    if (s.step === 1) {
+      const a = 70 + Math.abs(Math.sin(s.t / 26)) * 45;
+      upd.angle = a;
+      if (a > 113 && !s.fired) { upd.fired = true; }
+    }
+    if (s.step === 4) {
+      const keep = s.calState === 'success' || s.calState === 'fail';
+      if (!keep || s.t % 3 === 0) {
+        const typing = s.calStep === 3 && s.calState === 'detecting';
+        const n = typing ? 0.06 + Math.random() * 0.1 : 0.015 + Math.random() * 0.025;
+        if (!keep) upd.wave = s.wave.slice(1).concat([n]);
+      }
+    }
+    this.setState(upd);
+  }
+  simulate() {
+    const s = this.state; if (s.calStep === 3) return;
+    if (s.calState === 'success') return;
+    const want = this.CAL[s.calStep];
+    const r = Math.random();
+    const v = r < 0.25 ? (s.calStep === 0 ? 0.5 : s.calStep === 1 ? 0.9 : 0.4) : want[1] + (Math.random() - 0.5) * 0.08;
+    this.setState({ calState: 'detecting' });
+    const w = s.wave.slice(); for (let i = 0; i < 6; i++) w[w.length - 6 + i] = v * Math.pow(0.55, i);
+    this.setState({ wave: w });
+    clearTimeout(this.dt);
+    this.dt = setTimeout(() => {
+      const ok = v >= want[2] && v < want[3];
+      const m = this.state.measured.slice(); if (ok) m[s.calStep] = +v.toFixed(2);
+      this.setState({ calState: ok ? 'success' : 'fail', measured: m, lastV: v });
+    }, this.reduce ? 200 : 700);
+  }
+  renderVals() {
+    const s = this.state, I = (n, z, w) => this.ic(n, z, w), app = this.props.appName || 'Spank';
+    const N = 6, go = st => this.setState({ step: st, calState: 'waiting', fired: false });
+    const out = { appName: app, winLabel: '歡迎使用 ' + app, stepCount: `${s.step + 1} / ${N}` };
+    for (let i = 0; i < N; i++) out['s' + i] = s.step === i;
+    out.dots = Array.from({ length: N }, (_, i) => ({ w: i === s.step ? '18px' : '6px', bg: i <= s.step ? 'var(--color-accent)' : 'var(--color-bg-tertiary)' }));
+    out.canBack = s.step > 0 && s.step < 5;
+    out.back = () => { if (s.step === 4 && s.calStep > 0) return this.setState({ calStep: s.calStep - 1, calState: 'success' }); go(s.step - 1); };
+    out.next = () => {
+      if (s.step === 4) { if (s.calStep < 3) return this.setState({ calStep: s.calStep + 1, calState: s.calStep + 1 === 3 ? 'detecting' : 'waiting', typed: 0 }); return go(5); }
+      if (s.step === 5) return this.props.onDone && this.props.onDone();
+      go(Math.min(5, s.step + 1));
+    };
+    out.showNext = s.step !== 3;
+    out.nextLabel = s.step === 0 ? '開始' : s.step === 5 ? '完成' : s.step === 4 ? (s.calStep === 3 ? '完成校準' : '下一個') : '下一步';
+    out.nextDisabled = s.step === 4 && s.calState !== 'success';
+    out.nextOp = out.nextDisabled ? 0.4 : 1;
+    out.skipTap = () => this.setState({ step: 5, tapSkipped: true });
+    out.tapSkipped = s.tapSkipped;
+    // angle
+    const a = s.angle, L = 92;
+    out.lidX = (120 + L * Math.cos(a * Math.PI / 180)).toFixed(1); out.lidY = (130 - L * Math.sin(a * Math.PI / 180)).toFixed(1);
+    out.angText = Math.round(a) + '°'; out.angAria = `目前螢幕角度 ${Math.round(a)} 度`;
+    out.fbBg = s.fired ? 'var(--color-success-light)' : 'var(--color-bg-secondary)';
+    out.fbColor = s.fired ? 'var(--color-success)' : 'var(--text-muted)';
+    out.fbIcon = I(s.fired ? 'check' : 'sensors', 14, 2);
+    out.fbText = s.fired ? '偵測到了！剛剛播放「玻璃碎裂 01」' : '等你動一下螢幕…';
+    out.demoPlay = () => this.setState({ fired: true });
+    // profiles
+    const P = [['destroy', '毀滅', '玻璃碎掉、金屬斷裂。適合想要戲劇效果的人。', 'evOver'], ['whine', '哀哀叫', '喔！救命啊！一台很會演的筆電。', 'tapM'], ['classic', '經典', '吱嘎、悶響。低調，同事比較不會轉頭。', 'evOpen']];
+    out.cards = P.map(([id, name, desc, icon]) => {
+      const sel = s.profile === id, pl = s.playing === id;
+      return { name, desc, icon: I(icon, 18), sel, border: sel ? 'var(--color-accent)' : 'var(--color-border-strong)', shadow: sel ? '0 0 0 3px var(--color-accent-light)' : 'none', radio: sel ? 'var(--color-accent)' : 'var(--color-border-strong)', dot: sel ? 'var(--color-accent)' : 'transparent',
+        pick: () => this.setState({ profile: id }), key: e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); this.setState({ profile: id }); } },
+        play: e => { e.stopPropagation(); clearTimeout(this.pt); this.setState({ playing: pl ? null : id }); this.pt = setTimeout(() => this.setState({ playing: null }), 1500); },
+        playIcon: I(pl ? 'stop' : 'play', 10, 2), playText: pl ? '播放中…' : '試聽', playLabel: '試聽 ' + name, playBg: pl ? 'var(--color-accent-light)' : 'var(--color-bg)', playColor: pl ? 'var(--color-accent)' : 'var(--text-body)' };
+    });
+    out.icHand = I('hand', 34, 1.75);
+    // calibration
+    const cs = s.calStep, st = s.calState, cur = this.CAL[cs];
+    out.calSteps = this.CAL.map(([label], i) => {
+      const done = i < cs || (i === cs && st === 'success'), now = i === cs;
+      return { label, num: done ? '✓' : i + 1, current: now ? 'step' : undefined, bg: now ? 'var(--color-accent-light)' : 'transparent', color: now ? 'var(--color-accent)' : done ? 'var(--text-body)' : 'var(--text-faint)', numBg: done ? 'var(--color-accent)' : now ? 'var(--color-bg)' : 'var(--color-bg-tertiary)', numColor: done ? '#fff' : now ? 'var(--color-accent)' : 'var(--text-faint)' };
+    });
+    const typing = cs === 3;
+    const titles = ['輕輕拍一下', '中等力道拍一下', '用力拍一下（但別真的打壞）', '隨意打字 5 秒'];
+    const subs = ['像拍拍同事肩膀那樣，拍在觸控板旁邊的掌托。', '像在拍一台不太聽話的舊電視。', '像拍桌子表達不滿的那種力道。', '讓它學會分辨「打字」和「拍打」，之後打字就不會誤觸。'];
+    const yOf = v => (104 - v * 96).toFixed(1);
+    const lastV = s.lastV ?? 0.62;
+    const failMsg = typing ? '' : lastV > cur[3] ? `太大力了，這是${lastV > 0.72 ? '重拍' : '中拍'}等級。再輕一點試試。` : lastV < cur[2] ? '有點太輕，偵測成輕拍了。再大力一點。' : '';
+    const M = {
+      waiting: { pill: '等待中', pillColor: 'var(--text-muted)', pillIcon: I('clock', 12, 2), border: 'var(--color-border)', waveColor: 'var(--text-faint)', hasMsg: false, canRetry: false },
+      detecting: { pill: typing ? '記錄中…' : '偵測中…', pillColor: 'var(--color-accent)', pillIcon: I('refresh', 12, 2), border: 'var(--color-accent)', waveColor: 'var(--color-accent)', hasMsg: false, canRetry: false },
+      success: { pill: '偵測成功', pillColor: 'var(--color-success)', pillIcon: I('check', 12, 2.4), border: 'var(--color-success)', waveColor: 'var(--color-success)', hasMsg: true, msgBg: 'var(--color-success-light)', msgColor: 'var(--color-success)', msgIcon: I('check', 14, 2.2), msg: typing ? '已記下你的打字節奏。之後打字不會被當成拍打。' : `收到！${cur[0]}力道約 ${(s.measured[cs] ?? cur[1]).toFixed(2)} g`, canRetry: true },
+      fail: { pill: '不太對', pillColor: 'var(--color-danger)', pillIcon: I('x', 12, 2.4), border: 'var(--color-danger)', waveColor: 'var(--color-danger)', hasMsg: true, msgBg: 'var(--color-danger-light)', msgColor: 'var(--color-danger)', msgIcon: I('warn', 14), msg: failMsg || '太大力了，這是中拍等級。再輕一點試試。', canRetry: true },
+      timeout: { pill: '逾時', pillColor: 'var(--color-warning)', pillIcon: I('clock', 12, 2), border: 'var(--color-warning)', waveColor: 'var(--text-faint)', hasMsg: true, msgBg: 'var(--color-warning-light)', msgColor: 'var(--color-warning)', msgIcon: I('clock', 14), msg: '10 秒內沒有偵測到拍打。筆電放在軟墊上嗎？放到桌面再試。', canRetry: true }
+    }[st] || {};
+    out.cal = Object.assign({ title: titles[cs], sub: subs[cs], typing, targetY: yOf(typing ? 0.12 : cur[2]), lineColor: 'var(--color-accent)', aria: `${titles[cs]}：${st}` }, M);
+    out.wavePts = s.wave.map((v, i) => `${(i * 500 / (s.wave.length - 1)).toFixed(1)},${yOf(Math.min(1, v))}`).join(' ');
+    out.simulate = () => { if (st === 'waiting' && !typing && Math.random() < 0.15) return this.setState({ calState: 'timeout' }); this.simulate(); };
+    out.retry = () => this.setState({ calState: typing ? 'detecting' : 'waiting', typed: 0 });
+    out.typePct = Math.min(100, s.typed / 40 * 100) + '%';
+    out.onType = () => { const t = s.typed + 1; this.setState({ typed: t, calState: t >= 40 ? 'success' : 'detecting' }); };
+    out.icRefresh = I('refresh', 13, 2); out.icApp = I('app', 15, 1.8); out.icWifi = I('wifi', 13); out.icArrowUp = I('arrowUp', 18, 2);
+    return out;
+  }
+}
+</script>
+</body>
+</html>

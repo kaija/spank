@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="design_doc_mode" content="canvas">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/effects.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/css/base.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/css/ui.css">
+  <script src="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/_ds_bundle.js"></script>
+  <style>body{margin:0;background:#ececf3}a{color:var(--color-accent)}a:hover{color:var(--color-accent-hover)}</style>
+</helmet>
+<div style="display:flex;flex-direction:column;gap:56px;padding:64px;font-family:var(--font-sans);color:var(--text-body);width:max-content">
+  <header style="max-width:900px">
+    <div style="font-size:13px;font-weight:600;color:var(--color-accent)">macOS 14+ · 選單列 App · 高保真</div>
+    <h1 style="margin:6px 0 8px;font-size:40px;font-weight:700;letter-spacing:-0.03em;line-height:1.1">{{ appName }} — 完整 UI</h1>
+    <p style="margin:0;font-size:15px;color:var(--text-muted);line-height:1.6">每組畫面上排淺色、下排深色。所有畫面都是可操作的：側邊欄可切換、開關可按、角度儀可拖、音效可加入與移除。產品名稱由右側 Tweaks 的 appName 統一替換。</p>
+  </header>
+
+  <section id="menubar" data-screen-label="01 選單列" style="display:flex;flex-direction:column;gap:16px">
+    <h2 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-0.02em">1 · 選單列圖示與下拉選單</h2>
+    <sc-for list="{{ themes }}" as="t" hint-placeholder-count="2">
+      <div style="{{ t.style }}">
+        <div style="display:flex;gap:36px;padding:28px;border-radius:24px;background:var(--color-bg-secondary)">
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">運作中 · 選單展開</span><div style="width:520px;height:380px"><dc-import name="Menu Bar" style="width:100%;height:100%" app-name="{{ appName }}" state="active" open="{{ true }}" hint-size="520px,380px"></dc-import></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">已靜音 — 開會中 · Profile 子選單</span><div style="width:520px;height:380px"><dc-import name="Menu Bar" style="width:100%;height:100%" app-name="{{ appName }}" state="muted" sub="profile" sub-hi="poffice" open="{{ true }}" hint-size="520px,380px"></dc-import></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">已暫停 · 試聽子選單</span><div style="width:520px;height:380px"><dc-import name="Menu Bar" style="width:100%;height:100%" app-name="{{ appName }}" state="paused" sub="preview" sub-hi="e5" open="{{ true }}" hint-size="520px,380px"></dc-import></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">此機型不支援部分功能 · 收合 + 提示</span><div style="width:520px;height:380px"><dc-import name="Menu Bar" style="width:100%;height:100%" app-name="{{ appName }}" state="partial" open="{{ false }}" demo-shake="{{ true }}" hint-size="520px,380px"></dc-import></div></div>
+        </div>
+      </div>
+    </sc-for>
+  </section>
+
+  <section id="profiles" data-screen-label="02 Profiles" style="display:flex;flex-direction:column;gap:16px">
+    <h2 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-0.02em">2a · 設定 › Profiles</h2>
+    <sc-for list="{{ themes }}" as="t" hint-placeholder-count="2">
+      <div style="{{ t.style }}">
+        <div style="display:flex;gap:36px;padding:28px;border-radius:24px;background:var(--color-bg-secondary)">
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">自訂 Profile · 可編輯</span><div style="width:760px;height:520px"><dc-import name="Settings Window" style="width:100%;height:100%" app-name="{{ appName }}" page="profiles" profile="office" hint-size="760px,520px"></dc-import></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">內建 Profile · 唯讀，提示複製後編輯</span><div style="width:760px;height:520px"><dc-import name="Settings Window" style="width:100%;height:100%" app-name="{{ appName }}" page="profiles" profile="destroy" hint-size="760px,520px"></dc-import></div></div>
+        </div>
+      </div>
+    </sc-for>
+  </section>
+
+  <section id="library" data-screen-label="03 音效庫" style="display:flex;flex-direction:column;gap:16px">
+    <h2 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-0.02em">2b · 設定 › 音效庫</h2>
+    <sc-for list="{{ themes }}" as="t" hint-placeholder-count="2">
+      <div style="{{ t.style }}">
+        <div style="display:flex;gap:36px;padding:28px;border-radius:24px;background:var(--color-bg-secondary)">
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">清單 · 匯入處理中 · 截斷 / 格式 / 大小錯誤</span><div style="width:760px;height:520px"><dc-import name="Settings Window" style="width:100%;height:100%" app-name="{{ appName }}" page="library" hint-size="760px,520px"></dc-import></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">拖入中</span><div style="width:760px;height:520px"><dc-import name="Settings Window" style="width:100%;height:100%" app-name="{{ appName }}" page="library" drop-state="drag" hint-size="760px,520px"></dc-import></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">空狀態</span><div style="width:760px;height:520px"><dc-import name="Settings Window" style="width:100%;height:100%" app-name="{{ appName }}" page="library" library-empty="{{ true }}" hint-size="760px,520px"></dc-import></div></div>
+        </div>
+      </div>
+    </sc-for>
+  </section>
+
+  <section id="sensors" data-screen-label="04 感測器" style="display:flex;flex-direction:column;gap:16px">
+    <h2 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-0.02em">2c · 設定 › 感測器</h2>
+    <sc-for list="{{ themes }}" as="t" hint-placeholder-count="2">
+      <div style="{{ t.style }}">
+        <div style="display:flex;gap:36px;padding:28px;border-radius:24px;background:var(--color-bg-secondary)">
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">即時角度儀 + 進階設定展開</span><div style="width:760px;height:520px"><dc-import name="Settings Window" style="width:100%;height:100%" app-name="{{ appName }}" page="sensors" adv-open="{{ true }}" hint-size="760px,520px"></dc-import></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">此機型不支援螢幕角度 · 輸入監控未授權</span><div style="width:760px;height:520px"><dc-import name="Settings Window" style="width:100%;height:100%" app-name="{{ appName }}" page="sensors" unsupported="{{ true }}" input-perm-denied="{{ true }}" hint-size="760px,520px"></dc-import></div></div>
+        </div>
+      </div>
+    </sc-for>
+  </section>
+
+  <section id="mute" data-screen-label="05 自動靜音" style="display:flex;flex-direction:column;gap:16px">
+    <h2 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-0.02em">2d · 設定 › 自動靜音</h2>
+    <sc-for list="{{ themes }}" as="t" hint-placeholder-count="2">
+      <div style="{{ t.style }}">
+        <div style="display:flex;gap:36px;padding:28px;border-radius:24px;background:var(--color-bg-secondary)">
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">靜音中 — 開會中 · 安靜時段含跨午夜</span><div style="width:760px;height:520px"><dc-import name="Settings Window" style="width:100%;height:100%" app-name="{{ appName }}" page="mute" hint-size="760px,520px"></dc-import></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">專注模式 · 請求權限</span><div style="width:760px;height:520px"><dc-import name="Settings Window" style="width:100%;height:100%" app-name="{{ appName }}" page="mute" focus-perm="notDetermined" mute-active="{{ false }}" hint-size="760px,520px"></dc-import></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">專注模式 · 權限被拒絕</span><div style="width:760px;height:520px"><dc-import name="Settings Window" style="width:100%;height:100%" app-name="{{ appName }}" page="mute" focus-perm="denied" mute-active="{{ false }}" hint-size="760px,520px"></dc-import></div></div>
+        </div>
+      </div>
+    </sc-for>
+  </section>
+
+  <section id="general" data-screen-label="06 一般" style="display:flex;flex-direction:column;gap:16px">
+    <h2 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-0.02em">2e · 設定 › 一般</h2>
+    <sc-for list="{{ themes }}" as="t" hint-placeholder-count="2">
+      <div style="{{ t.style }}">
+        <div style="display:flex;gap:36px;padding:28px;border-radius:24px;background:var(--color-bg-secondary)">
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">一般</span><div style="width:760px;height:520px"><dc-import name="Settings Window" style="width:100%;height:100%" app-name="{{ appName }}" page="general" hint-size="760px,520px"></dc-import></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">放大後（980 × 620）· 版面延展</span><div style="width:980px;height:620px"><dc-import name="Settings Window" style="width:100%;height:100%" app-name="{{ appName }}" page="profiles" profile="office" hint-size="980px,620px"></dc-import></div></div>
+        </div>
+      </div>
+    </sc-for>
+  </section>
+
+  <section id="onboarding" data-screen-label="07 Onboarding" style="display:flex;flex-direction:column;gap:16px">
+    <h2 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-0.02em">3 · 首次啟動 Onboarding</h2>
+    <sc-for list="{{ themes }}" as="t" hint-placeholder-count="2">
+      <div style="{{ t.style }}">
+        <div style="display:grid;grid-template-columns:repeat(5,560px);gap:28px 36px;padding:28px;border-radius:24px;background:var(--color-bg-secondary)">
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">1 歡迎</span><div style="width:560px;height:440px"><dc-import name="Onboarding" style="width:100%;height:100%" app-name="{{ appName }}" step="{{ 0 }}" hint-size="560px,440px"></dc-import></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">2 螢幕角度展示 · 即時</span><div style="width:560px;height:440px"><dc-import name="Onboarding" style="width:100%;height:100%" app-name="{{ appName }}" step="{{ 1 }}" hint-size="560px,440px"></dc-import></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">3 選擇預設 Profile</span><div style="width:560px;height:440px"><dc-import name="Onboarding" style="width:100%;height:100%" app-name="{{ appName }}" step="{{ 2 }}" hint-size="560px,440px"></dc-import></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">4 拍打功能介紹</span><div style="width:560px;height:440px"><dc-import name="Onboarding" style="width:100%;height:100%" app-name="{{ appName }}" step="{{ 3 }}" hint-size="560px,440px"></dc-import></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">5 校準 · 輕拍 · 等待</span><div style="width:560px;height:440px"><dc-import name="Onboarding" style="width:100%;height:100%" app-name="{{ appName }}" step="{{ 4 }}" cal-step="{{ 0 }}" cal-state="waiting" hint-size="560px,440px"></dc-import></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">5 校準 · 中拍 · 成功</span><div style="width:560px;height:440px"><dc-import name="Onboarding" style="width:100%;height:100%" app-name="{{ appName }}" step="{{ 4 }}" cal-step="{{ 1 }}" cal-state="success" hint-size="560px,440px"></dc-import></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">5 校準 · 重拍 · 失敗（太輕）</span><div style="width:560px;height:440px"><dc-import name="Onboarding" style="width:100%;height:100%" app-name="{{ appName }}" step="{{ 4 }}" cal-step="{{ 2 }}" cal-state="fail" hint-size="560px,440px"></dc-import></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">5 校準 · 逾時</span><div style="width:560px;height:440px"><dc-import name="Onboarding" style="width:100%;height:100%" app-name="{{ appName }}" step="{{ 4 }}" cal-step="{{ 0 }}" cal-state="timeout" hint-size="560px,440px"></dc-import></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">5 校準 · 打字 5 秒 · 記錄中</span><div style="width:560px;height:440px"><dc-import name="Onboarding" style="width:100%;height:100%" app-name="{{ appName }}" step="{{ 4 }}" cal-step="{{ 3 }}" cal-state="detecting" hint-size="560px,440px"></dc-import></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">6 完成 · 指出選單列位置</span><div style="width:560px;height:440px"><dc-import name="Onboarding" style="width:100%;height:100%" app-name="{{ appName }}" step="{{ 5 }}" hint-size="560px,440px"></dc-import></div></div>
+        </div>
+      </div>
+    </sc-for>
+  </section>
+
+  <section id="dialogs" data-screen-label="08 對話框" style="display:flex;flex-direction:column;gap:16px">
+    <h2 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-0.02em">4 · 對話框</h2>
+    <sc-for list="{{ themes }}" as="t" hint-placeholder-count="2">
+      <div style="{{ t.style }}">
+        <div style="display:flex;gap:36px;align-items:flex-start;padding:28px;border-radius:24px;background:var(--color-bg-secondary)">
+          <div style="display:flex;flex-direction:column;gap:10px;width:440px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">匯入 .spankpack · 預覽</span><dc-import name="Dialogs" app-name="{{ appName }}" kind="pack" hint-size="440px,480px"></dc-import></div>
+          <div style="display:flex;flex-direction:column;gap:10px;width:440px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">匯入 · 驗證失敗</span><dc-import name="Dialogs" app-name="{{ appName }}" kind="invalid" hint-size="440px,340px"></dc-import></div>
+          <div style="display:flex;flex-direction:column;gap:10px;width:440px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">刪除確認</span><dc-import name="Dialogs" app-name="{{ appName }}" kind="delete" hint-size="440px,220px"></dc-import></div>
+          <div style="display:flex;flex-direction:column;gap:10px;width:440px"><span style="font-size:12px;font-weight:600;color:var(--text-muted)">新版本可用</span><dc-import name="Dialogs" app-name="{{ appName }}" kind="update" hint-size="440px,320px"></dc-import></div>
+        </div>
+      </div>
+    </sc-for>
+  </section>
+
+  <section id="states" data-screen-label="09 元件狀態" style="display:flex;flex-direction:column;gap:16px">
+    <h2 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-0.02em">5 · 關鍵元件狀態</h2>
+    <div style="display:flex;gap:36px">
+      <sc-for list="{{ themes }}" as="t" hint-placeholder-count="2">
+        <div style="{{ t.style }}">
+          <div style="width:960px;padding:28px;border-radius:24px;background:var(--color-bg-secondary)"><dc-import name="Component States" hint-size="904px,700px"></dc-import></div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section id="notes" data-screen-label="10 互動說明" style="display:flex;flex-direction:column;gap:16px;max-width:1240px">
+    <h2 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-0.02em">6 · 互動說明</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px">
+      <div style="padding:24px;border-radius:16px;background:var(--color-bg);border:1px solid var(--color-border)">
+        <h3 style="margin:0 0 10px;font-size:15px;font-weight:600">拖曳</h3>
+        <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:1.6;color:var(--text-muted)">
+          <li>音效庫的任一列、「加入音效」選單裡的項目，都可以拖到 Profiles 的事件列上。拖入中的列整列以主色描邊；放開即加入，重複的音效會被忽略。</li>
+          <li>已掛上的 chip 可以拖到另一個事件（複製，不移動）。內建 Profile 不接受拖放。</li>
+          <li>角度儀的三個門檻圓點可直接拖曳；聚焦後用方向鍵每次 1°，按住 Shift 每次 5°，旁邊的滑桿同步。</li>
+          <li>Finder 檔案拖進音效庫拖放區時顯示「放開就收下 N 個檔案」；不支援的格式在拖入時即轉為錯誤樣式。</li>
+        </ul>
+      </div>
+      <div style="padding:24px;border-radius:16px;background:var(--color-bg);border:1px solid var(--color-border)">
+        <h3 style="margin:0 0 10px;font-size:15px;font-weight:600">即時更新與動態效果</h3>
+        <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:1.6;color:var(--text-muted)">
+          <li>即時元素：角度數字與上蓋（約 30 次/秒）、拍打波形、自動靜音狀態列、選單第一行狀態、匯入進度、校準步驟。</li>
+          <li>VoiceOver：連續變動的數值不主動朗讀；狀態改變（開始靜音與原因、校準成功/失敗、匯入完成）以禮貌模式朗讀一次。</li>
+          <li>「減少動態效果」開啟時：波形每 0.5 秒更新一次、選單列圖示被打時改為淡出淡入一次而不抖動、展開與切頁不做位移動畫。</li>
+          <li>觸發回饋（選用）：每次播放音效時選單列圖示抖動 0.45 秒；連擊時不重複疊加。</li>
+        </ul>
+      </div>
+      <div style="padding:24px;border-radius:16px;background:var(--color-bg);border:1px solid var(--color-border)">
+        <h3 style="margin:0 0 10px;font-size:15px;font-weight:600">視窗、鍵盤與命名</h3>
+        <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:1.6;color:var(--text-muted)">
+          <li>設定視窗打開時才出現在 Dock；關閉（⌘W 或紅色按鈕）後縮回選單列，Dock 圖示消失。從選單「設定…」或 ⌘, 重新打開，回到上次的頁面。</li>
+          <li>Onboarding 完成或中途關閉都一樣縮回選單列；中途關閉時，下次打開設定會在感測器頁提示尚未校準。</li>
+          <li>預設 760 × 520，最小 640 × 440；放大時事件列 chips 區域延展，清單欄寬固定。英文字串較長時標籤換行，不截斷。</li>
+          <li>鍵盤：Tab 依序巡覽，⌘1–⌘5 切換側邊欄頁面；選單列選單用 ↑↓ 移動、← 開子選單（選單靠右，子選單向左展開）、Esc 關閉。</li>
+          <li>產品名稱集中在一個參數，所有畫面、選單項目（「暫停 {{ appName }}」「結束 {{ appName }}」）與權限說明同步替換。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;appName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Spank&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;themes&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;both&quot;,&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;both&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const dark = {
+      '--color-bg': '#1d1d2b', '--color-bg-secondary': '#242436', '--color-bg-tertiary': '#2f2f46',
+      '--color-text-primary': '#ececf6', '--color-text-secondary': '#a8a8c6', '--color-text-tertiary': '#80809f',
+      '--color-border': 'rgba(255,255,255,0.08)', '--color-border-strong': 'rgba(255,255,255,0.15)',
+      '--color-accent': '#7472f5', '--color-accent-hover': '#8a88ff', '--color-accent-light': 'rgba(116,114,245,0.16)', '--color-accent-glow': 'rgba(116,114,245,0.32)',
+      '--color-success': '#3cc08b', '--color-success-light': 'rgba(60,192,139,0.14)', '--color-warning': '#e0a040', '--color-warning-light': 'rgba(224,160,64,0.14)',
+      '--color-danger': '#f06a80', '--color-danger-light': 'rgba(240,106,128,0.14)', '--color-scrim': 'rgba(0,0,0,0.45)',
+      '--surface-page': '#1d1d2b', '--surface-section': '#242436', '--surface-card': '#1d1d2b', '--surface-sunken': '#15151f',
+      '--text-body': '#ececf6', '--text-muted': '#a8a8c6', '--text-faint': '#80809f',
+      '--shadow-sm': '0 1px 2px rgba(0,0,0,0.3)', '--shadow-md': '0 4px 12px rgba(0,0,0,0.35)', '--shadow-lg': '0 8px 32px rgba(0,0,0,0.45)', '--shadow-xl': '0 20px 60px rgba(0,0,0,0.55)',
+      colorScheme: 'dark', color: '#ececf6', borderRadius: '24px', background: '#15151f'
+    };
+    const mode = this.props.themes || 'both';
+    const list = [];
+    if (mode !== 'dark') list.push({ style: { colorScheme: 'light' } });
+    if (mode !== 'light') list.push({ style: dark });
+    return { appName: this.props.appName || 'Spank', themes: list };
+  }
+}
+</script>
+</body>
+</html>

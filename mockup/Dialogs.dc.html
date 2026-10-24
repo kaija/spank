@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/effects.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/css/base.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/css/components.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/css/ui.css">
+  <script src="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/_ds_bundle.js"></script>
+  <script src="spank-icons.js"></script>
+</helmet>
+<div role="dialog" aria-modal="true" aria-labelledby="dlg-title" style="width:100%;background:var(--color-bg);color:var(--text-body);font-family:var(--font-sans);font-size:13px;line-height:1.5;border-radius:12px;border:1px solid var(--color-border-strong);box-shadow:var(--shadow-xl);padding:20px 22px 18px">
+  <div style="display:flex;gap:14px;align-items:flex-start">
+    <span style="flex:none;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:8px;background:{{ head.bg }};color:{{ head.color }}">{{ head.icon }}</span>
+    <div style="flex:1;min-width:0">
+      <h2 id="dlg-title" style="margin:0;font-size:15px;font-weight:600;letter-spacing:-0.01em">{{ head.title }}</h2>
+      <p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">{{ head.sub }}</p>
+    </div>
+  </div>
+
+  <sc-if value="{{ isPack }}" hint-placeholder-val="{{ true }}">
+    <dl style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 16px;margin:16px 0 0;font-size:12px">
+      <dt style="color:var(--text-faint)">作者</dt><dd style="margin:0">小林音效工作室</dd>
+      <dt style="color:var(--text-faint)">授權</dt><dd style="margin:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span>CC BY 4.0 — 可商用，需標示作者</span><a href="#" style="color:var(--color-accent);text-decoration:none">查看全文 →</a></dd>
+      <dt style="color:var(--text-faint)">大小</dt><dd style="margin:0">5 個音效 · 1.8 MB</dd>
+    </dl>
+    <div role="list" aria-label="包含的音效" style="margin-top:14px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-bg-secondary);max-height:200px;overflow:auto">
+      <sc-for list="{{ sounds }}" as="s" hint-placeholder-count="5">
+        <div role="listitem" style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-top:{{ s.divider }}">
+          <button type="button" aria-label="{{ s.playLabel }}" onClick="{{ s.play }}" style="display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;border:1px solid var(--color-border-strong);background:var(--color-bg);color:{{ s.playColor }};cursor:pointer">{{ s.playIcon }}</button>
+          <span style="flex:1;min-width:0;font-weight:500">{{ s.name }}</span>
+          <sc-if value="{{ s.conflict }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;color:var(--color-warning)">同名，將存為「貓咪抗議 2」</span></sc-if>
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint)">{{ s.dur }}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="margin-top:14px">
+      <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Checkbox" checked="{{ makeProfile }}" on-change="{{ toggleMake }}" label="一併建立 Profile「動物園驚魂」" hint-size="100%,22px"></x-import>
+      <p style="margin:4px 0 0 28px;font-size:11px;color:var(--text-faint)">依照包內建議，把音效對應到七個事件。之後可以自由修改。</p>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isInvalid }}" hint-placeholder-val="{{ false }}">
+    <div role="list" aria-label="驗證失敗的項目" style="margin-top:16px;border:1px solid rgba(209,67,91,0.2);border-radius:12px;background:var(--color-danger-light)">
+      <sc-for list="{{ errors }}" as="e" hint-placeholder-count="3">
+        <div role="listitem" style="display:flex;gap:10px;padding:9px 12px;border-top:{{ e.divider }}">
+          <span style="flex:none;color:var(--color-danger);margin-top:1px">{{ e.icon }}</span>
+          <div style="min-width:0"><div style="font-weight:500">{{ e.title }}</div><div style="font-size:11px;color:var(--text-muted)">{{ e.sub }}</div></div>
+        </div>
+      </sc-for>
+    </div>
+    <p style="margin:12px 0 0;font-size:12px;color:var(--text-muted)">沒有任何檔案被匯入。請聯絡音效包作者取得新版本。</p>
+  </sc-if>
+
+  <sc-if value="{{ isDelete }}" hint-placeholder-val="{{ false }}">
+    <div style="margin-top:14px;padding:10px 12px;border-radius:8px;background:var(--color-warning-light);display:flex;gap:10px">
+      <span style="flex:none;color:var(--color-warning);margin-top:1px">{{ icWarn }}</span>
+      <div style="font-size:12px"><div style="font-weight:600">這是目前使用中的 Profile</div><div style="color:var(--text-muted)">刪除後會自動切換回「毀滅」。音效本身會留在音效庫。</div></div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isUpdate }}" hint-placeholder-val="{{ false }}">
+    <div style="margin-top:14px;padding:12px 14px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-bg-secondary)">
+      <div style="font-size:11px;font-weight:600;color:var(--text-faint);margin-bottom:6px">1.1.0 更新內容</div>
+      <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:12px">
+        <li>新事件「蓋子半開晃動」，給喜歡邊走邊拿筆電的人</li>
+        <li>拍打偵測在 M3 MacBook Air 上更準</li>
+        <li>修正：安靜時段跨午夜時偶爾提早結束</li>
+      </ul>
+    </div>
+    <sc-if value="{{ downloading }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:12px"><x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Progress" value="{{ dl }}" label="下載中…" hint-size="100%,24px"></x-import></div>
+    </sc-if>
+    <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Checkbox" checked="{{ autoInstall }}" on-change="{{ toggleAuto }}" label="以後自動下載並安裝" hint-size="100%,22px" style="margin-top:12px"></x-import>
+  </sc-if>
+
+  <div style="display:flex;align-items:center;gap:8px;margin-top:20px">
+    <sc-if value="{{ isUpdate }}" hint-placeholder-val="{{ false }}">
+      <button type="button" style="padding:0;border:none;background:none;font-family:inherit;font-size:12px;color:var(--text-muted);cursor:pointer">略過這個版本</button>
+    </sc-if>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <sc-if value="{{ hasCancel }}" hint-placeholder-val="{{ true }}">
+        <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" hint-size="60px,30px">{{ cancelLabel }}</x-import>
+      </sc-if>
+      <button type="button" onClick="{{ primary }}" autoFocus="{{ true }}" style="padding:6px 16px;font-family:inherit;font-size:13px;font-weight:500;color:#fff;background:{{ primaryBg }};border:1px solid transparent;border-radius:999px;cursor:pointer">{{ primaryLabel }}</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:440,&quot;height&quot;:480},&quot;appName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Spank&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;kind&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;pack&quot;,&quot;invalid&quot;,&quot;delete&quot;,&quot;update&quot;],&quot;default&quot;:&quot;pack&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { makeProfile: true, playing: null, autoInstall: false, dl: 0, downloading: false };
+  componentDidMount() { this.iconPoll = setInterval(() => { if (window.SpankIcons) { clearInterval(this.iconPoll); this.forceUpdate(); } }, 100); }
+  componentWillUnmount() { clearInterval(this.iconPoll); clearInterval(this.dlT); clearTimeout(this.pt); }
+  ic(n, s, sw) { return React.createElement('svg', { width: s || 16, height: s || 16, viewBox: '0 0 24 24', fill: n === 'play' ? 'currentColor' : 'none', stroke: 'currentColor', strokeWidth: sw || 1.75, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true, style: { display: 'block', flex: 'none' }, dangerouslySetInnerHTML: { __html: (window.SpankIcons || {})[n] || '' } }); }
+  renderVals() {
+    const s = this.state, I = (n, z, w) => this.ic(n, z, w), app = this.props.appName || 'Spank', k = this.props.kind || 'pack';
+    const H = {
+      pack: { icon: I('pack', 22), bg: 'var(--color-accent-light)', color: 'var(--color-accent)', title: '匯入「動物園驚魂」', sub: '動物園驚魂.spankpack · 版本 1.2' },
+      invalid: { icon: I('warn', 22), bg: 'var(--color-danger-light)', color: 'var(--color-danger)', title: '無法匯入「怪怪的包.spankpack」', sub: '這個音效包沒通過驗證。' },
+      delete: { icon: I('trash', 22), bg: 'var(--color-danger-light)', color: 'var(--color-danger)', title: '刪除「辦公室安靜版」？', sub: '這個動作無法復原。' },
+      update: { icon: I('download', 22), bg: 'var(--color-accent-light)', color: 'var(--color-accent)', title: app + ' 1.1.0 可以更新了', sub: '你目前使用 1.0.2。更新約 4 MB，裝完會自動重新開啟。' }
+    }[k];
+    const snd = [['貓咪抗議', '1.5s', true], ['鴨子被踩', '0.8s'], ['驢子嘆氣', '2.2s'], ['鸚鵡學「好痛」', '1.1s'], ['海獅鼓掌', '3.0s']];
+    return {
+      head: H, isPack: k === 'pack', isInvalid: k === 'invalid', isDelete: k === 'delete', isUpdate: k === 'update', icWarn: I('warn', 15),
+      sounds: snd.map(([name, dur, conflict], i) => { const pl = s.playing === i; return { name, dur, conflict: !!conflict, divider: i ? '1px solid var(--color-border)' : 'none', playIcon: I(pl ? 'stop' : 'play', 9, 2), playColor: pl ? 'var(--color-accent)' : 'var(--text-muted)', playLabel: '試聽 ' + name, play: () => { clearTimeout(this.pt); this.setState({ playing: pl ? null : i }); this.pt = setTimeout(() => this.setState({ playing: null }), 1400); } }; }),
+      makeProfile: s.makeProfile, toggleMake: () => this.setState({ makeProfile: !s.makeProfile }),
+      errors: [
+        { icon: I('file', 15), title: '缺少授權資訊', sub: '找不到 license.json，無法確認音效能不能用。' },
+        { icon: I('clock', 15), title: '「尖叫 03.wav」長 14 秒', sub: '超過每段 10 秒的上限。' },
+        { icon: I('shield', 15), title: '內容與清單不符', sub: 'manifest 列了 6 個檔案，實際只有 5 個。檔案可能損毀。' }
+      ].map((e, i) => ({ ...e, divider: i ? '1px solid rgba(209,67,91,0.15)' : 'none' })),
+      autoInstall: s.autoInstall, toggleAuto: () => this.setState({ autoInstall: !s.autoInstall }),
+      downloading: s.downloading, dl: s.dl,
+      hasCancel: k !== 'invalid',
+      cancelLabel: k === 'update' ? '稍後提醒' : '取消',
+      primaryLabel: { pack: s.makeProfile ? '匯入 5 個音效並建立 Profile' : '匯入 5 個音效', invalid: '好', delete: '刪除', update: s.downloading ? '下載中…' : '安裝並重新開啟' }[k],
+      primaryBg: k === 'delete' ? 'var(--color-danger)' : 'var(--color-accent)',
+      primary: () => { if (k === 'update' && !s.downloading) { this.setState({ downloading: true, dl: 0 }); this.dlT = setInterval(() => this.setState(st => { if (st.dl >= 100) { clearInterval(this.dlT); return {}; } return { dl: st.dl + 4 }; }), 80); } }
+    };
+  }
+}
+</script>
+</body>
+</html>

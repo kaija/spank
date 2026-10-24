@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/effects.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/css/base.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/css/ui.css">
+  <script src="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/_ds_bundle.js"></script>
+  <script src="spank-icons.js"></script>
+  <style>
+    @keyframes spank-shake{0%,100%{transform:translateX(0) rotate(0)}20%{transform:translateX(-2px) rotate(-8deg)}40%{transform:translateX(2px) rotate(7deg)}60%{transform:translateX(-1.5px) rotate(-5deg)}80%{transform:translateX(1px) rotate(3deg)}}
+    @keyframes spank-flash{0%,100%{opacity:1}50%{opacity:0.35}}
+  </style>
+</helmet>
+<div style="position:relative;width:100%;height:100%;min-height:300px;overflow:hidden;border-radius:12px;background:var(--surface-sunken);font-family:var(--font-sans);font-size:13px;color:var(--text-body);border:1px solid var(--color-border)">
+  <div role="menubar" aria-label="選單列" style="height:26px;display:flex;align-items:center;gap:2px;padding:0 10px;background:var(--color-bg-secondary);border-bottom:1px solid var(--color-border);font-size:12.5px">
+    <span style="font-weight:600;padding:0 8px">Finder</span>
+    <span style="padding:0 8px;color:var(--text-muted)">檔案</span>
+    <span style="padding:0 8px;color:var(--text-muted)">編輯</span>
+    
+    <div style="margin-left:auto;display:flex;align-items:center;gap:2px">
+      <button type="button" aria-haspopup="menu" aria-expanded="{{ open }}" aria-label="{{ iconLabel }}" onClick="{{ toggle }}" onKeyDown="{{ iconKey }}" style="position:relative;display:flex;align-items:center;gap:4px;height:22px;padding:0 7px;border:none;border-radius:5px;background:{{ iconBg }};color:var(--text-body);cursor:pointer">
+        <span style="display:flex;animation:{{ anim }}">{{ glyph }}</span>
+        <sc-if value="{{ hasDot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;right:4px;top:3px;width:6px;height:6px;border-radius:999px;background:{{ dotColor }};box-shadow:0 0 0 1.5px var(--color-bg-secondary)"></span></sc-if>
+      </button>
+      <span style="display:flex;padding:0 6px;color:var(--text-body)">{{ icWifi }}</span>
+            <span style="padding:0 8px">14:05</span>
+    </div>
+  </div>
+
+  <sc-if value="{{ showTip }}" hint-placeholder-val="{{ false }}">
+    <div role="tooltip" style="position:absolute;top:32px;right:40px;padding:5px 9px;font-size:11.5px;font-weight:500;color:var(--color-bg);background:var(--text-body);border-radius:6px;box-shadow:var(--shadow-md);white-space:nowrap">{{ tip }}</div>
+  </sc-if>
+
+  <sc-if value="{{ open }}" hint-placeholder-val="{{ true }}">
+    <div role="menu" aria-label="{{ appName }}" onKeyDown="{{ menuKey }}" style="position:absolute;top:29px;right:34px;width:250px;padding:5px;background:var(--color-bg);border:1px solid var(--color-border-strong);border-radius:10px;box-shadow:var(--shadow-lg)">
+      <div role="presentation" style="display:flex;align-items:flex-start;gap:9px;padding:6px 9px 8px">
+        <span style="flex:none;width:8px;height:8px;margin-top:5px;border-radius:999px;background:{{ statusColor }}"></span>
+        <div style="min-width:0">
+          <div style="font-weight:600">{{ statusTitle }}</div>
+          <div style="font-size:11.5px;color:var(--text-muted)">{{ statusSub }}</div>
+        </div>
+      </div>
+      <div style="height:1px;margin:4px 8px;background:var(--color-border)"></div>
+      <sc-for list="{{ items }}" as="it" hint-placeholder-count="6">
+        <sc-if value="{{ it.sep }}" hint-placeholder-val="{{ false }}"><div role="separator" style="height:1px;margin:4px 8px;background:var(--color-border)"></div></sc-if>
+        <sc-if value="{{ it.real }}" hint-placeholder-val="{{ true }}">
+          <div style="position:relative" onMouseEnter="{{ it.enter }}">
+            <button type="button" role="menuitem" aria-haspopup="{{ it.popup }}" aria-expanded="{{ it.expanded }}" onClick="{{ it.act }}" style="display:flex;align-items:center;gap:8px;width:100%;padding:5px 9px;border:none;border-radius:6px;font-family:inherit;font-size:13px;text-align:left;cursor:default;background:{{ it.bg }};color:{{ it.color }}">
+              <span style="flex:1">{{ it.label }}</span>
+              <span style="font-size:12px;color:{{ it.scColor }};font-family:var(--font-sans)">{{ it.shortcut }}</span>
+              <sc-if value="{{ it.hasSub }}" hint-placeholder-val="{{ false }}"><span style="display:flex;color:{{ it.scColor }}">{{ icChev }}</span></sc-if>
+            </button>
+            <sc-if value="{{ it.expanded }}" hint-placeholder-val="{{ false }}">
+              <div role="menu" aria-label="{{ it.label }}" style="position:absolute;top:-6px;right:calc(100% + 6px);width:208px;padding:5px;background:var(--color-bg);border:1px solid var(--color-border-strong);border-radius:10px;box-shadow:var(--shadow-lg)">
+                <sc-for list="{{ it.subs }}" as="sb" hint-placeholder-count="5">
+                  <sc-if value="{{ sb.sep }}" hint-placeholder-val="{{ false }}"><div role="separator" style="height:1px;margin:4px 8px;background:var(--color-border)"></div></sc-if>
+                  <sc-if value="{{ sb.head }}" hint-placeholder-val="{{ false }}"><div style="padding:4px 9px 2px;font-size:11px;font-weight:600;color:var(--text-faint)">{{ sb.label }}</div></sc-if>
+                  <sc-if value="{{ sb.real }}" hint-placeholder-val="{{ true }}">
+                    <button type="button" role="{{ sb.role }}" aria-checked="{{ sb.checked }}" onMouseEnter="{{ sb.enter }}" onClick="{{ sb.act }}" style="display:flex;align-items:center;gap:8px;width:100%;padding:5px 9px;border:none;border-radius:6px;font-family:inherit;font-size:13px;text-align:left;cursor:default;background:{{ sb.bg }};color:{{ sb.color }}">
+                      <span style="width:14px;display:flex">{{ sb.mark }}</span>
+                      <span style="flex:1">{{ sb.label }}</span>
+                      <span style="font-size:11px;color:{{ sb.scColor }}">{{ sb.note }}</span>
+                    </button>
+                  </sc-if>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+      </sc-for>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:560,&quot;height&quot;:360},&quot;appName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Spank&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;active&quot;,&quot;muted&quot;,&quot;paused&quot;,&quot;partial&quot;],&quot;default&quot;:&quot;active&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;reason&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;開會中&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;open&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;sub&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;&quot;,&quot;profile&quot;,&quot;preview&quot;],&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;subHi&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;tooltip&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;demoShake&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  state = { open: this.props.open !== false, sub: this.props.sub || null, hi: this.props.sub ? (this.props.sub === 'profile' ? 'profile' : 'preview') : null, subHi: this.props.subHi || null, paused: this.props.state === 'paused', profile: 'office', shake: 0, flash: false };
+  componentDidMount() {
+    this.iconPoll = setInterval(() => { if (window.SpankIcons) { clearInterval(this.iconPoll); this.forceUpdate(); } }, 100);
+    this.reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (this.props.demoShake) this.demo = setInterval(() => this.hit(), 2600);
+  }
+  componentWillUnmount() { clearInterval(this.iconPoll); clearInterval(this.demo); clearTimeout(this.ht); }
+  ic(n, s, sw) { return React.createElement('svg', { width: s || 16, height: s || 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: sw || 1.75, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true, style: { display: 'block', flex: 'none' }, dangerouslySetInnerHTML: { __html: (window.SpankIcons || {})[n] || '' } }); }
+  hit() { clearTimeout(this.ht); this.setState({ shake: this.state.shake + 1, flash: true }); this.ht = setTimeout(() => this.setState({ flash: false }), 450); }
+  renderVals() {
+    const s = this.state, I = (n, z, w) => this.ic(n, z, w), app = this.props.appName || 'Spank';
+    const st = s.paused ? 'paused' : (this.props.state === 'paused' ? 'active' : (this.props.state || 'active'));
+    const reason = this.props.reason || '開會中';
+    const M = {
+      active: { glyph: 'app', title: '運作中', sub: 'Profile：辦公室安靜版', color: 'var(--color-success)', tip: app + ' — 運作中' },
+      muted: { glyph: 'appMuted', title: '已靜音 — ' + reason, sub: reason === '開會中' ? 'Zoom 正在使用麥克風' : '規則結束後自動恢復', color: 'var(--color-warning)', tip: app + ' — 已靜音：' + reason },
+      paused: { glyph: 'appPaused', title: '已暫停', sub: '按「繼續」恢復偵測', color: 'var(--text-faint)', tip: app + ' — 已暫停' },
+      partial: { glyph: 'appPartial', title: '運作中 · 部分功能無法使用', sub: '此機型沒有螢幕角度感測器', color: 'var(--color-warning)', tip: app + ' — 此機型不支援螢幕角度事件' }
+    }[st];
+    const hiBg = 'var(--color-accent)';
+    const mk = (id, label, extra) => Object.assign({ real: true, sep: false, label, hasSub: false, bg: s.hi === id ? hiBg : 'transparent', color: s.hi === id ? '#fff' : 'var(--text-body)', scColor: s.hi === id ? 'rgba(255,255,255,0.8)' : 'var(--text-faint)', expanded: s.sub === id, popup: undefined, enter: () => this.setState({ hi: id, sub: (extra && extra.hasSub) ? id : null }), act: () => {} }, extra || {});
+    const sep = { sep: true, real: false };
+    const profiles = [['destroy', '毀滅'], ['whine', '哀哀叫'], ['classic', '經典'], null, ['office', '辦公室安靜版'], ['night', '深夜模式']];
+    const evs = [['打開螢幕', '玻璃碎裂 01'], ['闔上螢幕', '嗚…'], ['掰過頭', '金屬斷裂'], ['輕拍', '嗯？'], ['中拍', '哎唷'], ['重拍', '救命啊'], ['連擊', '不要再打了！！']];
+    const sub = (key, label, extra) => Object.assign({ real: true, sep: false, head: false, label, role: 'menuitem', bg: s.subHi === key ? hiBg : 'transparent', color: s.subHi === key ? '#fff' : 'var(--text-body)', scColor: s.subHi === key ? 'rgba(255,255,255,0.8)' : 'var(--text-faint)', mark: null, note: '', enter: () => this.setState({ subHi: key }) }, extra);
+    const items = [
+      mk('pause', s.paused ? '繼續' : '暫停 ' + app, { shortcut: '⌘P', act: () => this.setState({ paused: !s.paused }) }),
+      mk('profile', 'Profile', { hasSub: true, popup: 'menu', subs: [{ head: true, label: '內建' }].concat(profiles.map(p => p ? sub('p' + p[0], p[1], { role: 'menuitemradio', checked: s.profile === p[0], mark: s.profile === p[0] ? I('check', 14, 2.2) : null, act: () => this.setState({ profile: p[0] }) }) : { sep: true })).map(x => x.head ? Object.assign({ real: false, sep: false }, x) : x.sep ? { sep: true, real: false, head: false } : x) }),
+      mk('preview', '試聽', { hasSub: true, popup: 'menu', subs: evs.map(([e, n], i) => sub('e' + i, e, { note: n, act: () => this.hit() })) }),
+      sep,
+      mk('settings', '設定…', { shortcut: '⌘,', act: () => this.props.onOpenSettings && this.props.onOpenSettings() }),
+      mk('quit', '結束 ' + app, { shortcut: '⌘Q' })
+    ];
+    items.forEach(it => { if (it.subs) it.subs = it.subs.map(x => Object.assign({ head: false, sep: false, real: false }, x)); });
+    const shaking = s.flash;
+    return {
+      appName: app, open: s.open, items, icChev: I('chevR', 12, 2), icWifi: I('wifi', 15), icBattery: I('battery', 18),
+      glyph: I(M.glyph, 17, 1.8), iconLabel: M.tip, tip: M.tip,
+      iconBg: s.open ? 'var(--color-border-strong)' : 'transparent',
+      hasDot: st === 'muted' || st === 'partial', dotColor: 'var(--color-warning)',
+      showTip: !s.open && this.props.tooltip !== false,
+      anim: shaking ? (this.reduce ? 'spank-flash 0.45s ease' : 'spank-shake 0.45s ease') : 'none',
+      statusTitle: M.title, statusSub: M.sub, statusColor: M.color,
+      toggle: () => this.setState({ open: !s.open, sub: null, hi: null }),
+      iconKey: e => { if (e.key === 'ArrowDown') { e.preventDefault(); this.setState({ open: true, hi: 'pause' }); } },
+      menuKey: e => {
+        const order = ['pause', 'profile', 'preview', 'settings', 'quit'];
+        const i = order.indexOf(s.hi);
+        if (e.key === 'ArrowDown') { e.preventDefault(); this.setState({ hi: order[(i + 1) % order.length], sub: null }); }
+        if (e.key === 'ArrowUp') { e.preventDefault(); this.setState({ hi: order[(i - 1 + order.length) % order.length], sub: null }); }
+        if (e.key === 'ArrowLeft' && (s.hi === 'profile' || s.hi === 'preview')) this.setState({ sub: s.hi });
+        if (e.key === 'ArrowRight' || e.key === 'Escape') this.setState(e.key === 'Escape' && !s.sub ? { open: false } : { sub: null });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

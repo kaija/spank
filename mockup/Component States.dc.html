@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/effects.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/css/base.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/css/ui.css">
+  <script src="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/_ds_bundle.js"></script>
+  <script src="spank-icons.js"></script>
+  <style>
+    .switch-knob{display:block}
+    @keyframes spank-shake{0%,100%{transform:translateX(0) rotate(0)}20%{transform:translateX(-2px) rotate(-8deg)}40%{transform:translateX(2px) rotate(7deg)}60%{transform:translateX(-1.5px) rotate(-5deg)}80%{transform:translateX(1px) rotate(3deg)}}
+    @keyframes spank-flash{0%,100%{opacity:1}50%{opacity:0.35}}
+  </style>
+</helmet>
+<div style="width:100%;display:flex;flex-direction:column;gap:22px;padding:24px;background:var(--color-bg);color:var(--text-body);font-family:var(--font-sans);font-size:13px;border-radius:16px;border:1px solid var(--color-border)">
+
+  <section style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;align-items:start">
+    <h3 style="margin:4px 0 0;font-size:12px;font-weight:600;color:var(--text-faint)">選單列圖示</h3>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
+      <sc-for list="{{ icons }}" as="i" hint-placeholder-count="4">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;width:92px">
+          <span style="position:relative;display:flex;align-items:center;justify-content:center;width:44px;height:26px;border-radius:6px;background:var(--color-bg-secondary);border:1px solid var(--color-border);color:var(--text-body)">{{ i.glyph }}<sc-if value="{{ i.dot }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;right:10px;top:4px;width:6px;height:6px;border-radius:999px;background:var(--color-warning);box-shadow:0 0 0 1.5px var(--color-bg-secondary)"></span></sc-if></span>
+          <span style="font-size:11px;font-weight:600">{{ i.name }}</span>
+          <span style="font-size:10.5px;color:var(--text-faint);text-align:center;line-height:1.35">{{ i.note }}</span>
+        </div>
+      </sc-for>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;width:150px;margin-left:12px;padding-left:20px;border-left:1px solid var(--color-border)">
+        <span style="display:flex;align-items:center;justify-content:center;width:44px;height:26px;border-radius:6px;background:var(--color-bg-secondary);border:1px solid var(--color-border);color:var(--text-body)"><span style="display:flex;animation:{{ anim }}">{{ appGlyph }}</span></span>
+        <button type="button" onClick="{{ hit }}" style="padding:3px 10px;font-family:inherit;font-size:11px;font-weight:500;border:1px solid var(--color-border-strong);border-radius:999px;background:var(--color-bg);color:var(--text-body);cursor:pointer">拍一下看看</button>
+        <span style="font-size:10.5px;color:var(--text-faint);text-align:center;line-height:1.35">被打時抖 0.45 秒；減少動態效果時改為淡出淡入一次</span>
+      </div>
+    </div>
+  </section>
+
+  <section style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;align-items:start">
+    <h3 style="margin:4px 0 0;font-size:12px;font-weight:600;color:var(--text-faint)">開關</h3>
+    <div style="display:flex;gap:28px;flex-wrap:wrap">
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start"><x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Switch" size="sm" checked="{{ false }}" on-change="{{ noop }}" aria-label="關" hint-size="34px,20px"></x-import><span style="font-size:11px;color:var(--text-faint)">關</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start"><x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Switch" size="sm" checked="{{ true }}" on-change="{{ noop }}" aria-label="開" hint-size="34px,20px"></x-import><span style="font-size:11px;color:var(--text-faint)">開</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start"><span style="display:flex;border-radius:999px;box-shadow:0 0 0 3px var(--color-accent-glow)"><x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Switch" size="sm" checked="{{ true }}" on-change="{{ noop }}" aria-label="焦點" hint-size="34px,20px"></x-import></span><span style="font-size:11px;color:var(--text-faint)">鍵盤焦點</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start"><x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Switch" size="sm" checked="{{ true }}" disabled="{{ true }}" on-change="{{ noop }}" aria-label="停用" hint-size="34px,20px"></x-import><span style="font-size:11px;color:var(--text-faint)">停用（內建 Profile）</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start"><x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Switch" size="sm" checked="{{ false }}" disabled="{{ true }}" on-change="{{ noop }}" aria-label="權限被拒" hint-size="34px,20px"></x-import><span style="font-size:11px;color:var(--text-faint)">停用（權限被拒）</span></div>
+    </div>
+  </section>
+
+  <section style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;align-items:start">
+    <h3 style="margin:4px 0 0;font-size:12px;font-weight:600;color:var(--text-faint)">音效 chip</h3>
+    <div style="display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start">
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="display:inline-flex;align-items:center;gap:7px;padding:5px 12px;font-size:13px;font-weight:500;color:var(--text-muted);background:var(--color-bg-tertiary);border:1px solid var(--color-border);border-radius:999px">{{ icPlay }}喔！<span style="color:var(--text-faint);display:flex">{{ icX }}</span></span><span style="font-size:11px;color:var(--text-faint)">預設</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="display:inline-flex;align-items:center;gap:7px;padding:5px 12px;font-size:13px;font-weight:500;color:var(--text-body);background:var(--color-bg-tertiary);border:1px solid var(--color-border-strong);border-radius:999px">{{ icPlay }}喔！<span style="color:var(--text-body);display:flex">{{ icX }}</span></span><span style="font-size:11px;color:var(--text-faint)">hover</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="display:inline-flex;align-items:center;gap:7px;padding:5px 12px;font-size:13px;font-weight:500;color:var(--color-accent);background:var(--color-accent-light);border:1px solid var(--color-accent-glow);border-radius:999px">{{ icStop }}救命啊<span style="display:flex">{{ icX }}</span></span><span style="font-size:11px;color:var(--text-faint)">播放中</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="display:inline-flex;align-items:center;gap:7px;padding:5px 12px;font-size:13px;font-weight:500;color:var(--text-body);background:var(--color-bg);border:1px solid var(--color-accent);border-radius:999px;box-shadow:var(--shadow-lg);transform:rotate(-3deg) translateY(-2px)">{{ icGrip }}金屬斷裂</span><span style="font-size:11px;color:var(--text-faint)">拖曳中</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="display:inline-flex;align-items:center;gap:7px;padding:5px 12px;font-size:13px;font-weight:500;color:var(--text-muted);background:var(--color-bg-tertiary);border:1px solid var(--color-border);border-radius:999px">{{ icPlay }}玻璃碎裂 01</span><span style="font-size:11px;color:var(--text-faint)">唯讀（無移除）</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="display:inline-flex;align-items:center;gap:7px;padding:5px 12px;font-size:13px;font-weight:500;color:var(--color-danger);background:var(--color-danger-light);border:1px solid rgba(209,67,91,0.2);border-radius:999px">{{ icWarn }}老闆來了<span style="display:flex">{{ icX }}</span></span><span style="font-size:11px;color:var(--text-faint)">檔案遺失</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;font-size:12px;color:var(--color-accent);border:1px dashed var(--color-accent);background:var(--color-accent-light);border-radius:999px">{{ icPlus }}放開以加入</span><span style="font-size:11px;color:var(--text-faint)">事件列 · 拖入中</span></div>
+    </div>
+  </section>
+
+  <section style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;align-items:start">
+    <h3 style="margin:4px 0 0;font-size:12px;font-weight:600;color:var(--text-faint)">拖放區</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px">
+      <sc-for list="{{ zones }}" as="z" hint-placeholder-count="4">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:92px;padding:10px;text-align:center;border-radius:12px;border:1.5px dashed {{ z.border }};background:{{ z.bg }};color:{{ z.color }}">
+            <span style="display:flex">{{ z.icon }}</span>
+            <span style="font-size:12px;font-weight:600">{{ z.title }}</span>
+          </div>
+          <span style="font-size:11px;color:var(--text-faint)">{{ z.name }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;align-items:start">
+    <h3 style="margin:4px 0 0;font-size:12px;font-weight:600;color:var(--text-faint)">校準步驟</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px">
+      <sc-for list="{{ cals }}" as="c" hint-placeholder-count="4">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="position:relative;height:92px;border-radius:12px;background:var(--color-bg-secondary);border:1px solid {{ c.border }};overflow:hidden">
+            <svg viewBox="0 0 200 92" preserveAspectRatio="none" width="100%" height="92" aria-hidden="true" style="display:block"><line x1="0" x2="200" y1="62" y2="62" style="stroke:var(--color-accent);stroke-width:1;stroke-dasharray:4 3;opacity:0.6"></line><polyline points="{{ c.pts }}" style="fill:none;stroke:{{ c.color }};stroke-width:1.5;vector-effect:non-scaling-stroke"></polyline></svg>
+            <span style="position:absolute;left:8px;top:8px;display:flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;background:var(--color-bg);border:1px solid var(--color-border);font-size:10.5px;font-weight:600;color:{{ c.color }}">{{ c.icon }}{{ c.pill }}</span>
+          </div>
+          <span style="font-size:11px;color:var(--text-faint)">{{ c.note }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;align-items:start">
+    <h3 style="margin:4px 0 0;font-size:12px;font-weight:600;color:var(--text-faint)">載入 / 錯誤 / 權限</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--color-bg-secondary);border:1px solid var(--color-border)"><x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Spinner" size="sm" label="讀取中" hint-size="14px,14px"></x-import><span style="font-size:12px">讀取音效庫…</span></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--color-bg-secondary);border:1px solid var(--color-border)"><x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Spinner" size="sm" label="等待感測器" hint-size="14px,14px"></x-import><span style="font-size:12px">正在連接感測器…</span></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--color-danger-light);border:1px solid rgba(209,67,91,0.2)"><span style="color:var(--color-danger)">{{ icWarn }}</span><span style="font-size:12px">感測器沒有回應。重新開機通常會好。</span></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--color-warning-light);border:1px solid rgba(192,122,18,0.2)"><span style="color:var(--color-warning)">{{ icLock }}</span><span style="font-size:12px">權限被拒絕 · 打開系統設定</span></div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:900,&quot;height&quot;:720}}">
+class Component extends DCLogic {
+  state = { flash: false };
+  componentDidMount() { this.iconPoll = setInterval(() => { if (window.SpankIcons) { clearInterval(this.iconPoll); this.forceUpdate(); } }, 100); this.reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+  componentWillUnmount() { clearInterval(this.iconPoll); clearTimeout(this.ht); }
+  ic(n, s, sw) { return React.createElement('svg', { width: s || 16, height: s || 16, viewBox: '0 0 24 24', fill: n === 'play' ? 'currentColor' : 'none', stroke: 'currentColor', strokeWidth: sw || 1.75, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true, style: { display: 'block', flex: 'none' }, dangerouslySetInnerHTML: { __html: (window.SpankIcons || {})[n] || '' } }); }
+  renderVals() {
+    const I = (n, z, w) => this.ic(n, z, w);
+    const wave = (spike, h) => { let p = []; for (let i = 0; i < 50; i++) { let v = 0.04 + ((i * 37) % 7) / 200; if (spike && i >= 30 && i < 36) v = h * Math.pow(0.5, i - 30); p.push(`${i * 200 / 49},${(88 - v * 80).toFixed(1)}`); } return p.join(' '); };
+    return {
+      anim: this.state.flash ? (this.reduce ? 'spank-flash 0.45s ease' : 'spank-shake 0.45s ease') : 'none',
+      hit: () => { clearTimeout(this.ht); this.setState({ flash: false }, () => { requestAnimationFrame(() => this.setState({ flash: true })); this.ht = setTimeout(() => this.setState({ flash: false }), 500); }); },
+      noop: () => {}, appGlyph: I('app', 17, 1.8),
+      icPlay: I('play', 11, 2), icStop: I('stop', 11, 2), icX: I('x', 13, 2.25), icGrip: I('grip', 13), icWarn: I('warn', 13), icPlus: I('plus', 12, 2), icLock: I('lock', 14),
+      icons: [
+        { name: '運作中', note: '小筆電皺眉臉', glyph: I('app', 17, 1.8) },
+        { name: '已靜音', note: '加斜線 + 橘點；原因在提示與選單第一行', glyph: I('appMuted', 17, 1.8), dot: true },
+        { name: '已暫停', note: '螢幕內兩條暫停線', glyph: I('appPaused', 17, 1.8) },
+        { name: '部分不支援', note: '驚嘆號 + 橘點', glyph: I('appPartial', 17, 1.8), dot: true }
+      ],
+      zones: [
+        { name: '待命', title: '把音效檔拖到這裡', border: 'var(--color-border-strong)', bg: 'transparent', color: 'var(--text-muted)', icon: I('upload', 18) },
+        { name: 'hover', title: '或按一下選擇檔案', border: 'var(--color-accent-glow)', bg: 'var(--color-bg-secondary)', color: 'var(--text-body)', icon: I('upload', 18) },
+        { name: '拖入中', title: '放開就收下 3 個檔案', border: 'var(--color-accent)', bg: 'var(--color-accent-light)', color: 'var(--color-accent)', icon: I('download', 18) },
+        { name: '錯誤', title: '.aiff 不在支援格式內', border: 'var(--color-danger)', bg: 'var(--color-danger-light)', color: 'var(--color-danger)', icon: I('x', 18, 2) }
+      ],
+      cals: [
+        { pill: '等待中', note: '等待 · 10 秒倒數', color: 'var(--text-muted)', border: 'var(--color-border)', icon: I('clock', 11, 2), pts: wave(false) },
+        { pill: '偵測中…', note: '偵測中 · 波形轉為主色', color: 'var(--color-accent)', border: 'var(--color-accent)', icon: I('refresh', 11, 2), pts: wave(true, 0.4) },
+        { pill: '偵測成功', note: '成功 · 顯示量到的 g 值', color: 'var(--color-success)', border: 'var(--color-success)', icon: I('check', 11, 2.4), pts: wave(true, 0.42) },
+        { pill: '不太對', note: '失敗 · 說明偏輕或偏重 + 重來', color: 'var(--color-danger)', border: 'var(--color-danger)', icon: I('x', 11, 2.4), pts: wave(true, 0.95) }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

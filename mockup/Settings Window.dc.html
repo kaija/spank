@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/tokens/effects.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/css/base.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/css/components.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/css/ui.css">
+  <link rel="stylesheet" href="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/styles.css">
+  <script src="_ds/arlo-ai-design-system-6316a602-9c76-4ace-a739-fcff8b15ffa7/_ds_bundle.js"></script>
+  <script src="spank-icons.js"></script>
+  <style>.switch-knob{display:block}</style>
+</helmet>
+<div role="application" aria-label="{{ winLabel }}" style="position:relative;width:100%;height:100%;min-width:640px;min-height:440px;display:flex;background:var(--color-bg);color:var(--text-body);font-family:var(--font-sans);font-size:13px;line-height:1.45;border-radius:12px;overflow:hidden;border:1px solid var(--color-border-strong);box-shadow:var(--shadow-xl)">
+
+  <nav aria-label="設定頁面" style="flex:none;width:188px;display:flex;flex-direction:column;background:var(--color-bg-secondary);border-right:1px solid var(--color-border);padding:14px 10px 12px">
+    <div style="display:flex;gap:8px;padding:0 6px 18px">
+      <span aria-label="關閉視窗" style="width:12px;height:12px;border-radius:999px;background:#ff5f57"></span>
+      <span style="width:12px;height:12px;border-radius:999px;background:#febc2e"></span>
+      <span style="width:12px;height:12px;border-radius:999px;background:#28c840"></span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
+        <button type="button" onClick="{{ n.go }}" aria-current="{{ n.current }}" style="display:flex;align-items:center;gap:9px;width:100%;padding:7px 10px;border:none;border-radius:8px;font-family:inherit;font-size:13px;text-align:left;cursor:pointer;background:{{ n.bg }};color:{{ n.color }};font-weight:{{ n.fw }}">{{ n.icon }}<span>{{ n.label }}</span></button>
+      </sc-for>
+    </div>
+    <div style="margin-top:auto;display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:12px;color:var(--text-muted)">
+      <span style="width:7px;height:7px;border-radius:999px;background:{{ statusDot }}"></span>
+      <span>{{ statusText }}</span>
+    </div>
+  </nav>
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="flex:none;height:52px;display:flex;align-items:center;gap:10px;padding:0 16px 0 20px;border-bottom:1px solid var(--color-border)">
+      <h1 style="font-size:15px;font-weight:600;letter-spacing:-0.01em;margin:0">{{ pageTitle }}</h1>
+      <sc-if value="{{ isLibrary }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" on-click="{{ openImportPack }}" hint-size="120px,30px">匯入音效包…</x-import>
+          <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" on-click="{{ openExport }}" hint-size="80px,30px">匯出…</x-import>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isSensors }}" hint-placeholder-val="{{ false }}">
+        <span style="margin-left:auto;font-size:12px;color:var(--text-faint)">{{ machine }}</span>
+      </sc-if>
+    </header>
+
+    <!-- PROFILES -->
+    <sc-if value="{{ isProfiles }}" hint-placeholder-val="{{ true }}">
+      <div style="flex:1;min-height:0;display:flex">
+        <div style="flex:none;width:176px;display:flex;flex-direction:column;border-right:1px solid var(--color-border)">
+          <div role="listbox" aria-label="Profile 清單" style="flex:1;overflow:auto;padding:10px 8px">
+            <div style="padding:4px 8px 6px;font-size:11px;font-weight:600;color:var(--text-faint)">內建</div>
+            <sc-for list="{{ builtinList }}" as="p" hint-placeholder-count="3">
+              <button type="button" role="option" aria-selected="{{ p.selected }}" onClick="{{ p.pick }}" style="display:flex;align-items:center;gap:8px;width:100%;padding:7px 8px;border:none;border-radius:8px;font-family:inherit;text-align:left;cursor:pointer;background:{{ p.bg }};color:var(--text-body)">
+                <span style="flex:1;min-width:0">
+                  <span style="display:block;font-size:13px;font-weight:{{ p.fw }}">{{ p.name }}</span>
+                  <span style="display:block;font-size:11px;color:var(--text-faint)">{{ p.desc }}</span>
+                </span>
+                <span title="唯讀" aria-label="唯讀" style="color:var(--text-faint)">{{ lockIcon }}</span>
+              </button>
+            </sc-for>
+            <div style="padding:14px 8px 6px;font-size:11px;font-weight:600;color:var(--text-faint)">自訂</div>
+            <sc-for list="{{ customList }}" as="p" hint-placeholder-count="2">
+              <div style="position:relative">
+                <sc-if value="{{ p.renaming }}" hint-placeholder-val="{{ false }}">
+                  <input aria-label="重新命名 Profile" value="{{ renameVal }}" onChange="{{ onRenameChange }}" onKeyDown="{{ onRenameKey }}" onBlur="{{ commitRename }}" autoFocus="{{ true }}" style="width:100%;font-family:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--color-accent);border-radius:8px;box-shadow:0 0 0 3px var(--color-accent-light);background:var(--color-bg);color:var(--text-body);outline:none">
+                </sc-if>
+                <sc-if value="{{ p.notRenaming }}" hint-placeholder-val="{{ true }}">
+                  <button type="button" role="option" aria-selected="{{ p.selected }}" onClick="{{ p.pick }}" onDoubleClick="{{ p.rename }}" title="按兩下重新命名" style="display:flex;align-items:center;gap:8px;width:100%;padding:7px 8px;border:none;border-radius:8px;font-family:inherit;text-align:left;cursor:pointer;background:{{ p.bg }};color:var(--text-body)">
+                    <span style="flex:1;min-width:0;font-size:13px;font-weight:{{ p.fw }}">{{ p.name }}</span>
+                    <sc-if value="{{ p.active }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;color:var(--color-accent)">使用中</span></sc-if>
+                  </button>
+                </sc-if>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noCustom }}" hint-placeholder-val="{{ false }}">
+              <p style="margin:2px 8px;font-size:11px;color:var(--text-faint);line-height:1.5">還沒有自訂 Profile。複製一個內建的開始改。</p>
+            </sc-if>
+          </div>
+          <div role="toolbar" aria-label="Profile 操作" style="flex:none;display:flex;gap:2px;padding:6px;border-top:1px solid var(--color-border)">
+            <button type="button" aria-label="新增 Profile" title="新增" onClick="{{ addProfile }}" style="display:flex;align-items:center;justify-content:center;width:28px;height:26px;border:none;border-radius:6px;background:transparent;color:var(--text-muted);cursor:pointer" style-hover="background:var(--color-bg-tertiary)">{{ icPlus }}</button>
+            <button type="button" aria-label="刪除 Profile" title="刪除" onClick="{{ askDeleteProfile }}" disabled="{{ readOnly }}" style="display:flex;align-items:center;justify-content:center;width:28px;height:26px;border:none;border-radius:6px;background:transparent;color:var(--text-muted);cursor:pointer;opacity:{{ delOpacity }}" style-hover="background:var(--color-bg-tertiary)">{{ icMinus }}</button>
+            <button type="button" aria-label="複製 Profile" title="複製" onClick="{{ dupProfile }}" style="display:flex;align-items:center;justify-content:center;width:28px;height:26px;border:none;border-radius:6px;background:transparent;color:var(--text-muted);cursor:pointer" style-hover="background:var(--color-bg-tertiary)">{{ icCopy }}</button>
+          </div>
+        </div>
+
+        <div style="flex:1;min-width:0;overflow:auto">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 16px 10px">
+            <h2 style="margin:0;font-size:15px;font-weight:600;letter-spacing:-0.01em">{{ cur.name }}</h2>
+            <sc-if value="{{ readOnly }}" hint-placeholder-val="{{ false }}">
+              <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Badge" tone="neutral" hint-size="52px,22px">唯讀</x-import>
+            </sc-if>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:10px;min-width:180px;flex:1;max-width:240px">
+              <span style="color:var(--text-faint)">{{ icVol }}</span>
+              <div style="flex:1;opacity:{{ roOpacity }}">
+                <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Slider" value="{{ cur.vol }}" on-change="{{ setVol }}" disabled="{{ readOnly }}" format="{{ pctFmt }}" aria-label="Profile 音量" hint-size="100%,22px"></x-import>
+              </div>
+            </div>
+          </div>
+          <sc-if value="{{ readOnly }}" hint-placeholder-val="{{ false }}">
+            <div role="note" style="margin:0 16px 10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:var(--color-accent-light);border:1px solid var(--color-accent-glow)">
+              <span style="color:var(--color-accent)">{{ lockIcon }}</span>
+              <span style="flex:1;min-width:160px;font-size:12px;color:var(--text-muted)">內建 Profile 無法編輯。複製一份就能隨便改，原版不受影響。</span>
+              <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" variant="primary" on-click="{{ dupProfile }}" hint-size="96px,30px">複製後編輯</x-import>
+            </div>
+          </sc-if>
+          <div role="list" aria-label="事件對應" style="border-bottom:1px solid var(--color-border)">
+            <sc-for list="{{ rows }}" as="r" hint-placeholder-count="7">
+              <div role="listitem" onDragOver="{{ r.dragOver }}" onDragLeave="{{ r.dragLeave }}" onDrop="{{ r.drop }}" style="position:relative;display:grid;grid-template-columns:128px minmax(0,1fr) auto;gap:12px;align-items:start;padding:10px 16px;border-top:1px solid var(--color-border);background:{{ r.bg }};box-shadow:{{ r.ring }}">
+                <div style="display:flex;align-items:center;gap:9px;min-width:0">
+                  <span style="flex:none;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:var(--color-accent-light);color:var(--color-accent)">{{ r.icon }}</span>
+                  <span style="min-width:0">
+                    <span style="display:block;font-weight:600">{{ r.label }}</span>
+                    <span style="display:block;font-size:11px;color:var(--text-faint)">{{ r.hint }}</span>
+                  </span>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:28px;opacity:{{ r.op }}">
+                  <sc-for list="{{ r.chips }}" as="c" hint-placeholder-count="1">
+                    <span draggable="true" onDragStart="{{ c.dragStart }}" style="display:flex">
+                      <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Tag" tone="{{ c.tone }}" on-remove="{{ c.remove }}" hint-size="88px,28px">
+                        <button type="button" onClick="{{ c.play }}" aria-label="{{ c.playLabel }}" style="display:flex;padding:0;margin-left:-3px;border:none;background:none;color:inherit;cursor:pointer">{{ c.icon }}</button>
+                        <span>{{ c.name }}</span>
+                      </x-import>
+                    </span>
+                  </sc-for>
+                  <sc-if value="{{ r.empty }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-size:12px;color:var(--text-faint)">{{ r.emptyText }}</span>
+                  </sc-if>
+                  <sc-if value="{{ editable }}" hint-placeholder-val="{{ true }}">
+                    <div style="position:relative">
+                      <button type="button" onClick="{{ r.toggleAdd }}" aria-expanded="{{ r.addOpen }}" aria-label="{{ r.addLabel }}" style="display:flex;align-items:center;gap:4px;padding:4px 10px;font-family:inherit;font-size:12px;color:var(--text-muted);background:transparent;border:1px dashed var(--color-border-strong);border-radius:999px;cursor:pointer" style-hover="color:var(--color-accent);border-color:var(--color-accent)">{{ icPlusSm }}加入音效</button>
+                      <sc-if value="{{ r.addOpen }}" hint-placeholder-val="{{ false }}">
+                        <div role="menu" style="position:absolute;z-index:20;top:calc(100% + 6px);left:0;width:220px;max-height:220px;overflow:auto;padding:6px;background:var(--color-bg);border:1px solid var(--color-border-strong);border-radius:12px;box-shadow:var(--shadow-lg)">
+                          <div style="padding:4px 8px 6px;font-size:11px;color:var(--text-faint)">點一下加入，或直接拖到任一列</div>
+                          <sc-for list="{{ r.options }}" as="o" hint-placeholder-count="4">
+                            <button type="button" role="menuitem" draggable="true" onDragStart="{{ o.dragStart }}" onClick="{{ o.pick }}" style="display:flex;align-items:center;gap:8px;width:100%;padding:6px 8px;border:none;border-radius:6px;background:transparent;font-family:inherit;font-size:13px;color:var(--text-body);text-align:left;cursor:grab" style-hover="background:var(--color-accent-light)"><span style="color:var(--text-faint)">{{ icGrip }}</span><span style="flex:1">{{ o.name }}</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint)">{{ o.dur }}</span></button>
+                          </sc-for>
+                        </div>
+                      </sc-if>
+                    </div>
+                  </sc-if>
+                </div>
+                <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Switch" size="sm" checked="{{ r.on }}" on-change="{{ r.toggle }}" disabled="{{ readOnly }}" aria-label="{{ r.switchLabel }}" hint-size="34px,20px"></x-import>
+              </div>
+            </sc-for>
+          </div>
+          <p style="margin:10px 16px 16px;font-size:11px;color:var(--text-faint)">同一事件掛多個音效時，每次隨機挑一個播放。</p>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- LIBRARY -->
+    <sc-if value="{{ isLibrary }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;min-height:0;overflow:auto;padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px">
+        <div role="button" tabIndex="0" aria-label="上傳音效：拖放檔案或按 Enter 選擇檔案" onClick="{{ pickFiles }}" onKeyDown="{{ dzKey }}" onDragOver="{{ dzOver }}" onDragLeave="{{ dzLeave }}" onDrop="{{ dzDrop }}" onMouseEnter="{{ dzEnter }}" onMouseLeave="{{ dzLeave }}" style="flex:none;display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;border:1.5px dashed {{ dz.border }};background:{{ dz.bg }};cursor:pointer;transition:all 150ms ease">
+          <span style="flex:none;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:8px;background:{{ dz.iconBg }};color:{{ dz.iconColor }}">{{ dz.icon }}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;color:{{ dz.titleColor }}">{{ dz.title }}</div>
+            <div style="font-size:11px;color:var(--text-faint)">{{ dz.sub }}</div>
+          </div>
+          <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" on-click="{{ pickFiles }}" hint-size="90px,30px">選擇檔案…</x-import>
+        </div>
+
+        <sc-if value="{{ hasImports }}" hint-placeholder-val="{{ true }}">
+          <div role="status" aria-live="polite" style="display:flex;flex-direction:column;border:1px solid var(--color-border);border-radius:12px;background:var(--color-bg-secondary)">
+            <sc-for list="{{ imports }}" as="im" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:12px;padding:9px 12px;border-top:{{ im.divider }}">
+                <span style="flex:none;color:{{ im.color }}">{{ im.icon }}</span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><span style="font-weight:500">{{ im.file }}</span><span style="font-size:12px;color:{{ im.color }}">{{ im.msg }}</span></div>
+                  <sc-if value="{{ im.busy }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:6px;height:4px;border-radius:999px;background:var(--color-bg-tertiary);overflow:hidden"><div style="height:100%;border-radius:999px;background:var(--color-accent);width:{{ im.pct }}"></div></div>
+                  </sc-if>
+                </div>
+                <sc-if value="{{ im.truncated }}" hint-placeholder-val="{{ false }}">
+                  <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" on-click="{{ im.keep }}" hint-size="80px,28px">保留前 10 秒</x-import>
+                </sc-if>
+                <button type="button" aria-label="移除這筆" onClick="{{ im.dismiss }}" style="display:flex;padding:4px;border:none;background:none;color:var(--text-faint);cursor:pointer;border-radius:6px" style-hover="color:var(--text-body)">{{ icX }}</button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ libHasItems }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div role="tablist" aria-label="來源篩選" style="display:inline-flex;gap:2px;padding:3px;background:var(--color-bg-tertiary);border-radius:999px">
+              <sc-for list="{{ filters }}" as="f" hint-placeholder-count="4">
+                <button type="button" role="tab" aria-selected="{{ f.sel }}" onClick="{{ f.go }}" style="padding:4px 12px;border:none;border-radius:999px;font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;background:{{ f.bg }};color:{{ f.color }};box-shadow:{{ f.shadow }}">{{ f.label }}</button>
+              </sc-for>
+            </div>
+            <div style="margin-left:auto;position:relative;display:flex;align-items:center;width:180px">
+              <span style="position:absolute;left:10px;color:var(--text-faint)">{{ icSearch }}</span>
+              <input type="search" aria-label="搜尋音效" placeholder="搜尋音效" value="{{ q }}" onChange="{{ setQ }}" style="width:100%;font-family:inherit;font-size:12px;padding:6px 10px 6px 30px;border:1px solid var(--color-border-strong);border-radius:8px;background:var(--color-bg);color:var(--text-body);outline:none">
+            </div>
+          </div>
+          <div role="table" aria-label="音效清單" style="border:1px solid var(--color-border);border-radius:12px;overflow:visible">
+            <div role="row" style="display:grid;grid-template-columns:26px minmax(0,1.3fr) 64px 42px 84px minmax(0,1fr) 26px;gap:10px;align-items:center;padding:7px 12px;font-size:11px;font-weight:600;color:var(--text-faint);background:var(--color-bg-secondary);border-bottom:1px solid var(--color-border);border-radius:12px 12px 0 0">
+              <span></span><span>名稱</span><span>波形</span><span>長度</span><span>來源</span><span>使用中的 Profile</span><span></span>
+            </div>
+            <sc-for list="{{ libRows }}" as="s" hint-placeholder-count="6">
+              <div role="row" draggable="true" onDragStart="{{ s.dragStart }}" style="position:relative;display:grid;grid-template-columns:26px minmax(0,1.3fr) 64px 42px 84px minmax(0,1fr) 26px;gap:10px;align-items:center;padding:7px 12px;border-top:{{ s.divider }};background:{{ s.bg }}">
+                <button type="button" onClick="{{ s.play }}" aria-label="{{ s.playLabel }}" style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:999px;border:1px solid var(--color-border-strong);background:var(--color-bg);color:{{ s.playColor }};cursor:pointer">{{ s.playIcon }}</button>
+                <sc-if value="{{ s.renaming }}" hint-placeholder-val="{{ false }}">
+                  <input aria-label="重新命名音效" value="{{ renameVal }}" onChange="{{ onRenameChange }}" onKeyDown="{{ onRenameKey }}" onBlur="{{ commitRename }}" autoFocus="{{ true }}" style="min-width:0;font-family:inherit;font-size:13px;padding:3px 6px;border:1px solid var(--color-accent);border-radius:6px;box-shadow:0 0 0 3px var(--color-accent-light);background:var(--color-bg);color:var(--text-body);outline:none">
+                </sc-if>
+                <sc-if value="{{ s.notRenaming }}" hint-placeholder-val="{{ true }}">
+                  <span onDoubleClick="{{ s.rename }}" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">{{ s.name }}</span>
+                </sc-if>
+                <svg viewBox="0 0 64 20" width="64" height="20" aria-hidden="true" style="display:block;color:{{ s.waveColor }}"><path d="{{ s.wave }}" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"></path></svg>
+                <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">{{ s.dur }}</span>
+                <span style="display:flex"><x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Badge" tone="{{ s.tone }}" hint-size="60px,22px">{{ s.src }}</x-import></span>
+                <span style="min-width:0;font-size:12px;color:{{ s.usedColor }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.used }}</span>
+                <div style="position:relative">
+                  <button type="button" aria-label="{{ s.moreLabel }}" aria-haspopup="menu" onClick="{{ s.toggleMenu }}" style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border:none;border-radius:6px;background:transparent;color:var(--text-muted);cursor:pointer" style-hover="background:var(--color-bg-tertiary)">{{ icMore }}</button>
+                  <sc-if value="{{ s.menuOpen }}" hint-placeholder-val="{{ false }}">
+                    <div role="menu" style="position:absolute;z-index:30;right:0;top:calc(100% + 4px);width:168px;padding:5px;background:var(--color-bg);border:1px solid var(--color-border-strong);border-radius:10px;box-shadow:var(--shadow-lg)">
+                      <button type="button" role="menuitem" onClick="{{ s.play }}" style="display:flex;width:100%;padding:6px 10px;border:none;border-radius:6px;background:transparent;font-family:inherit;font-size:13px;color:var(--text-body);text-align:left;cursor:pointer" style-hover="background:var(--color-accent);color:#fff">試聽</button>
+                      <button type="button" role="menuitem" onClick="{{ s.rename }}" style="display:flex;width:100%;padding:6px 10px;border:none;border-radius:6px;background:transparent;font-family:inherit;font-size:13px;color:var(--text-body);text-align:left;cursor:pointer" style-hover="background:var(--color-accent);color:#fff">重新命名</button>
+                      <button type="button" role="menuitem" style="display:flex;width:100%;padding:6px 10px;border:none;border-radius:6px;background:transparent;font-family:inherit;font-size:13px;color:var(--text-body);text-align:left;cursor:pointer" style-hover="background:var(--color-accent);color:#fff">在 Finder 中顯示</button>
+                      <div style="height:1px;margin:4px 6px;background:var(--color-border)"></div>
+                      <button type="button" role="menuitem" onClick="{{ s.askDelete }}" style="display:flex;width:100%;padding:6px 10px;border:none;border-radius:6px;background:transparent;font-family:inherit;font-size:13px;color:var(--color-danger);text-align:left;cursor:pointer" style-hover="background:var(--color-danger);color:#fff">刪除…</button>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:20px;text-align:center;font-size:12px;color:var(--text-faint)">找不到「{{ q }}」。也許它還沒被錄下來。</div>
+            </sc-if>
+          </div>
+          <p style="margin:0;font-size:11px;color:var(--text-faint)">把任一列拖到「Profiles」頁的事件上即可掛上。按兩下名稱可改名。</p>
+        </sc-if>
+
+        <sc-if value="{{ libEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:12px 24px 8px">
+            <div aria-hidden="true" style="position:relative;width:132px;height:92px;margin-bottom:10px">
+              <div style="position:absolute;left:20px;top:8px;width:92px;height:58px;border:2px solid var(--text-faint);border-radius:8px;display:flex;align-items:center;justify-content:center;gap:16px;color:var(--text-faint)">
+                <span style="width:8px;height:2px;background:currentColor;border-radius:2px"></span>
+                <span style="width:8px;height:2px;background:currentColor;border-radius:2px"></span>
+              </div>
+              <div style="position:absolute;left:6px;right:6px;top:70px;height:2px;background:var(--text-faint);border-radius:2px"></div>
+              <div style="position:absolute;right:0;top:0;padding:2px 7px;font-size:11px;font-weight:600;color:var(--color-accent);background:var(--color-accent-light);border-radius:999px">z z z</div>
+            </div>
+            <h3 style="margin:0;font-size:15px;font-weight:600">這裡安靜得有點可怕</h3>
+            <p style="margin:0;max-width:320px;font-size:12px;color:var(--text-muted)">音效庫空空如也，你的 MacBook 現在被打也只能默默承受。拖一段慘叫進來，或匯入別人做好的音效包。</p>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" variant="primary" on-click="{{ pickFiles }}" hint-size="90px,30px">選擇檔案…</x-import>
+              <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" on-click="{{ restoreBuiltin }}" hint-size="120px,30px">還原內建音效</x-import>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- SENSORS -->
+    <sc-if value="{{ isSensors }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;min-height:0;overflow:auto;padding:14px 16px 18px;display:flex;flex-direction:column;gap:14px">
+        <section aria-labelledby="sg-angle" style="border:1px solid var(--color-border);border-radius:12px;background:var(--color-bg-secondary);padding:14px 16px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <h2 id="sg-angle" style="margin:0;font-size:13px;font-weight:600">螢幕角度</h2>
+            <sc-if value="{{ unsupported }}" hint-placeholder-val="{{ false }}">
+              <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Badge" tone="warning" hint-size="96px,22px">此機型不支援</x-import>
+            </sc-if>
+          </div>
+          <sc-if value="{{ supported }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+              <div style="flex:1 1 260px;min-width:240px;position:relative">
+                <svg ref="{{ svgRef }}" viewBox="0 0 380 186" width="100%" onPointerMove="{{ gMove }}" onPointerUp="{{ gUp }}" onPointerLeave="{{ gUp }}" role="img" aria-label="{{ g.aria }}" style="display:block;touch-action:none;overflow:visible">
+                  <path d="M 298 166 A 128 128 0 0 0 42 166" style="fill:none;stroke:var(--color-border-strong);stroke-width:2;stroke-dasharray:2 5"></path>
+                  <path d="{{ g.closeArc }}" style="fill:none;stroke:var(--color-warning);stroke-width:4;stroke-linecap:round;opacity:0.55"></path>
+                  <path d="{{ g.overArc }}" style="fill:none;stroke:var(--color-danger);stroke-width:4;stroke-linecap:round;opacity:0.55"></path>
+                  <path d="{{ g.angArc }}" style="fill:none;stroke:var(--color-accent);stroke-width:2;opacity:0.6"></path>
+                  <line x1="170" y1="166" x2="330" y2="166" style="stroke:var(--text-faint);stroke-width:8;stroke-linecap:round"></line>
+                  <line x1="170" y1="166" x2="{{ g.lx }}" y2="{{ g.ly }}" style="stroke:var(--color-accent);stroke-width:8;stroke-linecap:round"></line>
+                  <circle cx="170" cy="166" r="5" style="fill:var(--color-bg);stroke:var(--color-accent);stroke-width:2"></circle>
+                  <sc-for list="{{ g.handles }}" as="h" hint-placeholder-count="3">
+                    <g>
+                      <line x1="{{ h.tx1 }}" y1="{{ h.ty1 }}" x2="{{ h.tx2 }}" y2="{{ h.ty2 }}" style="stroke:{{ h.color }};stroke-width:2"></line>
+                      <circle cx="{{ h.x }}" cy="{{ h.y }}" r="8" tabIndex="0" role="slider" aria-label="{{ h.aria }}" aria-valuemin="0" aria-valuemax="180" aria-valuenow="{{ h.val }}" onPointerDown="{{ h.down }}" onKeyDown="{{ h.key }}" style="fill:var(--color-bg);stroke:{{ h.color }};stroke-width:2.5;cursor:grab;outline:none"></circle>
+                      <text x="{{ h.lx }}" y="{{ h.ly }}" style="font-size:12px;font-weight:600;fill:{{ h.color }};text-anchor:{{ h.anchor }};dominant-baseline:middle;font-family:var(--font-sans)">{{ h.label }}</text>
+                    </g>
+                  </sc-for>
+                </svg>
+              </div>
+              <div style="flex:0 1 190px;min-width:170px;display:flex;flex-direction:column;gap:10px">
+                <div role="status" aria-live="off">
+                  <div style="font-size:40px;font-weight:700;letter-spacing:-0.03em;line-height:1;font-variant-numeric:tabular-nums">{{ g.angleText }}</div>
+                  <div style="margin-top:4px;font-size:12px;color:{{ g.stateColor }}">{{ g.stateText }}</div>
+                </div>
+                <sc-for list="{{ g.handles }}" as="h" hint-placeholder-count="3">
+                  <div style="display:grid;grid-template-columns:44px minmax(0,1fr) 34px;gap:8px;align-items:center">
+                    <span style="font-size:12px;color:var(--text-muted)">{{ h.name }}</span>
+                    <input type="range" min="0" max="180" value="{{ h.val }}" onChange="{{ h.slide }}" aria-label="{{ h.aria }}" class="slider" style="accent-color:var(--color-accent)">
+                    <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);text-align:right">{{ h.valText }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <button type="button" aria-expanded="{{ advOpen }}" onClick="{{ toggleAdv }}" style="display:flex;align-items:center;gap:6px;margin-top:10px;padding:4px 0;border:none;background:none;font-family:inherit;font-size:12px;font-weight:500;color:var(--text-muted);cursor:pointer"><span style="display:flex;transform:{{ advRot }};transition:transform 150ms ease">{{ icChevR }}</span>進階設定</button>
+            <sc-if value="{{ advOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px 20px;padding:10px 0 2px">
+                <div>
+                  <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Slider" label="Hysteresis（遲滯）" value="{{ hyst }}" min="{{ 0 }}" max="{{ 10 }}" on-change="{{ setHyst }}" format="{{ degFmt }}" hint-size="100%,48px"></x-import>
+                  <div style="margin-top:4px;font-size:11px;color:var(--text-faint)">越過門檻後要再回頭這麼多度才會重新觸發，避免在門檻附近抖動時連續播放。</div>
+                </div>
+                <div>
+                  <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Slider" label="冷卻時間" value="{{ cool }}" min="{{ 200 }}" max="{{ 3000 }}" step="{{ 100 }}" on-change="{{ setCool }}" format="{{ msFmt }}" hint-size="100%,48px"></x-import>
+                  <div style="margin-top:4px;font-size:11px;color:var(--text-faint)">同一事件兩次播放之間的最短間隔。</div>
+                </div>
+              </div>
+            </sc-if>
+          </sc-if>
+          <sc-if value="{{ unsupported }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:14px;align-items:center;padding:8px 0 2px">
+              <span style="flex:none;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:8px;background:var(--color-warning-light);color:var(--color-warning)">{{ icSensorBig }}</span>
+              <p style="margin:0;font-size:12px;color:var(--text-muted)">{{ machineShort }} 沒有螢幕角度感測器，所以「打開螢幕」「闔上螢幕」「掰過頭」不會觸發。拍打功能照常運作，你的筆電還是會哀叫。</p>
+            </div>
+          </sc-if>
+        </section>
+
+        <section aria-labelledby="sg-tap" style="border:1px solid var(--color-border);border-radius:12px;background:var(--color-bg-secondary);padding:14px 16px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <h2 id="sg-tap" style="margin:0;font-size:13px;font-weight:600">拍打</h2>
+            <span style="font-size:12px;color:var(--text-faint)">{{ tapLive }}</span>
+            <span style="margin-left:auto"><x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Switch" size="sm" checked="{{ tapOn }}" on-change="{{ toggleTap }}" aria-label="啟用拍打偵測" hint-size="34px,20px"></x-import></span>
+          </div>
+          <div style="position:relative;height:96px;border-radius:8px;background:var(--color-bg);border:1px solid var(--color-border);overflow:hidden;opacity:{{ tapOp }}">
+            <svg viewBox="0 0 500 96" preserveAspectRatio="none" width="100%" height="96" aria-hidden="true" style="display:block">
+              <line x1="0" x2="500" y1="{{ lvl.hy }}" y2="{{ lvl.hy }}" style="stroke:var(--color-danger);stroke-width:1;stroke-dasharray:3 4;opacity:0.6"></line>
+              <line x1="0" x2="500" y1="{{ lvl.my }}" y2="{{ lvl.my }}" style="stroke:var(--color-warning);stroke-width:1;stroke-dasharray:3 4;opacity:0.6"></line>
+              <line x1="0" x2="500" y1="{{ lvl.ly }}" y2="{{ lvl.ly }}" style="stroke:var(--color-accent);stroke-width:1.5;stroke-dasharray:6 4"></line>
+              <polyline points="{{ wavePts }}" style="fill:none;stroke:var(--color-accent);stroke-width:1.5;stroke-linejoin:round;vector-effect:non-scaling-stroke"></polyline>
+            </svg>
+            <span style="position:absolute;right:8px;top:{{ lvl.lTop }};font-size:10px;font-weight:600;color:var(--color-accent);background:var(--color-bg);padding:0 4px;border-radius:4px">觸發門檻</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <sc-for list="{{ lvl.items }}" as="l" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;background:var(--color-bg);border:1px solid var(--color-border)">
+                <span style="width:8px;height:8px;border-radius:999px;background:{{ l.color }}"></span>
+                <span style="font-size:12px">{{ l.name }}</span>
+                <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">{{ l.val }}</span>
+              </div>
+            </sc-for>
+            <span style="font-size:11px;color:var(--text-faint)">10 月 20 日校準</span>
+            <span style="margin-left:auto"><x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" on-click="{{ recal }}" hint-size="90px,30px">重新校準…</x-import></span>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;margin-top:14px;padding-top:12px;border-top:1px solid var(--color-border)">
+            <span style="flex:none;color:var(--text-muted);margin-top:1px">{{ icKeyboard }}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600">精準打字模式</div>
+              <div style="font-size:12px;color:var(--text-muted)">打字時暫停拍打偵測，避免敲鍵盤被當成拍打。需要「輸入監控」權限；只記錄「有沒有按鍵」，不記錄按了什麼。</div>
+              <sc-if value="{{ precisePending }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:10px;margin-top:8px;padding:8px 10px;border-radius:8px;background:var(--color-warning-light);flex-wrap:wrap">
+                  <span style="color:var(--color-warning)">{{ icWarn }}</span>
+                  <span style="flex:1;min-width:160px;font-size:12px">尚未取得輸入監控權限。請到「系統設定 › 隱私權與安全性 › 輸入監控」打開 {{ appName }}。</span>
+                  <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" hint-size="110px,28px">打開系統設定</x-import>
+                </div>
+              </sc-if>
+            </div>
+            <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Switch" size="sm" checked="{{ precise }}" on-change="{{ togglePrecise }}" aria-label="精準打字模式" hint-size="34px,20px"></x-import>
+          </div>
+        </section>
+
+        <section aria-labelledby="sg-cap" style="border:1px solid var(--color-border);border-radius:12px;background:var(--color-bg-secondary)">
+          <h2 id="sg-cap" style="margin:0;padding:12px 16px 8px;font-size:13px;font-weight:600">感測器能力</h2>
+          <sc-for list="{{ caps }}" as="c" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:12px;padding:9px 16px;border-top:1px solid var(--color-border)">
+              <span style="color:var(--text-muted)">{{ c.icon }}</span>
+              <div style="flex:1;min-width:0"><div>{{ c.name }}</div><div style="font-size:11px;color:var(--text-faint)">{{ c.sub }}</div></div>
+              <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Badge" tone="{{ c.tone }}" dot="{{ true }}" hint-size="70px,22px">{{ c.status }}</x-import>
+            </div>
+          </sc-for>
+        </section>
+      </div>
+    </sc-if>
+
+    <!-- AUTO MUTE -->
+    <sc-if value="{{ isMute }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;min-height:0;overflow:auto;padding:14px 16px 18px;display:flex;flex-direction:column;gap:14px">
+        <div role="status" aria-live="polite" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:{{ muteBanner.bg }};border:1px solid {{ muteBanner.border }}">
+          <span style="color:{{ muteBanner.color }}">{{ muteBanner.icon }}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600">{{ muteBanner.title }}</div>
+            <div style="font-size:12px;color:var(--text-muted)">{{ muteBanner.sub }}</div>
+          </div>
+          <span style="font-size:11px;color:var(--text-faint)">任一條規則成立就靜音</span>
+        </div>
+        <div style="border:1px solid var(--color-border);border-radius:12px;background:var(--color-bg-secondary)">
+          <sc-for list="{{ rules }}" as="r" hint-placeholder-count="4">
+            <div style="padding:11px 16px;border-top:{{ r.divider }}">
+              <div style="display:flex;align-items:flex-start;gap:12px">
+                <span style="flex:none;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:var(--color-accent-light);color:var(--color-accent)">{{ r.icon }}</span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="font-weight:600">{{ r.name }}</span><sc-if value="{{ r.firing }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Badge" tone="warning" dot="{{ true }}" hint-size="64px,20px">成立中</x-import></sc-if></div>
+                  <div style="font-size:12px;color:var(--text-muted)">{{ r.desc }}</div>
+                </div>
+                <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Switch" size="sm" checked="{{ r.on }}" on-change="{{ r.toggle }}" disabled="{{ r.disabled }}" aria-label="{{ r.name }}" hint-size="34px,20px"></x-import>
+              </div>
+              <sc-if value="{{ r.permAsk }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:10px;margin:10px 0 0 40px;padding:9px 12px;border-radius:8px;background:var(--color-accent-light);flex-wrap:wrap">
+                  <span style="flex:1;min-width:180px;font-size:12px">{{ appName }} 需要讀取「專注模式狀態」才知道你什麼時候不想被打擾。只讀開關，不讀你設了哪種專注模式。</span>
+                  <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" variant="primary" on-click="{{ grantFocus }}" hint-size="80px,28px">允許存取…</x-import>
+                </div>
+              </sc-if>
+              <sc-if value="{{ r.permDenied }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:10px;margin:10px 0 0 40px;padding:9px 12px;border-radius:8px;background:var(--color-danger-light);flex-wrap:wrap">
+                  <span style="color:var(--color-danger)">{{ icWarn }}</span>
+                  <span style="flex:1;min-width:180px;font-size:12px">權限被拒絕，這條規則目前不會生效。到「系統設定 › 隱私權與安全性 › 專注模式」打開 {{ appName }} 即可。</span>
+                  <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" on-click="{{ grantFocus }}" hint-size="110px,28px">打開系統設定</x-import>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+
+        <section aria-labelledby="qh-title" style="border:1px solid var(--color-border);border-radius:12px;background:var(--color-bg-secondary);padding:12px 16px 14px;opacity:{{ quietOp }}">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <h2 id="qh-title" style="margin:0;font-size:13px;font-weight:600">安靜時段</h2>
+            <span style="font-size:12px;color:var(--text-faint)">每天重複</span>
+            <span style="margin-left:auto"><x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" on-click="{{ addSeg }}" hint-size="90px,28px">新增時段</x-import></span>
+          </div>
+          <div aria-hidden="true" style="position:relative;height:26px;border-radius:6px;background:var(--color-bg);border:1px solid var(--color-border)">
+            <sc-for list="{{ segPieces }}" as="p" hint-placeholder-count="3">
+              <div style="position:absolute;top:3px;bottom:3px;left:{{ p.left }};width:{{ p.width }};background:var(--color-accent-light);border:1px solid var(--color-accent-glow);border-radius:{{ p.radius }};display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:10px;font-weight:600;color:var(--color-accent);white-space:nowrap">{{ p.label }}</div>
+            </sc-for>
+            <div style="position:absolute;top:-3px;bottom:-3px;left:{{ nowLeft }};width:2px;background:var(--color-danger);border-radius:2px"></div>
+          </div>
+          <div aria-hidden="true" style="display:flex;justify-content:space-between;margin-top:4px;font-family:var(--font-mono);font-size:10px;color:var(--text-faint)"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
+            <sc-for list="{{ segs }}" as="s" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 8px;border-radius:8px;background:var(--color-bg);border:1px solid var(--color-border)">
+                <input aria-label="{{ s.labelAria }}" value="{{ s.label }}" onChange="{{ s.setLabel }}" style="width:84px;font-family:inherit;font-size:12px;padding:4px 8px;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--text-body);outline:none" style-focus="border-color:var(--color-accent)">
+                <input type="time" aria-label="開始時間" value="{{ s.from }}" onChange="{{ s.setFrom }}" style="font-family:var(--font-mono);font-size:12px;padding:4px 6px;border:1px solid var(--color-border-strong);border-radius:6px;background:var(--color-bg);color:var(--text-body)">
+                <span style="color:var(--text-faint)">→</span>
+                <input type="time" aria-label="結束時間" value="{{ s.to }}" onChange="{{ s.setTo }}" style="font-family:var(--font-mono);font-size:12px;padding:4px 6px;border:1px solid var(--color-border-strong);border-radius:6px;background:var(--color-bg);color:var(--text-body)">
+                <sc-if value="{{ s.overnight }}" hint-placeholder-val="{{ false }}">
+                  <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Badge" hint-size="80px,20px">跨午夜 · 隔天</x-import>
+                </sc-if>
+                <span style="font-size:11px;color:var(--text-faint)">{{ s.len }}</span>
+                <button type="button" aria-label="{{ s.removeAria }}" onClick="{{ s.remove }}" style="margin-left:auto;display:flex;padding:4px;border:none;border-radius:6px;background:none;color:var(--text-faint);cursor:pointer" style-hover="color:var(--color-danger)">{{ icTrash }}</button>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+    </sc-if>
+
+    <!-- GENERAL -->
+    <sc-if value="{{ isGeneral }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;min-height:0;overflow:auto;padding:14px 16px 18px;display:flex;flex-direction:column;gap:14px">
+        <div style="border:1px solid var(--color-border);border-radius:12px;background:var(--color-bg-secondary)">
+          <div style="display:flex;align-items:center;gap:12px;padding:11px 16px">
+            <span style="flex:1">登入時啟動</span>
+            <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Switch" size="sm" checked="{{ login }}" on-change="{{ toggleLogin }}" aria-label="登入時啟動" hint-size="34px,20px"></x-import>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;padding:11px 16px;border-top:1px solid var(--color-border);flex-wrap:wrap">
+            <span style="flex:none;min-width:96px">App 總音量</span>
+            <div style="flex:1;min-width:180px;display:flex;align-items:center;gap:10px">
+              <span style="color:var(--text-faint)">{{ icVolX }}</span>
+              <div style="flex:1"><x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Slider" value="{{ master }}" on-change="{{ setMaster }}" format="{{ pctFmt }}" aria-label="App 總音量" hint-size="100%,22px"></x-import></div>
+            </div>
+          </div>
+          <div style="padding:0 16px 10px 128px;font-size:11px;color:var(--text-faint)">與各 Profile 的音量相乘。也會跟著系統音量走。</div>
+          <div style="display:flex;align-items:center;gap:16px;padding:11px 16px;border-top:1px solid var(--color-border);flex-wrap:wrap">
+            <span style="flex:1;min-width:96px">語言</span>
+            <div style="width:200px"><x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Select" size="sm" value="{{ lang }}" on-change="{{ setLang }}" options="{{ langOptions }}" aria-label="語言" hint-size="200px,32px"></x-import></div>
+          </div>
+        </div>
+        <div style="border:1px solid var(--color-border);border-radius:12px;background:var(--color-bg-secondary)">
+          <div style="display:flex;align-items:center;gap:12px;padding:11px 16px">
+            <span style="flex:1">自動檢查更新</span>
+            <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Switch" size="sm" checked="{{ autoUpd }}" on-change="{{ toggleAuto }}" aria-label="自動檢查更新" hint-size="34px,20px"></x-import>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-top:1px solid var(--color-border);flex-wrap:wrap">
+            <div style="flex:1;min-width:0"><div>目前版本</div><div style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint)">{{ versionLine }}</div></div>
+            <sc-if value="{{ checking }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Spinner" size="sm" label="檢查中" hint-size="14px,14px"></x-import></sc-if>
+            <span style="font-size:12px;color:var(--text-muted)">{{ updMsg }}</span>
+            <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" on-click="{{ checkUpd }}" hint-size="90px,30px">檢查更新</x-import>
+          </div>
+        </div>
+        <div style="border:1px solid var(--color-border);border-radius:12px;background:var(--color-bg-secondary)">
+          <div style="display:flex;align-items:center;gap:10px;padding:11px 16px;flex-wrap:wrap">
+            <div style="flex:1;min-width:180px"><div>疑難排解</div><div style="font-size:11px;color:var(--text-faint)">回報問題時附上診斷資訊。內容只有機型、系統版本與感測器狀態。</div></div>
+            <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" on-click="{{ copyDiag }}" hint-size="110px,30px">{{ copyLabel }}</x-import>
+            <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" hint-size="110px,30px">打開 log 資料夾</x-import>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:2px 4px">
+          <span style="color:var(--color-success);margin-top:1px">{{ icShield }}</span>
+          <p style="margin:0;font-size:12px;color:var(--text-muted)">{{ appName }} 不收集任何資料。沒有分析、沒有帳號、沒有伺服器。感測器數值只在你的 Mac 上即時處理，用完就丟；檢查更新時只會送出版本號。</p>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ hasSheet }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:50;background:var(--color-scrim);display:flex;justify-content:center;align-items:flex-start;padding-top:52px">
+      <div role="alertdialog" aria-modal="true" aria-labelledby="sheet-t" style="width:380px;max-width:calc(100% - 40px);background:var(--color-bg);border:1px solid var(--color-border-strong);border-radius:0 0 12px 12px;box-shadow:var(--shadow-xl);padding:20px">
+        <div style="display:flex;gap:14px">
+          <span style="flex:none;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:8px;background:{{ sheet.iconBg }};color:{{ sheet.iconColor }}">{{ sheet.icon }}</span>
+          <div style="flex:1;min-width:0">
+            <h2 id="sheet-t" style="margin:0 0 4px;font-size:14px;font-weight:600">{{ sheet.title }}</h2>
+            <p style="margin:0;font-size:12px;color:var(--text-muted)">{{ sheet.body }}</p>
+            <sc-if value="{{ sheet.hasUsers }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
+                <sc-for list="{{ sheet.users }}" as="u" hint-placeholder-count="2">
+                  <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Badge" tone="warning" hint-size="80px,22px">{{ u }}</x-import>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px">
+          <x-import component-from-global-scope="ArloAIDesignSystem_6316a6.Button" size="sm" on-click="{{ closeSheet }}" hint-size="60px,30px">取消</x-import>
+          <button type="button" onClick="{{ sheet.confirm }}" style="padding:6px 14px;font-family:inherit;font-size:13px;font-weight:500;color:#fff;background:{{ sheet.btnBg }};border:1px solid transparent;border-radius:999px;cursor:pointer">{{ sheet.confirmLabel }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:760,&quot;height&quot;:520},&quot;appName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Spank&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;page&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;profiles&quot;,&quot;library&quot;,&quot;sensors&quot;,&quot;mute&quot;,&quot;general&quot;],&quot;default&quot;:&quot;profiles&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;profile&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;office&quot;,&quot;night&quot;,&quot;destroy&quot;,&quot;whine&quot;,&quot;classic&quot;],&quot;default&quot;:&quot;office&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;libraryEmpty&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;dropState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;idle&quot;,&quot;hover&quot;,&quot;drag&quot;,&quot;error&quot;],&quot;default&quot;:&quot;idle&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;unsupported&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;advOpen&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;inputPermDenied&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;focusPerm&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;granted&quot;,&quot;notDetermined&quot;,&quot;denied&quot;],&quot;default&quot;:&quot;granted&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;muteActive&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  EVENTS = [
+    ['open', '打開螢幕', 'evOpen', '角度超過門檻'],
+    ['close', '闔上螢幕', 'evClose', '角度低於門檻'],
+    ['over', '掰過頭', 'evOver', '角度超過 120°'],
+    ['light', '輕拍', 'tapL', '力道 · 輕'],
+    ['mid', '中拍', 'tapM', '力道 · 中'],
+    ['heavy', '重拍', 'tapH', '力道 · 重'],
+    ['combo', '連擊', 'combo', '2 秒內 4 下以上']
+  ];
+  LIB = [
+    ['g1', '玻璃碎裂 01', 0.8, 'builtin'], ['g2', '玻璃碎裂 02', 1.1, 'builtin'], ['m1', '金屬斷裂', 1.6, 'builtin'],
+    ['m2', '鋼筋彎折', 2.3, 'builtin'], ['o1', '喔！', 0.4, 'builtin'], ['h1', '救命啊', 1.2, 'builtin'],
+    ['a1', '哎唷', 0.6, 'builtin'], ['s1', '嗚…', 0.9, 'builtin'], ['k1', '吱嘎門軸', 1.9, 'builtin'], ['d1', '悶響 · 低', 0.6, 'builtin'],
+    ['u1', '不要再打了！！', 2.1, 'user'], ['u2', '好痛 02', 0.7, 'user'], ['u3', '老闆來了', 3.4, 'user'],
+    ['p1', '貓咪抗議', 1.5, 'pack'], ['p2', '鴨子被踩', 0.8, 'pack']
+  ].map(([id, name, dur, src]) => ({ id, name, dur, src }));
+  seed() {
+    const E = (on, ...s) => ({ on: !!on, s });
+    const P = (name, builtin, vol, ev, desc) => ({ name, builtin, vol, ev, desc });
+    return {
+      destroy: P('毀滅', true, 70, { open: E(1, '玻璃碎裂 01', '玻璃碎裂 02'), close: E(1, '悶響 · 低'), over: E(1, '金屬斷裂', '鋼筋彎折'), light: E(1, '玻璃碎裂 01'), mid: E(1, '玻璃碎裂 02'), heavy: E(1, '金屬斷裂'), combo: E(1, '玻璃碎裂 01', '玻璃碎裂 02', '金屬斷裂') }, '玻璃、金屬'),
+      whine: P('哀哀叫', true, 60, { open: E(1, '喔！'), close: E(1, '嗚…'), over: E(1, '救命啊'), light: E(1, '喔！'), mid: E(1, '哎唷'), heavy: E(1, '救命啊'), combo: E(1, '不要再打了！！') }, '喔、尖叫'),
+      classic: P('經典', true, 55, { open: E(1, '吱嘎門軸'), close: E(1, '悶響 · 低'), over: E(1, '吱嘎門軸'), light: E(1, '悶響 · 低'), mid: E(1, '悶響 · 低'), heavy: E(1, '悶響 · 低'), combo: E(0) }, '吱嘎、悶響'),
+      office: P('辦公室安靜版', false, 35, { open: E(1, '喔！'), close: E(1, '嗚…'), over: E(0, '金屬斷裂'), light: E(1), mid: E(1, '哎唷'), heavy: E(1, '救命啊', '好痛 02'), combo: E(1, '不要再打了！！') }),
+      night: P('深夜模式', false, 15, { open: E(0), close: E(0), over: E(1, '貓咪抗議'), light: E(0), mid: E(1, '鴨子被踩'), heavy: E(1, '鴨子被踩'), combo: E(1, '老闆來了') })
+    };
+  }
+  state = {
+    page: this.props.page || 'profiles',
+    sel: this.props.profile || 'office',
+    active: 'office',
+    profiles: this.seed(),
+    custom: ['office', 'night'],
+    renaming: null, renameVal: '',
+    playing: null, addOpen: null, dragRow: null,
+    sheet: null,
+    lib: this.props.libraryEmpty ? [] : this.LIB.slice(),
+    filter: 'all', q: '', menu: null,
+    dz: this.props.dropState || 'idle',
+    imports: this.props.libraryEmpty ? [] : [
+      { id: 'i1', file: '尖叫（長版）.m4a', stage: 0, pct: 62, kind: 'busy' },
+      { id: 'i2', file: '長篇大論.wav', kind: 'trunc' },
+      { id: 'i3', file: '鬧鐘.aiff', kind: 'format' },
+      { id: 'i4', file: '整首歌.mp3', kind: 'size' }
+    ],
+    t: 0, angle: 104, th: { open: 10, close: 20, over: 120 }, drag: null,
+    advOpen: !!this.props.advOpen, hyst: 3, cool: 800,
+    tapOn: true, precise: true, wave: Array(100).fill(0.02), lastHit: null,
+    rules: { meeting: true, focus: true, quiet: true, sys: false },
+    focusPerm: this.props.focusPerm || 'granted',
+    segs: [{ label: '午休', from: '12:30', to: '13:30' }, { label: '睡覺', from: '23:00', to: '07:30' }],
+    login: true, master: 80, lang: 'system', autoUpd: true, checking: false, updMsg: '已是最新版本', copied: false
+  };
+  componentDidMount() {
+    this.svgRef = this.svgRef || React.createRef();
+    this.iconPoll = setInterval(() => { if (window.SpankIcons) { clearInterval(this.iconPoll); this.forceUpdate(); } }, 100);
+    this.reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.timer = setInterval(() => this.tick(), this.reduce ? 500 : 70);
+  }
+  componentWillUnmount() { clearInterval(this.timer); clearInterval(this.iconPoll); clearTimeout(this.playT); }
+  componentDidUpdate(pp) {
+    if (pp.page !== this.props.page && this.props.page) this.setState({ page: this.props.page });
+  }
+  tick() {
+    const s = this.state;
+    const upd = {};
+    if (s.page === 'sensors') {
+      const t = s.t + 1;
+      upd.t = t;
+      if (!s.drag) upd.angle = 104 + Math.sin(t / 22) * 7 + Math.sin(t / 7) * 1.2;
+      let hit = null;
+      if (s.tapOn) {
+        const r = Math.random();
+        if (r < 0.012) hit = 0.85; else if (r < 0.03) hit = 0.45; else if (r < 0.06) hit = 0.2;
+      }
+      const prev = s.wave[s.wave.length - 1];
+      const v = hit != null ? hit : Math.max(0.015 + Math.random() * 0.03, prev * 0.55 + (Math.random() - 0.5) * 0.02);
+      upd.wave = s.wave.slice(1).concat([s.tapOn ? v : 0.01]);
+      if (hit != null) upd.lastHit = hit > 0.72 ? '重拍' : hit > 0.35 ? '中拍' : '輕拍';
+    }
+    if (s.page === 'library' && s.imports.some(i => i.kind === 'busy')) {
+      upd.imports = s.imports.map(i => {
+        if (i.kind !== 'busy') return i;
+        const pct = i.pct + (this.reduce ? 6 : 0.8);
+        if (pct >= 100) {
+          if (i.stage === 0) return { ...i, stage: 1, pct: 0 };
+          return { ...i, kind: 'done' };
+        }
+        return { ...i, pct };
+      });
+      const done = upd.imports.find(i => i.kind === 'done' && !i.added);
+      if (done) {
+        done.added = true;
+        upd.lib = s.lib.concat([{ id: 'n' + Date.now(), name: done.file.replace(/\.[^.]+$/, ''), dur: 4.2, src: 'user' }]);
+      }
+    }
+    if (Object.keys(upd).length) this.setState(upd);
+  }
+  ic(n, s, sw) {
+    return React.createElement('svg', { width: s || 16, height: s || 16, viewBox: '0 0 24 24', fill: n === 'play' ? 'currentColor' : 'none', stroke: 'currentColor', strokeWidth: sw || 1.75, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true, style: { display: 'block', flex: 'none' }, dangerouslySetInnerHTML: { __html: (window.SpankIcons || {})[n] || '' } });
+  }
+  usedBy(name) {
+    const P = this.state.profiles;
+    return Object.keys(P).filter(k => Object.values(P[k].ev).some(e => e.s.includes(name))).map(k => P[k].name);
+  }
+  play(key) {
+    clearTimeout(this.playT);
+    if (this.state.playing === key) return this.setState({ playing: null });
+    this.setState({ playing: key });
+    this.playT = setTimeout(() => this.setState({ playing: null }), 1400);
+  }
+  updProfile(fn) {
+    const id = this.state.sel;
+    this.setState(s => { const p = JSON.parse(JSON.stringify(s.profiles[id])); fn(p); return { profiles: { ...s.profiles, [id]: p } }; });
+  }
+  addSound(ev, name) { this.updProfile(p => { if (!p.ev[ev].s.includes(name)) p.ev[ev].s.push(name); }); this.setState({ addOpen: null, dragRow: null }); }
+  newId() { return 'c' + Math.random().toString(36).slice(2, 7); }
+  dup() {
+    const s = this.state, src = s.profiles[s.sel], id = this.newId();
+    const copy = JSON.parse(JSON.stringify(src)); copy.builtin = false; copy.name = src.name + ' 拷貝'; delete copy.desc;
+    this.setState({ profiles: { ...s.profiles, [id]: copy }, custom: s.custom.concat(id), sel: id, renaming: id, renameVal: copy.name });
+  }
+  commitRename() {
+    const s = this.state; if (!s.renaming) return;
+    const v = s.renameVal.trim();
+    if (s.renaming.startsWith && s.lib.find(x => x.id === s.renaming)) {
+      if (v) this.setState({ lib: s.lib.map(x => x.id === s.renaming ? { ...x, name: v } : x) });
+    } else if (v && s.profiles[s.renaming]) {
+      this.setState({ profiles: { ...s.profiles, [s.renaming]: { ...s.profiles[s.renaming], name: v } } });
+    }
+    this.setState({ renaming: null });
+  }
+  arcPath(a0, a1, R) {
+    const p = a => [170 + R * Math.cos(a * Math.PI / 180), 166 - R * Math.sin(a * Math.PI / 180)];
+    const [x0, y0] = p(a0), [x1, y1] = p(a1);
+    return `M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${R} ${R} 0 ${a1 - a0 > 180 ? 1 : 0} 0 ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+  }
+  angleFromEvent(e) {
+    const svg = this.svgRef && this.svgRef.current; if (!svg) return null;
+    const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    const q = pt.matrixTransform(svg.getScreenCTM().inverse());
+    let a = Math.atan2(166 - q.y, q.x - 170) * 180 / Math.PI;
+    if (a < -90) a = 180; if (a < 0) a = 0;
+    return Math.round(Math.min(180, a));
+  }
+  setTh(k, v) { this.setState(s => ({ th: { ...s.th, [k]: Math.max(0, Math.min(180, v)) } })); }
+  toMin(t) { const [h, m] = (t || '0:0').split(':').map(Number); return h * 60 + m; }
+  renderVals() {
+    if (!this.svgRef) this.svgRef = React.createRef();
+    const s = this.state, I = (n, z, w) => this.ic(n, z, w);
+    const appName = this.props.appName || 'Spank';
+    const pages = [['profiles', 'Profiles', 'profiles'], ['library', '音效庫', 'library'], ['sensors', '感測器', 'sensors'], ['mute', '自動靜音', 'mute'], ['general', '一般', 'general']];
+    const cur = s.profiles[s.sel] || s.profiles.office;
+    const readOnly = !!cur.builtin;
+    const lib = s.lib;
+    const durOf = n => { const x = this.LIB.find(l => l.name === n) || lib.find(l => l.name === n); return x ? x.dur.toFixed(1) + 's' : ''; };
+    const muteActive = this.props.muteActive !== false;
+    const out = {
+      appName, winLabel: appName + ' 設定',
+      navItems: pages.map(([id, label, icon]) => ({ label, icon: I(icon, 16), current: s.page === id ? 'page' : undefined, bg: s.page === id ? 'var(--color-accent-light)' : 'transparent', color: s.page === id ? 'var(--color-accent)' : 'var(--text-body)', fw: s.page === id ? 600 : 400, go: () => this.setState({ page: id, menu: null, addOpen: null }) })),
+      statusDot: muteActive ? 'var(--color-warning)' : 'var(--color-success)',
+      statusText: muteActive ? '已靜音 — 開會中' : '運作中',
+      pageTitle: (pages.find(p => p[0] === s.page) || pages[0])[1],
+      isProfiles: s.page === 'profiles', isLibrary: s.page === 'library', isSensors: s.page === 'sensors', isMute: s.page === 'mute', isGeneral: s.page === 'general',
+      lockIcon: I('lock', 13), icPlus: I('plus', 15), icMinus: I('minus', 15), icCopy: I('copy', 14), icPlusSm: I('plus', 12, 2), icVol: I('vol', 15), icVolX: I('volX', 15),
+      icGrip: I('grip', 12), icX: I('x', 14), icSearch: I('search', 13), icMore: I('more', 16, 2.2), icChevR: I('chevR', 13, 2), icKeyboard: I('keyboard', 18), icWarn: I('warn', 15), icTrash: I('trash', 14), icShield: I('shield', 18), icSensorBig: I('sensors', 22, 2),
+      pctFmt: v => Math.round(v) + '%', degFmt: v => v + '°', msFmt: v => v + ' ms',
+      machine: this.props.unsupported ? 'MacBook Air（M1, 2020）' : 'MacBook Pro 14 吋（M3 Pro, 2023）',
+      machineShort: 'MacBook Air（M1）'
+    };
+    // profiles
+    const item = (id, p) => ({ name: p.name, desc: p.desc, selected: s.sel === id, bg: s.sel === id ? 'var(--color-accent-light)' : 'transparent', fw: s.sel === id ? 600 : 400, active: s.active === id, pick: () => this.setState({ sel: id, addOpen: null }) });
+    out.builtinList = ['destroy', 'whine', 'classic'].map(id => item(id, s.profiles[id]));
+    out.customList = s.custom.map(id => ({ ...item(id, s.profiles[id]), renaming: s.renaming === id, notRenaming: s.renaming !== id, rename: () => this.setState({ renaming: id, renameVal: s.profiles[id].name }) }));
+    out.noCustom = s.custom.length === 0;
+    out.renameVal = s.renameVal;
+    out.onRenameChange = e => this.setState({ renameVal: e.target.value });
+    out.onRenameKey = e => { if (e.key === 'Enter') this.commitRename(); if (e.key === 'Escape') this.setState({ renaming: null }); };
+    out.commitRename = () => this.commitRename();
+    out.cur = cur; out.readOnly = readOnly; out.editable = !readOnly;
+    out.roOpacity = readOnly ? 0.55 : 1; out.delOpacity = readOnly ? 0.35 : 1;
+    out.setVol = e => this.updProfile(p => { p.vol = +e.target.value; });
+    out.addProfile = () => { const id = this.newId(), E = () => ({ on: true, s: [] }); this.setState({ profiles: { ...s.profiles, [id]: { name: '未命名 Profile', builtin: false, vol: 50, ev: { open: E(), close: E(), over: E(), light: E(), mid: E(), heavy: E(), combo: E() } } }, custom: s.custom.concat(id), sel: id, renaming: id, renameVal: '未命名 Profile' }); };
+    out.dupProfile = () => this.dup();
+    out.askDeleteProfile = () => { if (readOnly) return; this.setState({ sheet: { kind: 'delProfile', title: `刪除「${cur.name}」？`, body: s.active === s.sel ? '這是目前使用中的 Profile。刪除後會切換回「毀滅」。音效本身會留在音效庫。' : '音效本身會留在音效庫，只會移除這組對應。', confirmLabel: '刪除', danger: true } }); };
+    out.rows = this.EVENTS.map(([id, label, icon, hint]) => {
+      const e = cur.ev[id];
+      const hints = { open: `角度超過 ${s.th.open}°`, close: `角度低於 ${s.th.close}°`, over: `角度超過 ${s.th.over}°` };
+      const used = e.s;
+      const isDrag = s.dragRow === id && !readOnly;
+      return {
+        label, hint: hints[id] || hint, icon: I(icon, 16), on: e.on, op: e.on ? 1 : 0.45,
+        switchLabel: `${label}：${e.on ? '已啟用' : '已關閉'}`,
+        toggle: () => this.updProfile(p => { p.ev[id].on = !p.ev[id].on; }),
+        empty: used.length === 0, emptyText: readOnly ? '無音效' : '尚未掛上音效 — 這個事件會安靜地發生',
+        bg: isDrag ? 'var(--color-accent-light)' : 'transparent', ring: isDrag ? 'inset 0 0 0 1.5px var(--color-accent)' : 'none',
+        addOpen: s.addOpen === id, addLabel: `為「${label}」加入音效`,
+        toggleAdd: () => this.setState({ addOpen: s.addOpen === id ? null : id }),
+        options: lib.filter(l => !used.includes(l.name)).map(l => ({ name: l.name, dur: l.dur.toFixed(1) + 's', pick: () => this.addSound(id, l.name), dragStart: ev => { ev.dataTransfer.setData('text/plain', l.name); ev.dataTransfer.effectAllowed = 'copy'; } })),
+        dragOver: ev => { if (readOnly) return; ev.preventDefault(); if (s.dragRow !== id) this.setState({ dragRow: id }); },
+        dragLeave: () => this.setState({ dragRow: null }),
+        drop: ev => { ev.preventDefault(); const n = ev.dataTransfer.getData('text/plain'); if (n && !readOnly) this.addSound(id, n); else this.setState({ dragRow: null }); },
+        chips: used.map(n => {
+          const key = id + ':' + n, playing = s.playing === key;
+          return { name: n, tone: playing ? 'accent' : undefined, icon: I(playing ? 'stop' : 'play', 11, 2), playLabel: (playing ? '停止 ' : '試聽 ') + n, play: () => this.play(key), remove: readOnly ? null : () => this.updProfile(p => { p.ev[id].s = p.ev[id].s.filter(x => x !== n); }), dragStart: ev => ev.dataTransfer.setData('text/plain', n) };
+        })
+      };
+    });
+    // library
+    const dzMap = {
+      idle: { border: 'var(--color-border-strong)', bg: 'transparent', iconBg: 'var(--color-bg-tertiary)', iconColor: 'var(--text-muted)', icon: I('upload', 18), title: '把音效檔拖到這裡', titleColor: 'var(--text-body)', sub: 'wav · mp3 · m4a · aac · flac · ogg　每段最長 10 秒、5 MB 以內　匯入時自動標準化音量並去除開頭靜音' },
+      hover: { border: 'var(--color-accent-glow)', bg: 'var(--color-bg-secondary)', iconBg: 'var(--color-accent-light)', iconColor: 'var(--color-accent)', icon: I('upload', 18), title: '把音效檔拖到這裡', titleColor: 'var(--text-body)', sub: '或按一下選擇檔案' },
+      drag: { border: 'var(--color-accent)', bg: 'var(--color-accent-light)', iconBg: 'var(--color-accent)', iconColor: '#fff', icon: I('download', 18), title: '放開就收下 3 個檔案', titleColor: 'var(--color-accent)', sub: '放開後會依序處理' },
+      error: { border: 'var(--color-danger)', bg: 'var(--color-danger-light)', iconBg: 'var(--color-danger)', iconColor: '#fff', icon: I('x', 18, 2), title: '這個我吃不下：.aiff 不在支援格式內', titleColor: 'var(--color-danger)', sub: '請轉成 wav、mp3、m4a、aac、flac 或 ogg 再試一次' }
+    };
+    out.dz = dzMap[s.dz] || dzMap.idle;
+    const startImport = () => this.setState(st => ({ dz: 'idle', imports: st.imports.concat([{ id: 'i' + Date.now(), file: '新的慘叫 ' + (st.lib.length + 1) + '.wav', stage: 0, pct: 0, kind: 'busy' }]) }));
+    out.pickFiles = e => { e && e.stopPropagation && e.stopPropagation(); startImport(); };
+    out.dzKey = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startImport(); } };
+    out.dzOver = e => { e.preventDefault(); if (s.dz !== 'drag') this.setState({ dz: 'drag' }); };
+    out.dzEnter = () => { if (s.dz === 'idle') this.setState({ dz: 'hover' }); };
+    out.dzLeave = () => { if (s.dz === 'hover' || s.dz === 'drag') this.setState({ dz: 'idle' }); };
+    out.dzDrop = e => { e.preventDefault(); startImport(); };
+    const imMsg = i => i.kind === 'busy' ? (i.stage === 0 ? '標準化音量中…' : '去除開頭的靜音…') : i.kind === 'done' ? '已加入音效庫' : i.kind === 'trunc' ? '23.4 秒，超過 10 秒。會截斷成前 10 秒' : i.kind === 'format' ? '不支援的格式（.aiff）' : '12.4 MB，超過 5 MB 上限';
+    out.imports = s.imports.map((i, n) => ({
+      file: i.file, msg: imMsg(i), busy: i.kind === 'busy', pct: Math.round(i.pct || 0) + '%', truncated: i.kind === 'trunc', divider: n ? '1px solid var(--color-border)' : 'none',
+      color: i.kind === 'busy' ? 'var(--color-accent)' : i.kind === 'done' ? 'var(--color-success)' : i.kind === 'trunc' ? 'var(--color-warning)' : 'var(--color-danger)',
+      icon: i.kind === 'busy' ? I('refresh', 15) : i.kind === 'done' ? I('check', 15, 2.2) : i.kind === 'trunc' ? I('scissors', 15) : I('warn', 15),
+      keep: () => this.setState(st => ({ imports: st.imports.map(x => x.id === i.id ? { ...x, kind: 'busy', stage: 0, pct: 0 } : x) })),
+      dismiss: () => this.setState(st => ({ imports: st.imports.filter(x => x.id !== i.id) }))
+    }));
+    out.hasImports = s.imports.length > 0;
+    out.libHasItems = lib.length > 0; out.libEmpty = lib.length === 0;
+    const srcLabel = { builtin: '內建', user: '自行上傳', pack: '音效包' }, srcTone = { builtin: 'neutral', user: undefined, pack: 'success' };
+    out.filters = [['all', '全部'], ['builtin', '內建'], ['user', '自行上傳'], ['pack', '音效包']].map(([id, label]) => ({ label, sel: s.filter === id, bg: s.filter === id ? 'var(--color-bg)' : 'transparent', color: s.filter === id ? 'var(--text-body)' : 'var(--text-muted)', shadow: s.filter === id ? 'var(--shadow-sm)' : 'none', go: () => this.setState({ filter: id }) }));
+    out.q = s.q; out.setQ = e => this.setState({ q: e.target.value });
+    const shown = lib.filter(l => (s.filter === 'all' || l.src === s.filter) && (!s.q || l.name.includes(s.q)));
+    out.noResults = shown.length === 0 && lib.length > 0;
+    out.libRows = shown.map((l, n) => {
+      const used = this.usedBy(l.name), key = 'lib:' + l.id, playing = s.playing === key;
+      let seed = 0; for (const ch of l.name) seed = (seed * 31 + ch.charCodeAt(0)) % 9973;
+      let d = ''; for (let k = 0; k < 16; k++) { seed = (seed * 73 + 41) % 997; const h = 2 + (seed % 14) * (1 - Math.abs(k - 5) / 18); d += `M${2 + k * 4} ${10 - h / 2}V${10 + h / 2}`; }
+      return {
+        name: l.name, dur: l.dur.toFixed(1) + 's', src: srcLabel[l.src], tone: srcTone[l.src], wave: d, waveColor: playing ? 'var(--color-accent)' : 'var(--text-faint)',
+        used: used.length ? used.join('、') : '未使用', usedColor: used.length ? 'var(--text-muted)' : 'var(--text-faint)',
+        divider: n ? '1px solid var(--color-border)' : 'none', bg: playing ? 'var(--color-accent-light)' : 'transparent',
+        playIcon: I(playing ? 'stop' : 'play', 10, 2), playColor: playing ? 'var(--color-accent)' : 'var(--text-muted)', playLabel: (playing ? '停止 ' : '試聽 ') + l.name, play: () => { this.setState({ menu: null }); this.play(key); },
+        moreLabel: l.name + ' 的更多動作', menuOpen: s.menu === l.id, toggleMenu: () => this.setState({ menu: s.menu === l.id ? null : l.id }),
+        renaming: s.renaming === l.id, notRenaming: s.renaming !== l.id, rename: () => this.setState({ renaming: l.id, renameVal: l.name, menu: null }),
+        dragStart: ev => ev.dataTransfer.setData('text/plain', l.name),
+        askDelete: () => this.setState({ menu: null, sheet: used.length ? { kind: 'delSound', id: l.id, title: `「${l.name}」還在使用中`, body: `刪除後，下列 Profile 裡的這個音效也會一起拿掉。如果那是某個事件唯一的音效，那個事件之後會安靜無聲。`, users: used, confirmLabel: '仍要刪除', danger: true } : { kind: 'delSound', id: l.id, title: `刪除「${l.name}」？`, body: '檔案會移到垃圾桶，沒有 Profile 在用它。', confirmLabel: '刪除', danger: true } })
+      };
+    });
+    out.openImportPack = () => this.props.onImportPack && this.props.onImportPack();
+    out.openExport = () => {};
+    out.restoreBuiltin = () => this.setState({ lib: this.LIB.filter(l => l.src === 'builtin') });
+    // sensors
+    out.unsupported = !!this.props.unsupported; out.supported = !this.props.unsupported;
+    const R = 128, P = a => [170 + R * Math.cos(a * Math.PI / 180), 166 - R * Math.sin(a * Math.PI / 180)];
+    const ang = s.angle, L = 116;
+    const meta = { open: ['打開', 'var(--color-success)'], close: ['闔上', 'var(--color-warning)'], over: ['掰過頭', 'var(--color-danger)'] };
+    out.g = {
+      lx: (170 + L * Math.cos(ang * Math.PI / 180)).toFixed(1), ly: (166 - L * Math.sin(ang * Math.PI / 180)).toFixed(1),
+      angArc: this.arcPath(0, Math.max(1, ang), 40), closeArc: this.arcPath(0, Math.max(1, s.th.close), R), overArc: this.arcPath(s.th.over, 180, R),
+      angleText: Math.round(ang) + '°',
+      stateText: ang > s.th.over ? '掰過頭了，小心' : ang < s.th.close ? '快闔上了' : '正常使用中 · 即時',
+      stateColor: ang > s.th.over ? 'var(--color-danger)' : 'var(--text-muted)',
+      aria: `目前螢幕角度 ${Math.round(ang)} 度`,
+      handles: ['open', 'close', 'over'].map(k => {
+        const v = s.th[k], [x, y] = P(v), c = Math.cos(v * Math.PI / 180), lr = R + 22;
+        const [tx1, ty1] = [170 + (R - 9) * Math.cos(v * Math.PI / 180), 166 - (R - 9) * Math.sin(v * Math.PI / 180)];
+        const [tx2, ty2] = [170 + (R + 9) * Math.cos(v * Math.PI / 180), 166 - (R + 9) * Math.sin(v * Math.PI / 180)];
+        const ly0 = 166 - lr * Math.sin(v * Math.PI / 180);
+        return {
+          name: meta[k][0], color: meta[k][1], val: v, valText: v + '°', label: `${meta[k][0]} ${v}°`, aria: `${meta[k][0]}門檻（度）`,
+          x: x.toFixed(1), y: y.toFixed(1), tx1, ty1, tx2, ty2,
+          lx: (170 + lr * c).toFixed(1), ly: (k === 'open' ? ly0 + 8 : k === 'close' ? ly0 - 6 : ly0).toFixed(1), anchor: c > 0.3 ? 'start' : c < -0.3 ? 'end' : 'middle',
+          down: e => { e.preventDefault(); this.setState({ drag: k }); },
+          key: e => { const d = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key]; if (d) { e.preventDefault(); this.setTh(k, v + d * (e.shiftKey ? 5 : 1)); } },
+          slide: e => this.setTh(k, +e.target.value)
+        };
+      })
+    };
+    out.svgRef = this.svgRef;
+    out.gMove = e => { if (!s.drag) return; const a = this.angleFromEvent(e); if (a != null) this.setTh(s.drag, a); };
+    out.gUp = () => { if (s.drag) this.setState({ drag: null }); };
+    out.advOpen = s.advOpen; out.advRot = s.advOpen ? 'rotate(90deg)' : 'none'; out.toggleAdv = () => this.setState({ advOpen: !s.advOpen });
+    out.hyst = s.hyst; out.cool = s.cool; out.setHyst = e => this.setState({ hyst: +e.target.value }); out.setCool = e => this.setState({ cool: +e.target.value });
+    const lv = { l: 0.12, m: 0.35, h: 0.72 }, yOf = v => (92 - v * 84).toFixed(1);
+    out.wavePts = s.wave.map((v, i) => `${(i * 500 / 99).toFixed(1)},${yOf(Math.min(1, v))}`).join(' ');
+    out.lvl = { ly: yOf(lv.l), my: yOf(lv.m), hy: yOf(lv.h), lTop: (92 - lv.l * 84 - 16) + 'px', items: [['輕', '0.12 g', 'var(--color-accent)'], ['中', '0.35 g', 'var(--color-warning)'], ['重', '0.72 g', 'var(--color-danger)']].map(([name, val, color]) => ({ name, val, color })) };
+    out.tapOn = s.tapOn; out.tapOp = s.tapOn ? 1 : 0.4; out.toggleTap = () => this.setState({ tapOn: !s.tapOn });
+    out.tapLive = s.tapOn ? (s.lastHit ? `剛剛偵測到：${s.lastHit}` : '即時加速度') : '已關閉';
+    out.recal = () => this.props.onRecalibrate && this.props.onRecalibrate();
+    out.precise = s.precise; out.precisePending = s.precise && !!this.props.inputPermDenied; out.togglePrecise = () => this.setState({ precise: !s.precise });
+    out.caps = [
+      { icon: I('sensors', 16), name: '螢幕角度感測器', sub: this.props.unsupported ? '此機型沒有內建' : '鉸鏈角度，每秒 30 次', status: this.props.unsupported ? '此機型不支援' : '支援', tone: this.props.unsupported ? 'warning' : 'success' },
+      { icon: I('cpu', 16), name: '加速度計', sub: '用來偵測拍打力道', status: '支援', tone: 'success' },
+      { icon: I('keyboard', 16), name: '輸入監控', sub: '精準打字模式使用', status: this.props.inputPermDenied ? '未授權' : '已授權', tone: this.props.inputPermDenied ? 'danger' : 'success' }
+    ];
+    // mute
+    const perm = s.focusPerm;
+    out.muteBanner = muteActive && s.rules.meeting ? { bg: 'var(--color-warning-light)', border: 'rgba(192,122,18,0.2)', color: 'var(--color-warning)', icon: I('volX', 18), title: '目前已靜音 — 開會中', sub: 'Zoom 正在使用麥克風。會議結束後會自動恢復。' } : { bg: 'var(--color-success-light)', border: 'rgba(31,157,107,0.2)', color: 'var(--color-success)', icon: I('vol', 18), title: '目前沒有靜音', sub: '沒有任何規則成立，打下去就會叫。' };
+    const rdef = [
+      ['meeting', '開會中', 'mic', '麥克風或相機被其他 app 使用時靜音。', muteActive],
+      ['focus', '專注模式', 'moon', '開啟任一專注模式時靜音。', false],
+      ['quiet', '安靜時段', 'clock', '在下方設定的時段內靜音，可以跨午夜。', false],
+      ['sys', '跟隨系統靜音', 'volX', 'Mac 靜音時一起安靜。關閉時，即使系統靜音也照樣出聲。', false]
+    ];
+    out.rules = rdef.map(([id, name, icon, desc, firing], n) => ({
+      name, desc, icon: I(icon, 15), on: s.rules[id] && !(id === 'focus' && perm === 'denied'), firing: firing && s.rules[id], divider: n ? '1px solid var(--color-border)' : 'none',
+      disabled: id === 'focus' && perm === 'denied',
+      toggle: () => { if (id === 'focus' && perm === 'notDetermined' && !s.rules.focus) return this.setState({ rules: { ...s.rules, focus: true } }); this.setState({ rules: { ...s.rules, [id]: !s.rules[id] } }); },
+      permAsk: id === 'focus' && perm === 'notDetermined' && s.rules.focus, permDenied: id === 'focus' && perm === 'denied'
+    }));
+    out.grantFocus = () => this.setState({ focusPerm: 'granted' });
+    out.quietOp = s.rules.quiet ? 1 : 0.5;
+    const pieces = [];
+    s.segs.forEach(g => {
+      const a = this.toMin(g.from), b = this.toMin(g.to), pc = m => (m / 1440 * 100).toFixed(2) + '%';
+      if (b > a) pieces.push({ left: pc(a), width: pc(b - a), label: g.label, radius: '4px' });
+      else { pieces.push({ left: pc(a), width: pc(1440 - a), label: g.label + ' →', radius: '4px 0 0 4px' }); pieces.push({ left: '0%', width: pc(b), label: '→ ' + g.label, radius: '0 4px 4px 0' }); }
+    });
+    out.segPieces = pieces;
+    out.nowLeft = (14 * 60 + 5) / 1440 * 100 + '%';
+    out.segs = s.segs.map((g, i) => {
+      const a = this.toMin(g.from), b = this.toMin(g.to), len = ((b - a + 1440) % 1440) || 1440;
+      const set = (k) => e => this.setState(st => ({ segs: st.segs.map((x, j) => j === i ? { ...x, [k]: e.target.value } : x) }));
+      return { ...g, overnight: b <= a, len: `${Math.floor(len / 60)} 小時${len % 60 ? ' ' + (len % 60) + ' 分' : ''}`, labelAria: '時段名稱', removeAria: `刪除時段「${g.label}」`, setLabel: set('label'), setFrom: set('from'), setTo: set('to'), remove: () => this.setState(st => ({ segs: st.segs.filter((_, j) => j !== i) })) };
+    });
+    out.addSeg = () => this.setState(st => ({ segs: st.segs.concat([{ label: '新時段', from: '09:00', to: '10:00' }]) }));
+    // general
+    out.login = s.login; out.toggleLogin = () => this.setState({ login: !s.login });
+    out.master = s.master; out.setMaster = e => this.setState({ master: +e.target.value });
+    out.lang = s.lang; out.setLang = e => this.setState({ lang: e.target.value });
+    out.langOptions = [{ value: 'system', label: '跟隨系統' }, { value: 'zh', label: '繁體中文' }, { value: 'en', label: 'English' }];
+    out.autoUpd = s.autoUpd; out.toggleAuto = () => this.setState({ autoUpd: !s.autoUpd });
+    out.versionLine = '1.0.2（build 214）· 上次檢查：今天 09:12';
+    out.checking = s.checking; out.updMsg = s.checking ? '檢查中…' : s.updMsg;
+    out.checkUpd = () => { this.setState({ checking: true }); setTimeout(() => this.setState({ checking: false, updMsg: '已是最新版本' }), 1400); };
+    out.copyLabel = s.copied ? '已複製' : '複製診斷資訊';
+    out.copyDiag = () => { this.setState({ copied: true }); setTimeout(() => this.setState({ copied: false }), 1600); };
+    // sheet
+    const sh = s.sheet;
+    out.hasSheet = !!sh;
+    out.closeSheet = () => this.setState({ sheet: null });
+    out.sheet = sh ? {
+      ...sh, hasUsers: !!(sh.users && sh.users.length), users: sh.users || [],
+      icon: I(sh.users ? 'warn' : 'trash', 20), iconBg: sh.users ? 'var(--color-warning-light)' : 'var(--color-danger-light)', iconColor: sh.users ? 'var(--color-warning)' : 'var(--color-danger)', btnBg: 'var(--color-danger)',
+      confirm: () => {
+        if (sh.kind === 'delProfile') { const custom = s.custom.filter(x => x !== s.sel); this.setState({ custom, sel: custom[0] || 'destroy', active: s.active === s.sel ? 'destroy' : s.active, sheet: null }); }
+        else if (sh.kind === 'delSound') { const name = (lib.find(l => l.id === sh.id) || {}).name; const P2 = JSON.parse(JSON.stringify(s.profiles)); Object.values(P2).forEach(p => { if (!p.builtin) Object.values(p.ev).forEach(e => { e.s = e.s.filter(x => x !== name); }); }); this.setState({ lib: lib.filter(l => l.id !== sh.id), profiles: P2, sheet: null }); }
+        else this.setState({ sheet: null });
+      }
+    } : {};
+    return out;
+  }
+}
+</script>
+</body>
+</html>
