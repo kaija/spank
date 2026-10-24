@@ -4,6 +4,16 @@
 > 一個 Wave 全部完成（或其依賴的任務完成）後即可開始下一個 Wave。
 > ⛳ = Gate：結果可能修改 ADR / 設計，後續任務開始前要先檢查。
 
+## 開發狀態（2026-10-24）
+
+- **進度**：Wave 0–5 實作完成（T20、T31–T34 待手動驗證），branch `claude/wave-3-4-b3266e`（尚無 remote，未 push、CI 未在 GitHub 上跑過）。
+- **App 現況**：選單列 App 可運作：螢幕開合音效、自動靜音、Tray 選單、Profiles／音效庫／自動靜音三個設定頁、內建三個 Profile。拍打預設關閉，要等 T36 校準精靈才在 UI 開啟。感測器頁、一般頁仍是施工中畫面（T37、T38）。
+- **待使用者手動驗證**（🟡）：
+  - T20：`cargo run -p spank-sysmon --example sysmon-watch`，逐項切換麥克風／相機／音量／靜音／鎖定／睡眠。
+  - T31–T34：`open target/release/bundle/macos/Spank.app`（先 `pnpm --dir apps/desktop tauri build --bundles app`），試 Tray 選單與三個設定頁。
+- **下一步**：Wave 6 可開始的任務（依賴皆已完成）：T36、T37、T38、T40；T39 依賴 T20（待驗證）。
+- **已知限制**：內建人聲是合成的卡通音；T23 參數只用一台 M4 Air、一位使用者的 trace 調過；`cargo fuzz` 需 nightly，尚未跑過。
+
 ## 總覽
 
 | Wave | 主題 | 任務（同 Wave 可平行） |
@@ -425,49 +435,42 @@ flowchart LR
 - 狀態：✅ 完成（2026-10-24）：CI 跑 `slap_traces`，報表寫入 job summary 並上傳 `trace-report` artifact；`cargo llvm-cov … --fail-under-lines 80`（目前 82.8%）。repo 尚無 remote，未在 GitHub 上跑過
 - 內容：CI 跑所有 trace 計算 precision/recall，低於門檻失敗；覆蓋率門檻設 80%。
 - 完成條件：CI 綠燈且有報表輸出。
-- 備註（W3–4）：`spank-sensors/tests/slap_traces.rs` 已在 `cargo test` 內以 precision ≥ 0.95、recall ≥ 0.90 擋下退步，並以 `--nocapture` 印出逐段報表。剩下：CI 把報表存成 artifact、llvm-cov 加 `--fail-under-lines 80`（目前 82%，含無法在 CI 跑的 FFI 檔）。
 
 ### T30 加速度計生命週期（App 內）
 - 依賴：T12、T24、T27
 - 狀態：✅ 完成（2026-10-24）：`apps/desktop/src-tauri/src/engine.rs` core thread（啟動時 `reset_accel_properties()`、加速度計 500 ms capability probe、依 orchestrator 指令啟停 `IoHidLid`／`IoHidAccel`、每 50 ms drain、lid 依 `LidPollSchedule` 輪詢、20 s 重算安靜時段、`AudioPlayer` 與感測器共用 epoch）、`SysMonitor` 接入、panic hook 還原 property。拍打 trace 重播整合測試即 `slap_traces`／`orchestrator_replay`；真機拍打端到端留給 T36
 - 內容：啟用 / 停用拍打、暫停 / 鎖定 / 睡眠時停止感測器、capability detection（property 失敗或無報告 → 標示不支援）、將 `ImpactCandidate` 接入 suppression → classifier → orchestrator。
 - 完成條件：`TraceReplay` 整合測試：重播拍打 trace 觸發正確事件序列；真機端到端於 T36 驗證。
-- 備註（W3–4）：`ImpactCandidate` → 抑制閘 → 分級 → 連擊 → 播放已在 `Orchestrator::on_accel` 串好，重播拍打 trace 的整合測試也有（`slap_traces`、`orchestrator_replay`）。剩下的是 App runtime：啟動時 `reset_accel_properties()`、執行 `Output::Sensor` 指令（`IoHidAccel::start`／`stop`、`IoHidLid` 依 `LidPollSchedule` 輪詢）、每 ~50 ms `drain` 餵給 orchestrator、`SysMonitor` 必須在主執行緒啟動、`AudioPlayer` 與感測器共用同一個 epoch `Instant`、panic hook 還原 property、`capabilities()` 結果給 UI。
 
 ### T31 Tray 選單完整版
 - 依賴：T27、T26
 - 狀態：🟡 實作完成（2026-10-24）：`tray.rs` 狀態列（運作中／已靜音：原因／已暫停）、目前 Profile、暫停／繼續、Profile 子選單（勾選）、試聽子選單（7 個事件）、設定…、結束；zh-Hant／en 跟隨設定或系統語言；狀態變化時重建。**待使用者手動驗證**
 - 內容：design §10.1；狀態 / 靜音原因顯示、Profile 切換、試聽、暫停。
 - 完成條件：手動驗證。
-- 備註（W3–4）：試聽用 `Orchestrator::preview`（忽略暫停與靜音）；狀態與靜音原因來自 `Output::MuteChanged`（`MuteStatus.reasons`）與 `Orchestrator::paused()`。
 
 ### T32 UI：Profiles 頁
 - 依賴：T21、T15
 - 狀態：🟡 實作完成（2026-10-24）：`src/screens/ProfilesPage.tsx`（內建／自訂清單、雙擊改名、新增／刪除（確認）／複製、唯讀提示與「複製後編輯」、Profile 音量、7 個事件列：音效 chip 試聽／移除、加入音效選單、列間拖放、啟用開關、設為使用中）；Vitest 5 個測試。**待使用者在 App 內手動驗證**
 - 內容：Profile 清單、事件對應編輯、拖放音效、試聽、啟用開關、音量。
 - 完成條件：Vitest 元件測試 + 手動驗證。
-- 備註（W3–4）：後端用 `spank-store::Profiles`（`list`／`create`／`duplicate`／`rename`／`delete`／`set_active`，內建 `builtin.*` 唯讀）；切換 Profile 後呼叫 `Orchestrator::set_profile` 並用 `SoundBank::sync` 預載。
 
 ### T33 UI：音效庫頁
 - 依賴：T13、T22、T15
 - 狀態：🟡 實作完成（2026-10-24）：`src/screens/LibraryPage.tsx`（拖放到視窗／選擇檔案匯入、逐檔狀態（截斷、過大、不支援、靜音）、來源篩選、搜尋、32 段波形縮圖、試聽、雙擊改名、在 Finder 中顯示、刪除（使用中會列出 Profile 並一併移除）、匯入／匯出 `.spankpack`）；Vitest 7 個測試。**待使用者在 App 內手動驗證**
 - 內容：拖放 / 選檔上傳、進度與錯誤訊息、波形預覽、改名、刪除、匯入 / 匯出 `.spankpack`。
 - 完成條件：Vitest + 手動驗證。
-- 備註（W3–4）：匯入／匯出用 `spank_pack::{read_pack_file, import_pack, export_pack, write_pack}`；錯誤訊息來自 `PackError`。
 
 ### T34 UI：自動靜音頁
 - 依賴：T26、T15
 - 狀態：🟡 實作完成（2026-10-24）：`src/screens/MutePage.tsx`（目前狀態橫幅、四條規則與「成立中」、Focus 權限請求／被拒／未簽章版本提示、安靜時段時間軸與編輯（名稱、跨午夜、長度、無效時段不存））；Vitest 5 個測試。**待使用者在 App 內手動驗證**
 - 內容：四條規則開關、安靜時段編輯器、Focus 權限請求流程。
 - 完成條件：Vitest + 手動驗證。
-- 備註（W3–4）：Focus 權限用 `spank_sysmon::request_focus_authorization`（Info.plist 要加 `NSFocusStatusUsageDescription`）；`MuteStatus.focus_unavailable` 為 true 時顯示「需正式簽章版本」（ADR-0007）。
 
 ### T35 內建 CC0 音效與 3 個 Profile
 - 依賴：T13、T22（以 `.spankpack` 形式打包內建音效）
 - 狀態：✅ 完成（2026-10-24）：沒有下載第三方音源，改由 `tools/gen-builtin-sounds` 以固定 seed 程序合成 13 個音效（玻璃、金屬、悶響、吱嘎、formant 合成的卡通人聲），經 importer 正規化到 -16 LUFS，打包成 `assets/sounds/builtin/{destruction,whine,classic}.spankpack`（共 1.1 MB），`assets/sounds/SOUNDS_LICENSE.md` 為 CC0；App 啟動時以 `spank_pack::load_builtin` 從 bundle 資源載入成唯讀 Profile 與音效。人聲是合成的卡通音，之後可換成錄音
 - 內容：挑選 CC0 音源、經 importer 正規化、`SOUNDS_LICENSE.md` 記錄來源、組成「毀滅」「哀哀叫」「經典」三個 Profile，總計 < 5 MB。
 - 完成條件：bundle 內含並在首次啟動載入。
-- 備註（W3–4）：內建 Profile 以 JSON 放在 bundle 資源目錄，由 `Profiles::load_builtin` 載入；id 必須以 `builtin.` 開頭，預設 active 為 `builtin.destruction`。音效需為 48 kHz、≤ 10 s 的 WAV（同 `.spankpack` 驗證規則）。
 
 ## Wave 6 — Onboarding、進階功能、發佈管線
 
@@ -481,11 +484,13 @@ flowchart LR
 - 依賴：T27、T30、T15
 - 內容：即時角度、門檻滑桿、拍打靈敏度、重新校準、精準打字模式開關、能力狀態。
 - 完成條件：手動驗證。
+- 備註（W5）：即時角度與能力狀態已在 `RuntimeState`（`lid_angle`、`caps`、`lid_running`、`accel_running`），隨 `engine_state` 事件更新；要新增 `set_lid_config`／`set_slap_config` command（照 `set_mute_rules` 的寫法用 `AppState::update_config`）。頁面目前是 `PagePlaceholder`。
 
 ### T38 UI：一般頁
 - 依賴：T30、T15
 - 內容：登入時啟動、App 音量、語言、複製診斷資訊、log 位置。
 - 完成條件：手動驗證。
+- 備註（W5）：`AppConfig` 已有 `launch_at_login`、`app_volume`、`language`；autostart 外掛已註冊但從未依設定啟用。`I18nProvider` 的 `setting` 還沒接到 `AppConfig.language`；Tray 已依 `language` 切換。頁面目前是 `PagePlaceholder`。
 
 ### T39 精準打字模式（Input Monitoring）
 - 依賴：T23、T20
@@ -509,7 +514,7 @@ flowchart LR
 - 依賴：T31、T32、T33、T34、T36、T37、T38、T39
 - 內容：`docs/release-checklist.md`；功耗觀察（ADR-0013）；錯誤處理與 log；fuzz 跑一輪；無障礙基本檢查。
 - 完成條件：checklist 全數通過。
-- 備註（W3–4）：待辦清單要包含：T20 逐項切換驗證（`sysmon-watch`）、`cargo +nightly fuzz run read_pack`（spank-pack）、播放中切換輸出裝置（`AudioPlayer` 會在下次播放時重建 stream，尚未在真機測過）、其他機型重錄 trace 驗證 T23 參數。
+- 備註（W3–5）：待辦清單要包含：T20 逐項切換驗證（`sysmon-watch`）、T31–T34 手動驗證、`cargo +nightly fuzz run read_pack`（spank-pack）、播放中切換輸出裝置（`AudioPlayer` 會在下次播放時重建 stream，尚未在真機測過）、其他機型重錄 trace 驗證 T23 參數。
 
 ### T43 文件
 - 依賴：T36、T38
