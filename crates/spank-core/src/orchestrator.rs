@@ -14,6 +14,10 @@
 //! slaps enabled, or the calibration wizard running (which works even while paused and never
 //! plays slap sounds). After a wake the lid is read once even if the screen is locked, so `LidOpened`
 //! plays when the lid opens, not when the user unlocks.
+//!
+//! `LidOverbent` is continuous: it plays while the lid is being opened inside the opening range,
+//! stops (with a fade) when the lid rests or goes down, and resumes where it left off when the lid
+//! moves up again. It plays once per opening; dropping below the range starts the next one fresh.
 
 use crate::calibration::{CalError, CalStep, CalibrationProgress, Calibrator};
 use crate::config::{AppConfig, Calibration, SlapConfig, TimeOfDay};
@@ -35,6 +39,8 @@ pub struct PlayRequest {
     pub priority: Priority,
     /// Profile volume × app volume (the OS applies the system volume).
     pub gain: f32,
+    /// Start this far into the sound (resuming the opening sound).
+    pub offset_ms: u64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -58,6 +64,10 @@ pub struct PlaybackStatus {
 pub trait Player {
     fn play(&mut self, req: &PlayRequest) -> PlayOutcome;
     fn status(&self) -> PlaybackStatus;
+    /// Length of a loaded sound, if known.
+    fn sound_ms(&self, _sound: &SoundId) -> Option<u64> {
+        None
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -101,6 +111,8 @@ pub enum Output {
         reason: SuppressReason,
     },
     MuteChanged(MuteStatus),
+    /// Fade out the sound playing at this priority, if any (the opening sound paused).
+    StopSound(Priority),
     /// Calibration wizard state changed.
     Calibration(CalibrationProgress),
     /// Largest high-passed |a| (g) in the last accelerometer batch, while the live waveform is
@@ -117,6 +129,21 @@ struct SensorState {
     accel: bool,
 }
 
+/// Playback of the continuous opening sound (`LidOverbent`) for the current opening.
+#[derive(Debug, Clone, Default, PartialEq)]
+struct Opening {
+    /// Picked when the opening first plays.
+    sound: Option<SoundId>,
+    /// How much of it has played.
+    played_ms: u64,
+    /// Playing now; time of the last sample counted into `played_ms`.
+    playing_at: Option<u64>,
+    /// Played to the end, or can't play: nothing more until the next opening.
+    done: bool,
+    /// A `Fired` output was sent for this opening.
+    reported: bool,
+}
+
 pub struct Orchestrator {
     cfg: AppConfig,
     profile: Profile,
@@ -131,6 +158,7 @@ pub struct Orchestrator {
     last_input_ms: Option<u64>,
     calibrator: Option<Calibrator>,
     monitor: bool,
+    opening: Opening,
 }
 
 impl Orchestrator {
@@ -147,6 +175,7 @@ impl Orchestrator {
             last_input_ms: None,
             calibrator: None,
             monitor: false,
+            opening: Opening::default(),
             accel_rate_hz,
             cfg,
             profile,
@@ -266,6 +295,7 @@ impl Orchestrator {
         if let Some(e) = event {
             self.fire(e, player, &mut out);
         }
+        self.update_opening(s.at_ms, player, &mut out);
         out
     }
 
@@ -321,6 +351,7 @@ impl Orchestrator {
         if let Some(status) = self.mute.on_signal(s, now) {
             out.push(Output::MuteChanged(status));
         }
+        self.halt_opening_if_muted(&mut out);
         self.sync_sensors(&mut out);
         out
     }
@@ -328,11 +359,14 @@ impl Orchestrator {
     /// Re-evaluate time-based mute rules (call at least every minute, or at the boundary from
     /// [`crate::mute::minutes_to_next_boundary`]).
     pub fn on_tick(&mut self, now: TimeOfDay) -> Vec<Output> {
-        self.mute
+        let mut out: Vec<Output> = self
+            .mute
             .refresh(now)
             .map(Output::MuteChanged)
             .into_iter()
-            .collect()
+            .collect();
+        self.halt_opening_if_muted(&mut out);
+        out
     }
 
     /// Keyboard / trackpad activity (precise typing mode, T39).
@@ -366,6 +400,7 @@ impl Orchestrator {
         {
             out.push(Output::MuteChanged(status));
         }
+        self.halt_opening_if_muted(&mut out);
         if cfg.paused != self.cfg.paused {
             self.awaiting_wake = false;
         }
@@ -374,11 +409,18 @@ impl Orchestrator {
         out
     }
 
-    pub fn set_profile(&mut self, profile: Profile) {
+    pub fn set_profile(&mut self, profile: Profile) -> Vec<Output> {
+        let mut out = Vec::new();
         if profile.id != self.profile.id {
             self.picker.reset();
         }
+        if profile.mapping != self.profile.mapping {
+            // The picked opening sound may be gone: pick again from the top.
+            self.halt_opening(&mut out);
+            self.opening = Opening::default();
+        }
         self.profile = profile;
+        out
     }
 
     /// Play the active profile's sound for `kind` right away (tray "preview"). Ignores pause and
@@ -389,7 +431,7 @@ impl Orchestrator {
             at_ms,
             meta: EventMeta::None,
         };
-        self.play(&event, player)
+        self.play(&event, player, 0)
     }
 
     // ---- internals ----------------------------------------------------------------------
@@ -407,11 +449,15 @@ impl Orchestrator {
     fn sync_sensors(&mut self, out: &mut Vec<Output>) {
         let want = self.desired();
         if want.lid != self.sensors.lid {
+            if !want.lid {
+                // The next sample after a restart only re-learns the zone.
+                self.lid.on_sleep();
+                self.halt_opening(out);
+                self.opening = Opening::default();
+            }
             out.push(Output::Sensor(if want.lid {
                 SensorCommand::StartLid
             } else {
-                // The next sample after a restart only re-learns the zone.
-                self.lid.on_sleep();
                 SensorCommand::StopLid
             }));
         }
@@ -426,17 +472,99 @@ impl Orchestrator {
         self.sensors = want;
     }
 
-    fn fire(&mut self, event: TriggerEvent, player: &mut impl Player, out: &mut Vec<Output>) {
-        let result = if self.cfg.paused {
-            FireResult::Paused
+    /// Why nothing may play right now, if anything.
+    fn blocked(&self) -> Option<FireResult> {
+        if self.cfg.paused {
+            Some(FireResult::Paused)
         } else if self.mute.status().muted() {
-            FireResult::Muted {
+            Some(FireResult::Muted {
                 reasons: self.mute.status().reasons.clone(),
-            }
+            })
         } else {
-            self.play(&event, player)
+            None
+        }
+    }
+
+    fn fire(&mut self, event: TriggerEvent, player: &mut impl Player, out: &mut Vec<Output>) {
+        let result = match self.blocked() {
+            Some(r) => r,
+            None => self.play(&event, player, 0),
         };
         out.push(Output::Fired { event, result });
+    }
+
+    /// Start, pause or resume the opening sound after a lid sample.
+    fn update_opening(&mut self, at_ms: u64, player: &mut impl Player, out: &mut Vec<Output>) {
+        if self.lid.below_opening_range() {
+            self.halt_opening(out);
+            self.opening = Opening::default();
+            return;
+        }
+        let o = &mut self.opening;
+        if let Some(prev) = o.playing_at {
+            o.played_ms += at_ms.saturating_sub(prev);
+            o.playing_at = Some(at_ms);
+            if let Some(len) = o.sound.as_ref().and_then(|s| player.sound_ms(s))
+                && o.played_ms >= len
+            {
+                // Finished on its own.
+                o.playing_at = None;
+                o.done = true;
+            }
+        }
+        let want = self.lid.opening() && !self.opening.done;
+        match (self.opening.playing_at.is_some(), want) {
+            (true, false) => self.halt_opening(out),
+            (false, true) => self.start_opening(at_ms, player, out),
+            _ => {}
+        }
+    }
+
+    fn start_opening(&mut self, at_ms: u64, player: &mut impl Player, out: &mut Vec<Output>) {
+        let event = TriggerEvent {
+            kind: EventKind::LidOverbent,
+            at_ms,
+            meta: EventMeta::Lid {
+                angle_deg: self.lid.angle().unwrap_or_default(),
+            },
+        };
+        let result = match self.blocked() {
+            Some(r) => r,
+            None => {
+                let offset = self.opening.played_ms;
+                let pinned = self.opening.sound.clone();
+                match pinned {
+                    Some(sound) => self.play_sound(&event, sound, player, offset),
+                    None => self.play(&event, player, offset),
+                }
+            }
+        };
+        match &result {
+            FireResult::Played { sound } => {
+                self.opening.sound = Some(sound.clone());
+                self.opening.playing_at = Some(at_ms);
+            }
+            // Retried on the next sample while the lid keeps opening.
+            FireResult::Busy | FireResult::Paused | FireResult::Muted { .. } => {}
+            FireResult::NoSound | FireResult::Unavailable => self.opening.done = true,
+        }
+        if !self.opening.reported {
+            self.opening.reported = true;
+            out.push(Output::Fired { event, result });
+        }
+    }
+
+    /// Stop the opening sound, keeping its position.
+    fn halt_opening(&mut self, out: &mut Vec<Output>) {
+        if self.opening.playing_at.take().is_some() {
+            out.push(Output::StopSound(EventKind::LidOverbent.priority()));
+        }
+    }
+
+    fn halt_opening_if_muted(&mut self, out: &mut Vec<Output>) {
+        if self.blocked().is_some() {
+            self.halt_opening(out);
+        }
     }
 
     /// The binding to use. A combo falls back to the slap's strength level when the profile has
@@ -452,7 +580,7 @@ impl Orchestrator {
         None
     }
 
-    fn play(&mut self, event: &TriggerEvent, player: &mut impl Player) -> FireResult {
+    fn play(&mut self, event: &TriggerEvent, player: &mut impl Player, offset_ms: u64) -> FireResult {
         let Some((kind, binding)) = self.binding_for(event) else {
             return FireResult::NoSound;
         };
@@ -460,12 +588,23 @@ impl Orchestrator {
         let Some(sound) = self.picker.pick(kind, &binding) else {
             return FireResult::NoSound;
         };
+        self.play_sound(event, sound, player, offset_ms)
+    }
+
+    fn play_sound(
+        &mut self,
+        event: &TriggerEvent,
+        sound: SoundId,
+        player: &mut impl Player,
+        offset_ms: u64,
+    ) -> FireResult {
         let req = PlayRequest {
             kind: event.kind,
             sound: sound.clone(),
             // Priority follows the detected event, even when a combo borrows a level's sound.
             priority: event.kind.priority(),
             gain: (self.profile.volume * self.cfg.app_volume).clamp(0.0, 1.0),
+            offset_ms,
         };
         match player.play(&req) {
             PlayOutcome::Started | PlayOutcome::Preempted => FireResult::Played { sound },
@@ -485,6 +624,7 @@ mod tests {
         requests: Vec<PlayRequest>,
         status: PlaybackStatus,
         outcome: Option<PlayOutcome>,
+        sound_ms: Option<u64>,
     }
 
     impl Player for FakePlayer {
@@ -495,6 +635,22 @@ mod tests {
         fn status(&self) -> PlaybackStatus {
             self.status
         }
+        fn sound_ms(&self, _sound: &SoundId) -> Option<u64> {
+            self.sound_ms
+        }
+    }
+
+    fn stops(out: &[Output]) -> usize {
+        out.iter()
+            .filter(|o| matches!(o, Output::StopSound(p) if *p == EventKind::LidOverbent.priority()))
+            .count()
+    }
+
+    /// Lid rising from `from` to `to` (inclusive), 1° per 33 ms starting at `t0`.
+    fn rising(from: u32, to: u32, t0: u64) -> Vec<(f32, u64)> {
+        (from..=to)
+            .map(|a| (a as f32, t0 + (a - from) as u64 * 33))
+            .collect()
     }
 
     fn noon() -> TimeOfDay {
@@ -745,12 +901,127 @@ mod tests {
         assert_eq!(fired(&out), vec![(EventKind::LidClosing, FireResult::NoSound)]);
 
         p.outcome = Some(PlayOutcome::Busy);
-        let out = lid(&mut o, &mut p, &[(125.0, 1000)]);
-        assert_eq!(fired(&out), vec![(EventKind::LidOverbent, FireResult::Busy)]);
+        let out = lid(&mut o, &mut p, &[(40.0, 1000), (43.0, 1033), (46.0, 1066)]);
+        assert_eq!(
+            fired(&out),
+            vec![(EventKind::LidOverbent, FireResult::Busy)],
+            "reported once, retried while opening"
+        );
+        assert_eq!(p.requests.len(), 3);
         p.outcome = Some(PlayOutcome::Unavailable);
         assert_eq!(
             o.preview(EventKind::LidOpened, 0, &mut p),
             FireResult::Unavailable
+        );
+    }
+
+    #[test]
+    fn opening_sound_plays_pauses_and_resumes() {
+        let (mut o, _) = orch(AppConfig::default());
+        let mut p = FakePlayer {
+            sound_ms: Some(4000),
+            ..Default::default()
+        };
+        // Resting at 25°, then opening: starts once the lid has risen 2° and is at or above 30°.
+        let out = lid(&mut o, &mut p, &rising(25, 50, 0));
+        assert_eq!(
+            fired(&out),
+            vec![(
+                EventKind::LidOverbent,
+                FireResult::Played { sound: "bend".into() }
+            )]
+        );
+        assert_eq!(p.requests.len(), 1);
+        let first = &p.requests[0];
+        assert_eq!(
+            (first.offset_ms, first.priority),
+            (0, EventKind::LidOverbent.priority())
+        );
+        // 30° at 165 ms → 50° at 825 ms: 660 ms played.
+
+        // Rests: stops after 300 ms without rising.
+        let out = lid(&mut o, &mut p, &[(50.0, 900), (50.0, 1100), (50.0, 1200)]);
+        assert_eq!(stops(&out), 1);
+        // Moves on: resumes from where it stopped (counted up to the stopping sample).
+        let out = lid(&mut o, &mut p, &rising(51, 60, 2000));
+        assert!(fired(&out).is_empty(), "resuming is not a new event");
+        assert_eq!(p.requests.len(), 2);
+        assert_eq!(p.requests[1].offset_ms, 1200 - 165);
+        assert_eq!(p.requests[1].sound, SoundId::from("bend"));
+
+        // Going down stops it as well.
+        let out = lid(&mut o, &mut p, &[(59.0, 2400), (57.0, 2433)]);
+        assert_eq!(stops(&out), 1);
+    }
+
+    #[test]
+    fn opening_sound_plays_once_per_opening_and_not_above_range() {
+        let (mut o, _) = orch(AppConfig::default());
+        let mut p = FakePlayer {
+            sound_ms: Some(200),
+            ..Default::default()
+        };
+        // 30° → 60° takes ~1 s; the 200 ms sound ends on its own, nothing to stop.
+        let out = lid(&mut o, &mut p, &rising(28, 60, 0));
+        assert_eq!(p.requests.len(), 1);
+        assert_eq!(stops(&out), 0);
+        // Rest, then open further: already played for this opening.
+        lid(&mut o, &mut p, &[(60.0, 2000), (60.0, 2400)]);
+        lid(&mut o, &mut p, &rising(61, 80, 3000));
+        assert_eq!(p.requests.len(), 1);
+        // Back below 30°: the next opening plays from the top.
+        lid(&mut o, &mut p, &[(25.0, 5000), (25.0, 5400)]);
+        p.sound_ms = Some(10_000);
+        lid(&mut o, &mut p, &rising(26, 118, 6000));
+        assert_eq!(p.requests.len(), 2);
+        assert_eq!(p.requests[1].offset_ms, 0);
+        // Past 120°: stops.
+        let out = lid(&mut o, &mut p, &rising(119, 125, 9100));
+        assert_eq!(stops(&out), 1);
+        assert_eq!(p.requests.len(), 2);
+    }
+
+    #[test]
+    fn pause_mute_and_profile_change_stop_the_opening_sound() {
+        let (mut o, _) = orch(AppConfig::default());
+        let mut p = FakePlayer::default();
+        lid(&mut o, &mut p, &rising(30, 40, 0));
+        let out = o.set_paused(true);
+        assert_eq!(stops(&out), 1);
+        assert_eq!(sensors(&out), vec![SensorCommand::StopLid]);
+        o.set_paused(false);
+
+        lid(&mut o, &mut p, &rising(30, 40, 1000));
+        let out = o.on_sys(SysSignal::MicInUse { in_use: true }, noon());
+        assert_eq!(stops(&out), 1);
+        // While muted the opening is reported once and nothing plays.
+        let n = p.requests.len();
+        let out = lid(&mut o, &mut p, &[(10.0, 2000), (10.0, 2200)]);
+        assert!(fired(&out).iter().all(|(k, _)| *k == EventKind::LidClosing));
+        let out = lid(&mut o, &mut p, &rising(30, 40, 3000));
+        assert_eq!(
+            fired(&out),
+            vec![(
+                EventKind::LidOverbent,
+                FireResult::Muted {
+                    reasons: vec![MuteReason::Meeting]
+                }
+            )]
+        );
+        assert_eq!(p.requests.len(), n);
+        o.on_sys(SysSignal::MicInUse { in_use: false }, noon());
+
+        // Unmuted mid-opening: starts without a second report.
+        let out = lid(&mut o, &mut p, &rising(41, 45, 4000));
+        assert!(fired(&out).is_empty());
+        assert_eq!(p.requests.len(), n + 1);
+        let mut prof = profile();
+        prof.mapping.get_mut(&EventKind::LidOverbent).unwrap().sounds = vec!["other".into()];
+        assert_eq!(stops(&o.set_profile(prof)), 1);
+        lid(&mut o, &mut p, &rising(46, 50, 5000));
+        assert_eq!(
+            p.requests.last().map(|r| (r.sound.clone(), r.offset_ms)),
+            Some(("other".into(), 0))
         );
     }
 

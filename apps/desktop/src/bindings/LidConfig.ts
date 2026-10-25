@@ -7,4 +7,13 @@ export type LidConfig = {
 /**
  * On wake, play `LidOpened` only if the lid is above this angle.
  */
-open_min_deg: number, close_threshold_deg: number, overbend_threshold_deg: number, hysteresis_deg: number, cooldown_ms: number, };
+open_min_deg: number, close_threshold_deg: number, 
+/**
+ * `LidOverbent` plays while the lid is opening between this angle and
+ * `overbend_threshold_deg`: it pauses when the lid stops and resumes when it moves on.
+ */
+opening_start_deg: number, 
+/**
+ * Upper end of the opening range; nothing plays above it.
+ */
+overbend_threshold_deg: number, hysteresis_deg: number, cooldown_ms: number, };

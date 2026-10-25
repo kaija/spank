@@ -19,3 +19,4 @@
 | [0012](0012-licensing-and-naming.md) | 授權與命名：MIT 開源、spank 為代號 | Accepted |
 | [0013](0013-power-policy.md) | 功耗策略：Best effort + 睡眠/鎖定暫停 | Accepted |
 | [0014](0014-in-app-accelerometer.md) | 加速度計直接在 App 內讀取（不需 root） | Accepted |
+| [0015](0015-continuous-opening-sound.md) | 開啟中（30–120°）連續播放，停下暫停、繼續續播 | Accepted |

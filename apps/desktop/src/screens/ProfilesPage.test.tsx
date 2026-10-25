@@ -41,10 +41,10 @@ describe("ProfilesPage", () => {
     await screen.findByRole("heading", { name: "辦公室安靜版" });
     const office = () => backend.data.profiles.find((p) => p.id === "user-office")!;
 
-    fireEvent.click(screen.getByRole("button", { name: "為「掰過頭」加入音效" }));
+    fireEvent.click(screen.getByRole("button", { name: "為「開啟中」加入音效" }));
     fireEvent.click(within(screen.getByRole("menu")).getByRole("menuitem", { name: /金屬斷裂/ }));
     await waitFor(() => expect(office().mapping.lid_overbent?.sounds).toEqual(["builtin.metal-snap"]));
-    expect(within(row("掰過頭")).getByText("金屬斷裂")).toBeTruthy();
+    expect(within(row("開啟中")).getByText("金屬斷裂")).toBeTruthy();
 
     fireEvent.click(within(row("闔上螢幕")).getByRole("button", { name: "移除 嗚…" }));
     await waitFor(() => expect(office().mapping.lid_closing?.sounds).toEqual([]));

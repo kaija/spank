@@ -4,11 +4,11 @@
   "scenarios": {
     "baseline": {
       "slaps": [22.90, 23.65, 24.30, 25.80, 27.60, 29.40, 30.80, 32.45, 37.00, 38.90, 40.95, 43.89, 45.18, 45.38, 45.60, 45.80, 46.08],
-      "lid": ["lid_closing"]
+      "lid": ["lid_closing", "lid_overbent"]
     },
     "carry": { "slaps": [], "lid": [] },
     "desk": { "slaps": [], "lid": [] },
-    "lid": { "slaps": [], "lid": ["lid_overbent", "lid_overbent", "lid_closing", "lid_overbent"] },
+    "lid": { "slaps": [], "lid": ["lid_overbent", "lid_closing", "lid_overbent", "lid_overbent"] },
     "playback": { "slaps": [10.65, 11.80, 12.85], "lid": [] },
     "typing": { "slaps": [28.35, 29.35, 30.45], "lid": [] }
   }

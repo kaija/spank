@@ -6,7 +6,7 @@
 //! ─────────────
 //! 暫停 / 繼續
 //! Profile ▸  ✓ 毀滅 / 哀哀叫 / 經典 / …自訂
-//! 試聽 ▸     打開螢幕 / 闔上螢幕 / 掰過頭 / 輕拍 / 中拍 / 重拍 / 連擊
+//! 試聽 ▸     打開螢幕 / 闔上螢幕 / 開啟中 / 輕拍 / 中拍 / 重拍 / 連擊
 //! ─────────────
 //! 設定…   ⌘,
 //! 結束    ⌘Q
@@ -73,7 +73,7 @@ impl Text {
         match k {
             EventKind::LidOpened => self.t("打開螢幕", "Lid opened"),
             EventKind::LidClosing => self.t("闔上螢幕", "Lid closing"),
-            EventKind::LidOverbent => self.t("掰過頭", "Bent too far"),
+            EventKind::LidOverbent => self.t("開啟中", "Opening"),
             EventKind::SlapLight => self.t("輕拍", "Light slap"),
             EventKind::SlapMedium => self.t("中拍", "Medium slap"),
             EventKind::SlapHard => self.t("重拍", "Hard slap"),

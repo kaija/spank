@@ -30,7 +30,7 @@ describe("SensorsPage", () => {
     await waitFor(() => expect(backend.data.config.lid.close_threshold_deg).toBe(30), { timeout: 1500 });
 
     // Invalid combinations are shown and not saved.
-    fireEvent.change(screen.getAllByRole("slider", { name: "掰過頭門檻（度）" })[1], { target: { value: "20" } });
+    fireEvent.change(screen.getAllByRole("slider", { name: "開啟上限門檻（度）" })[1], { target: { value: "20" } });
     expect((await screen.findByRole("alert")).textContent).toContain("無法儲存");
     await new Promise((r) => setTimeout(r, 500));
     expect(backend.data.config.lid.overbend_threshold_deg).toBe(120);

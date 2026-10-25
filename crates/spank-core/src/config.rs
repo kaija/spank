@@ -23,6 +23,10 @@ pub struct LidConfig {
     /// On wake, play `LidOpened` only if the lid is above this angle.
     pub open_min_deg: f32,
     pub close_threshold_deg: f32,
+    /// `LidOverbent` plays while the lid is opening between this angle and
+    /// `overbend_threshold_deg`: it pauses when the lid stops and resumes when it moves on.
+    pub opening_start_deg: f32,
+    /// Upper end of the opening range; nothing plays above it.
     pub overbend_threshold_deg: f32,
     pub hysteresis_deg: f32,
     pub cooldown_ms: u32,
@@ -33,6 +37,7 @@ impl Default for LidConfig {
         Self {
             open_min_deg: 10.0,
             close_threshold_deg: 20.0,
+            opening_start_deg: 30.0,
             overbend_threshold_deg: 120.0,
             hysteresis_deg: 5.0,
             cooldown_ms: 3000,
@@ -46,6 +51,7 @@ impl LidConfig {
         if ![
             self.open_min_deg,
             self.close_threshold_deg,
+            self.opening_start_deg,
             self.overbend_threshold_deg,
         ]
         .into_iter()
@@ -56,6 +62,11 @@ impl LidConfig {
         if self.close_threshold_deg >= self.overbend_threshold_deg {
             return Err(ConfigError::invalid(
                 "close threshold must be below overbend threshold",
+            ));
+        }
+        if self.opening_start_deg >= self.overbend_threshold_deg {
+            return Err(ConfigError::invalid(
+                "opening start must be below overbend threshold",
             ));
         }
         let gap = self.overbend_threshold_deg - self.close_threshold_deg;
@@ -344,6 +355,7 @@ mod tests {
         assert_eq!(c.slap.trigger_g, 0.15);
         assert_eq!(c.slap.refractory_ms, 150);
         assert_eq!(c.lid.close_threshold_deg, 20.0);
+        assert_eq!(c.lid.opening_start_deg, 30.0);
         assert_eq!(c.lid.overbend_threshold_deg, 120.0);
         assert!(c.mute.meeting && c.mute.focus && c.mute.follow_system);
         assert!(c.launch_at_login);
@@ -401,6 +413,11 @@ mod tests {
         assert!(bad.validate().is_err());
         let bad = LidConfig {
             overbend_threshold_deg: 200.0,
+            ..Default::default()
+        };
+        assert!(bad.validate().is_err());
+        let bad = LidConfig {
+            opening_start_deg: 120.0,
             ..Default::default()
         };
         assert!(bad.validate().is_err());

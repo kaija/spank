@@ -24,7 +24,7 @@ function hint(t: ReturnType<typeof useTranslations>, k: EventKind, cfg: AppConfi
     case "lid_closing":
       return t("events.hintClosing", { deg: lid?.close_threshold_deg ?? 20 });
     case "lid_overbent":
-      return t("events.hintOverbent", { deg: lid?.overbend_threshold_deg ?? 120 });
+      return t("events.hintOverbent", { from: lid?.opening_start_deg ?? 30, to: lid?.overbend_threshold_deg ?? 120 });
     case "slap_light":
       return t("events.hintLight");
     case "slap_medium":

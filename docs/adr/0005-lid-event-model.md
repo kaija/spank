@@ -1,6 +1,6 @@
 # ADR-0005：螢幕開合 — 事件 + 角度區間模型
 
-- 狀態：Accepted
+- 狀態：Accepted（`LidOverbent` 已由 ADR-0015 修訂為開啟中連續播放）
 - 日期：2026-10-24
 
 ## Context

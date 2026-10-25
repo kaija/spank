@@ -454,7 +454,7 @@ export function defaultConfig(): AppConfig {
     language: "system",
     auto_check_updates: true,
     onboarding_done: false,
-    lid: { open_min_deg: 10, close_threshold_deg: 20, overbend_threshold_deg: 120, hysteresis_deg: 5, cooldown_ms: 3000 },
+    lid: { open_min_deg: 10, close_threshold_deg: 20, opening_start_deg: 30, overbend_threshold_deg: 120, hysteresis_deg: 5, cooldown_ms: 3000 },
     slap: {
       enabled: false,
       highpass_hz: 2,

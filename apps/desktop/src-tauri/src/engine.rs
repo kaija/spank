@@ -154,6 +154,13 @@ impl Player for Audio {
             Audio::None => PlaybackStatus::default(),
         }
     }
+
+    fn sound_ms(&self, sound: &SoundId) -> Option<u64> {
+        match self {
+            Audio::Real(p) => p.sound_ms(sound),
+            Audio::None => None,
+        }
+    }
 }
 
 impl Audio {
@@ -336,7 +343,8 @@ impl Core {
                 self.handle(out);
             }
             EngineCmd::Profile(p) => {
-                self.orch.set_profile(p);
+                let out = self.orch.set_profile(p);
+                self.handle(out);
                 self.sync_bank();
             }
             EngineCmd::PreviewEvent(kind) => {
@@ -504,6 +512,11 @@ impl Core {
                     (self.sink)(EngineEvent::Fired(FiredEvent { event, result }));
                 }
                 Output::MuteChanged(m) => self.state.mute = m,
+                Output::StopSound(priority) => {
+                    if let Audio::Real(p) = &self.audio {
+                        p.stop_priority(priority);
+                    }
+                }
                 Output::SlapSuppressed { .. } => {}
                 Output::Calibration(p) => (self.sink)(EngineEvent::Calibration(p)),
                 Output::AccelPeak { peak_g, .. } => (self.sink)(EngineEvent::AccelLevel(peak_g)),

@@ -6,7 +6,7 @@
 
 | # | 需求 | 對應 ADR |
 |---|------|---------|
-| R1 | 螢幕開合時依角度事件播放音效（打開 / 闔上 / 掰過頭） | 0005 |
+| R1 | 螢幕開合時依角度事件播放音效（打開 / 闔上 / 開啟中） | 0005, 0015 |
 | R2 | 拍打電腦時依力道分級播放哀叫，支援連擊 | 0006, 0014 |
 | R3 | 以 Profile 依情境設定音效；自動靜音（開會、專注、安靜時段、系統靜音） | 0007 |
 | R4 | 使用者上傳音效（正規化、≤10 s、≤5 MB） | 0008 |
@@ -89,7 +89,7 @@ pub struct Profile {
 }
 pub struct EventBinding { enabled: bool, sounds: Vec<SoundId> }
 
-pub struct LidConfig  { open_min: f32, close_threshold: f32, overbend_threshold: f32,
+pub struct LidConfig  { open_min: f32, close_threshold: f32, opening_start: f32, overbend_threshold: f32,
                         hysteresis: f32, cooldown: Duration }
 pub struct SlapConfig { light: f32, medium: f32, hard: f32, combo_window: Duration,
                         combo_count: u8, cooldown: Duration, precise_typing: bool }
@@ -103,12 +103,10 @@ pub struct MuteRules  { meeting: bool, focus: bool, quiet_hours: Vec<TimeRange>,
   ┌───────┐ ─────────────────► ┌───────┐ ──────────────────────► ┌───────┐
   │ Armed │   emit LidClosing  │ Low   │                         │ Armed │
   └───────┘                    └───────┘                         └───────┘
-      │ angle > over_th  emit LidOverbent
-      ▼
-  ┌───────┐  angle < over_th - hyst
-  │ High  │ ─────────────────────────► Armed
-  └───────┘
   on Wake: if angle > open_min → emit LidOpened
+  opening()（ADR-0015）：opening_start ≤ angle ≤ over_th 且正在往上（累積 ≥ 2°，300 ms 內持續上升）
+    → Orchestrator 播放 LidOverbent；停下／往下 → 淡出並記住位置；再往上 → 續播；每次打開播一遍，
+      角度低於 opening_start 才重新開始
   每種事件各自 cooldown；角度變化率 |dθ/dt| > 5°/s 時標記 "lid_moving"（供 suppression 使用）
 ```
 
@@ -127,7 +125,7 @@ pub struct MuteRules  { meeting: bool, focus: bool, quiet_hours: Vec<TimeRange>,
 ### 4.3 Orchestrator
 
 `spank-core::Orchestrator`：純邏輯，由 runtime 餵入 lid 樣本、accel 批次、`SysSignal`、設定變更，回傳 `Output`
-（感測器啟停、`Fired { event, result }`、`MuteChanged`）；播放經 `Player` trait（測試用假的）。
+（感測器啟停、`Fired { event, result }`、`MuteChanged`、`StopSound`）；播放經 `Player` trait（測試用假的）。
 感測器只在「醒著 + 未鎖定 + 未暫停」時運作（accel 另需啟用拍打）；喚醒後即使鎖定也讀一次角度觸發 `LidOpened`。
 Combo 沒有綁音效時退回該次力道分級的音效（優先權仍為 Combo）。
 

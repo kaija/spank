@@ -5,8 +5,9 @@ import type { SlapLevels } from "@/bindings/SlapLevels";
 /** Same rules as `LidConfig::validate` (crates/spank-core/src/config.rs). */
 export function lidConfigValid(l: LidConfig): boolean {
   const inRange = (v: number) => v >= 0 && v <= 180;
-  if (![l.open_min_deg, l.close_threshold_deg, l.overbend_threshold_deg].every(inRange)) return false;
+  if (![l.open_min_deg, l.close_threshold_deg, l.opening_start_deg, l.overbend_threshold_deg].every(inRange)) return false;
   if (l.close_threshold_deg >= l.overbend_threshold_deg) return false;
+  if (l.opening_start_deg >= l.overbend_threshold_deg) return false;
   const gap = l.overbend_threshold_deg - l.close_threshold_deg;
   return l.hysteresis_deg > 0 && l.hysteresis_deg * 2 < gap;
 }

@@ -55,8 +55,10 @@ enum Ctl {
         clip: Arc<Clip>,
         priority: Priority,
         gain: f32,
+        offset_ms: u64,
     },
     Stop,
+    StopPriority(Priority),
     Shutdown,
 }
 
@@ -65,8 +67,10 @@ enum Cmd {
         clip: Arc<Clip>,
         priority: Priority,
         gain: f32,
+        offset_ms: u64,
     },
     Stop,
+    StopPriority(Priority),
 }
 
 /// Output format of the current stream.
@@ -123,6 +127,17 @@ impl AudioPlayer {
 
     /// Play a clip directly (previews, tests).
     pub fn play_clip(&self, clip: Arc<Clip>, priority: Priority, gain: f32) -> PlayOutcome {
+        self.play_clip_at(clip, priority, gain, 0)
+    }
+
+    /// Play a clip starting `offset_ms` into it.
+    pub fn play_clip_at(
+        &self,
+        clip: Arc<Clip>,
+        priority: Priority,
+        gain: f32,
+        offset_ms: u64,
+    ) -> PlayOutcome {
         let st = &self.status;
         if st.playing.load(Ordering::Acquire) || st.pending.load(Ordering::Acquire) > 0 {
             let cur = Priority(st.priority.load(Ordering::Acquire) as u8);
@@ -134,7 +149,16 @@ impl AudioPlayer {
         st.pending.fetch_add(1, Ordering::AcqRel);
         st.priority.store(priority.0 as u32, Ordering::Release);
         st.requested_at_us.store(st.now_us(), Ordering::Release);
-        if self.tx.send(Ctl::Play { clip, priority, gain }).is_err() {
+        if self
+            .tx
+            .send(Ctl::Play {
+                clip,
+                priority,
+                gain,
+                offset_ms,
+            })
+            .is_err()
+        {
             st.pending.fetch_sub(1, Ordering::AcqRel);
             return PlayOutcome::Unavailable;
         }
@@ -148,6 +172,16 @@ impl AudioPlayer {
     /// Stop whatever is playing (e.g. the user pressed stop on a preview).
     pub fn stop(&self) {
         let _ = self.tx.send(Ctl::Stop);
+    }
+
+    /// Fade out the sound of `priority`, if that is what's playing. Other sounds keep going, and
+    /// the fading sound no longer blocks new ones.
+    pub fn stop_priority(&self, priority: Priority) {
+        let _ =
+            self.status
+                .priority
+                .compare_exchange(priority.0 as u32, 0, Ordering::AcqRel, Ordering::Acquire);
+        let _ = self.tx.send(Ctl::StopPriority(priority));
     }
 
     /// Delay between the last request and the audio callback that started it.
@@ -166,9 +200,13 @@ impl AudioPlayer {
 impl Player for AudioPlayer {
     fn play(&mut self, req: &PlayRequest) -> PlayOutcome {
         match self.bank.get(&req.sound) {
-            Some(clip) => self.play_clip(clip, req.priority, req.gain),
+            Some(clip) => self.play_clip_at(clip, req.priority, req.gain, req.offset_ms),
             None => PlayOutcome::Unavailable,
         }
+    }
+
+    fn sound_ms(&self, sound: &spank_core::SoundId) -> Option<u64> {
+        self.bank.get(sound).map(|c| c.duration_ms())
     }
 
     fn status(&self) -> PlaybackStatus {
@@ -219,8 +257,13 @@ fn build(status: &Arc<Status>) -> Result<Output, PlayerError> {
                 // Real-time: no locks, no allocation (dropping a finished clip's Arc may free).
                 while let Ok(c) = rx.pop() {
                     match c {
-                        Cmd::Play { clip, priority, gain } => {
-                            if mixer.request(clip, priority, gain) != MixOutcome::Busy {
+                        Cmd::Play {
+                            clip,
+                            priority,
+                            gain,
+                            offset_ms,
+                        } => {
+                            if mixer.request_at(clip, priority, gain, offset_ms) != MixOutcome::Busy {
                                 let req = st.requested_at_us.load(Ordering::Acquire);
                                 st.last_start_delay_us
                                     .store(st.now_us().saturating_sub(req), Ordering::Release);
@@ -229,6 +272,7 @@ fn build(status: &Arc<Status>) -> Result<Output, PlayerError> {
                             st.pending.fetch_sub(1, Ordering::AcqRel);
                         }
                         Cmd::Stop => mixer.stop(),
+                        Cmd::StopPriority(p) => mixer.stop_priority(p),
                     }
                 }
                 mixer.render(data);
@@ -266,7 +310,12 @@ fn control_thread(
     let mut running = false;
     loop {
         match rx.recv_timeout(Duration::from_millis(100)) {
-            Ok(Ctl::Play { clip, priority, gain }) => {
+            Ok(Ctl::Play {
+                clip,
+                priority,
+                gain,
+                offset_ms,
+            }) => {
                 if status.stream_failed.swap(false, Ordering::AcqRel) || out.is_none() {
                     drop(out.take());
                     running = false;
@@ -276,7 +325,15 @@ fn control_thread(
                     status.pending.fetch_sub(1, Ordering::AcqRel);
                     continue;
                 };
-                if o.cmds.push(Cmd::Play { clip, priority, gain }).is_err() {
+                if o.cmds
+                    .push(Cmd::Play {
+                        clip,
+                        priority,
+                        gain,
+                        offset_ms,
+                    })
+                    .is_err()
+                {
                     status.pending.fetch_sub(1, Ordering::AcqRel);
                     continue;
                 }
@@ -287,6 +344,11 @@ fn control_thread(
             Ok(Ctl::Stop) => {
                 if let Some(o) = out.as_mut() {
                     let _ = o.cmds.push(Cmd::Stop);
+                }
+            }
+            Ok(Ctl::StopPriority(p)) => {
+                if let Some(o) = out.as_mut() {
+                    let _ = o.cmds.push(Cmd::StopPriority(p));
                 }
             }
             Ok(Ctl::Shutdown) | Err(mpsc::RecvTimeoutError::Disconnected) => break,

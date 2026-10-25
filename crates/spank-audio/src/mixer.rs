@@ -6,11 +6,16 @@
 //!   starts; equal or lower priority is dropped ([`MixOutcome::Busy`]).
 //! - Clips keep their own rate and channel count; the mixer converts on the fly (linear
 //!   interpolation, mono ↔ stereo mapping), so a device change never needs a reload.
+//! - A sound can start part-way in (resuming the lid-opening sound) with a short fade-in, and
+//!   [`Mixer::stop_priority`] fades out just the sound of one priority. A sound fading out after
+//!   such a stop no longer blocks new requests.
 
 use spank_core::Priority;
 use std::sync::Arc;
 
 pub const FADE_MS: u32 = 50;
+/// Fade-in when starting part-way into a clip, so the cut doesn't click.
+pub const RESUME_FADE_MS: u32 = 10;
 
 /// Decoded audio, interleaved f32.
 #[derive(Debug, Clone, PartialEq)]
@@ -67,6 +72,10 @@ struct Voice {
     priority: Priority,
     /// Frames left in the fade-out, when fading.
     fade_left: Option<u32>,
+    /// Frames left in the fade-in, when resuming.
+    fade_in_left: u32,
+    /// Fading out because it was stopped (not preempted): doesn't block new sounds.
+    stopping: bool,
 }
 
 impl Voice {
@@ -80,6 +89,7 @@ pub struct Mixer {
     channels: usize,
     sample_rate: u32,
     fade_frames: u32,
+    resume_fade_frames: u32,
     voice: Option<Voice>,
     next: Option<Voice>,
 }
@@ -90,6 +100,7 @@ impl Mixer {
             channels: channels.max(1) as usize,
             sample_rate: sample_rate.max(1),
             fade_frames: (sample_rate as u64 * FADE_MS as u64 / 1000).max(1) as u32,
+            resume_fade_frames: (sample_rate as u64 * RESUME_FADE_MS as u64 / 1000).max(1) as u32,
             voice: None,
             next: None,
         }
@@ -103,21 +114,44 @@ impl Mixer {
         self.voice.is_some() || self.next.is_some()
     }
 
-    /// Priority of what is (or is about to be) playing.
+    /// Priority of what is (or is about to be) playing. A stopped sound that is still fading out
+    /// doesn't count.
     pub fn current_priority(&self) -> Option<Priority> {
-        self.next.as_ref().or(self.voice.as_ref()).map(|v| v.priority)
+        self.next
+            .as_ref()
+            .or(self.voice.as_ref().filter(|v| !v.stopping))
+            .map(|v| v.priority)
     }
 
     pub fn request(&mut self, clip: Arc<Clip>, priority: Priority, gain: f32) -> MixOutcome {
+        self.request_at(clip, priority, gain, 0)
+    }
+
+    /// Like [`Mixer::request`], starting `offset_ms` into the clip (with a short fade-in).
+    pub fn request_at(
+        &mut self,
+        clip: Arc<Clip>,
+        priority: Priority,
+        gain: f32,
+        offset_ms: u64,
+    ) -> MixOutcome {
+        let start = offset_ms as f64 * clip.sample_rate as f64 / 1000.0;
         let voice = Voice {
             step: clip.sample_rate as f64 / self.sample_rate as f64,
             clip,
-            pos: 0.0,
+            pos: start,
             gain: gain.clamp(0.0, 1.0),
             priority,
             fade_left: None,
+            fade_in_left: if offset_ms > 0 { self.resume_fade_frames } else { 0 },
+            stopping: false,
         };
         match self.current_priority() {
+            // Let a stopped sound finish its fade, then play.
+            None if self.voice.is_some() => {
+                self.next = Some(voice);
+                MixOutcome::Started
+            }
             None => {
                 self.voice = Some(voice);
                 MixOutcome::Started
@@ -141,6 +175,21 @@ impl Mixer {
         self.next = None;
     }
 
+    /// Fade out the sound of `priority` (playing or about to play); others keep going.
+    pub fn stop_priority(&mut self, priority: Priority) {
+        if self.next.as_ref().is_some_and(|v| v.priority == priority) {
+            self.next = None;
+        }
+        if let Some(v) = &mut self.voice
+            && v.priority == priority
+        {
+            v.stopping = true;
+            if v.fade_left.is_none() {
+                v.fade_left = Some(self.fade_frames);
+            }
+        }
+    }
+
     /// Fill interleaved `out` (overwrites it).
     pub fn render(&mut self, out: &mut [f32]) {
         let ch = self.channels;
@@ -160,7 +209,13 @@ impl Mixer {
                 }
                 None => 1.0,
             };
-            let gain = v.gain * fade;
+            let fade_in = if v.fade_in_left > 0 {
+                v.fade_in_left -= 1;
+                1.0 - v.fade_in_left as f32 / self.resume_fade_frames as f32
+            } else {
+                1.0
+            };
+            let gain = v.gain * fade * fade_in;
             let src_ch = v.clip.channels as usize;
             for (c, s) in frame.iter_mut().enumerate() {
                 *s = gain
@@ -253,6 +308,50 @@ mod tests {
         m.request(clip(1000, 0.7, 1, 1000), Priority(7), 1.0);
         let out = render(&mut m, 40);
         assert_eq!(out[30], 0.7);
+    }
+
+    #[test]
+    fn starts_part_way_with_fade_in() {
+        let mut m = Mixer::new(1, 1000); // resume fade = 10 frames
+        let ramp: Vec<f32> = (0..1000).map(|i| i as f32 / 1000.0).collect();
+        let c = Arc::new(Clip::new(ramp, 1, 1000));
+        m.request_at(c.clone(), Priority(5), 1.0, 500);
+        let out = render(&mut m, 20);
+        assert!(out[0] < 0.1, "fading in: {}", out[0]);
+        assert!((out[15] - 0.515).abs() < 1e-6, "{}", out[15]);
+        // Past the end: nothing to play.
+        let mut m = Mixer::new(1, 1000);
+        m.request_at(c, Priority(5), 1.0, 2000);
+        assert_eq!(render(&mut m, 2), vec![0.0, 0.0]);
+        assert!(!m.is_active());
+    }
+
+    #[test]
+    fn stop_priority_fades_only_that_sound() {
+        let mut m = Mixer::new(1, 1000);
+        m.request(clip(1000, 1.0, 1, 1000), Priority(5), 1.0);
+        render(&mut m, 10);
+        // Another priority: no effect.
+        m.stop_priority(Priority(3));
+        assert_eq!(render(&mut m, 1), vec![1.0]);
+        m.stop_priority(Priority(5));
+        assert_eq!(m.current_priority(), None, "a stopped sound doesn't block");
+        let out = render(&mut m, 10);
+        assert!(out[1] < 1.0 && out[9] > 0.0, "fading out: {out:?}");
+        // A lower-priority sound queued during the fade plays after it.
+        assert_eq!(
+            m.request(clip(100, 0.25, 1, 1000), Priority(1), 1.0),
+            MixOutcome::Started
+        );
+        let out = render(&mut m, 50);
+        assert_eq!(out[45], 0.25);
+        // Stopping a pending sound drops it.
+        let mut m = Mixer::new(1, 1000);
+        m.request(clip(1000, 1.0, 1, 1000), Priority(1), 1.0);
+        m.request(clip(1000, 0.5, 1, 1000), Priority(5), 1.0);
+        m.stop_priority(Priority(5));
+        render(&mut m, 60);
+        assert!(!m.is_active());
     }
 
     #[test]

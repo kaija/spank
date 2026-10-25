@@ -29,7 +29,14 @@ fn lid_event_sequences_match_expected() {
                 "{name}"
             );
         }
-        assert_eq!(r.player.requests.len(), r.fired.len());
+        // One request from the top per event; the rest resume the opening sound (no new event)
+        // each time the lid moves on.
+        let (fresh, resumed): (Vec<_>, Vec<_>) = r.player.requests.iter().partition(|q| q.offset_ms == 0);
+        assert_eq!(fresh.len(), r.fired.len(), "{name}");
+        assert!(resumed.iter().all(|q| q.kind == EventKind::LidOverbent), "{name}");
+        for q in &r.player.requests {
+            assert_eq!(q.sound, format!("{:?}", q.kind).as_str().into(), "{name}");
+        }
         assert!(r.player.requests.iter().all(|q| (q.gain - 0.8).abs() < 1e-6));
     }
 }
@@ -44,7 +51,7 @@ fn lid_events_land_in_the_right_segments() {
         .collect();
     assert_eq!(
         labels,
-        vec!["lid_overbend", "lid_overbend", "lid_close_open", "lid_close_open"]
+        vec!["lid_overbend", "lid_close_open", "lid_close_open", "lid_fast"]
     );
     // Lid motion gates every accelerometer impact in this trace.
     assert!(r.fired.iter().all(|(e, _)| e.kind.is_lid()));
@@ -104,12 +111,12 @@ fn sleep_drops_closing_and_wake_fires_opened() {
         kinds,
         vec![
             EventKind::LidOverbent,
-            EventKind::LidOverbent,
             EventKind::LidOpened,
+            EventKind::LidOverbent,
             EventKind::LidOverbent
         ]
     );
-    let opened = fired[2].1;
+    let opened = fired[1].1;
     assert!(
         (20_600..20_700).contains(&opened),
         "LidOpened at first sample after wake: {opened}"
@@ -132,7 +139,14 @@ fn locked_screen_stops_sensors() {
     let (fired, cmds) =
         replay_with_signals(&[(0, SysSignal::ScreenLocked), (16_000, SysSignal::ScreenUnlocked)]);
     let kinds: Vec<_> = fired.iter().map(|f| f.0).collect();
-    assert_eq!(kinds, vec![EventKind::LidClosing, EventKind::LidOverbent]);
+    assert_eq!(
+        kinds,
+        vec![
+            EventKind::LidClosing,
+            EventKind::LidOverbent,
+            EventKind::LidOverbent
+        ]
+    );
     assert_eq!(
         cmds[2..],
         [
