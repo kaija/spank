@@ -2,7 +2,7 @@
 
 最後更新：2026-10-25。適用於 Creaky（Mac App Store 版）與產品網站。
 
-網站政策：<https://creaky.arlo-ai.app/#privacy>（網站部署後生效）。Spank（DMG 版）的政策請見 [PRIVACY.md](../PRIVACY.md)。
+網站政策：<https://creaky.arlo-ai.app/privacy.html>。Spank（DMG 版）的政策請見 [PRIVACY.md](../PRIVACY.md)。
 
 Creaky App 不收集或傳送個人資料。
 沒有帳號、廣告或使用行為分析。

@@ -12,10 +12,10 @@ App Store 版叫 **Creaky**，只有螢幕開合（打開、開啟中 30–120°
 | 主要類別 | 娛樂（Entertainment） |
 | Cargo feature | `appstore`（DMG 版是預設的 `direct`） |
 | 最低系統 | macOS 14，只有 Apple Silicon（arm64） |
-| 支援網址 | `https://github.com/kaija/spank` |
-| 隱私權政策網址 | `https://github.com/kaija/spank/blob/main/docs/privacy.md` |
+| 支援網址 | `https://creaky.arlo-ai.app/#support` |
+| 隱私權政策網址 | `https://creaky.arlo-ai.app/privacy.html` |
 
-網站部署完成後，支援網址改為 `https://creaky.arlo-ai.app/#support`、行銷網址改為 `https://creaky.arlo-ai.app/`、隱私權政策網址改為 `https://creaky.arlo-ai.app/#privacy`。目前表格保留已上線的網址；先依 [網站部署說明](website.md) 部署並確認 HTTPS 正常，再更新 App Store Connect 的兩個語言。
+網站首頁為 `https://creaky.arlo-ai.app/`，支援網址為 `https://creaky.arlo-ai.app/#support`，獨立隱私權政策網址為 `https://creaky.arlo-ai.app/privacy.html`。部署方式見 [網站部署說明](website.md)。
 
 ## 1. 一次性準備（依序）
 
@@ -112,7 +112,7 @@ ASC_KEY_ID=XXXXXXXXXX ASC_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx tools/r
 - 類別：主要 **娛樂**，次要 不選（或「工具程式」）。
 - 內容版權：選「是，包含第三方內容，且我有權使用」。內建音效是作者以 ElevenLabs 產生、授權隨本 App 散布（`assets/sounds/SOUNDS_LICENSE.md`）。
 - 年齡分級：見 §5。
-- 隱私權政策網址：`https://github.com/kaija/spank/blob/main/docs/privacy.md`
+- 隱私權政策網址：`https://creaky.arlo-ai.app/privacy.html`
 
 ### 3.2 價格與供應狀況
 
@@ -202,7 +202,7 @@ Creaky 第一版：開合螢幕時出聲，內建「全玻璃」與「地城石�
 **支援網址**
 
 ```
-https://github.com/kaija/spank
+https://creaky.arlo-ai.app/#support
 ```
 
 ### English (U.S.)
@@ -269,7 +269,7 @@ First release of Creaky: sounds when you open and close the lid, two built-in so
 **Support URL**
 
 ```
-https://github.com/kaija/spank
+https://creaky.arlo-ai.app/#support
 ```
 
 ## 5. App 隱私與年齡分級

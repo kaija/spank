@@ -1,6 +1,6 @@
 # Creaky 產品網站與隱私政策
 
-網站原始檔在 `website/`，是免安裝依賴、免建置的單頁 HTML/CSS。圖片為已核可廣告圖的壓縮 JPEG，全部自帶；沒有外部字型、分析工具、Cookie 或 JavaScript。
+網站原始檔在 `website/`，是免安裝依賴、免建置的 HTML/CSS，包含一頁式產品介紹與獨立隱私政策頁。圖片為已核可廣告圖的壓縮 JPEG，全部自帶；沒有外部字型、分析工具、Cookie 或 JavaScript。
 
 ## 本機預覽
 
@@ -25,19 +25,19 @@ python3 -m http.server 4173 --bind 127.0.0.1 --directory website
 
 官方參考：[GitHub Pages 自訂 workflow](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)、[自訂網域](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site)。
 
-## App Store Connect 網址（網站正式上線後填入）
+## App Store Connect 網址
 
 | 欄位 | 繁體中文與英文共用網址 |
 | --- | --- |
 | Marketing URL | `https://creaky.arlo-ai.app/` |
 | Support URL | `https://creaky.arlo-ai.app/#support` |
-| Privacy Policy URL | `https://creaky.arlo-ai.app/#privacy` |
+| Privacy Policy URL | `https://creaky.arlo-ai.app/privacy.html` |
 
-英文隱私政策另可直達 `https://creaky.arlo-ai.app/#privacy-en`，不需要 JavaScript、登入或展開操作。
+英文隱私政策另可直達 `https://creaky.arlo-ai.app/privacy.html#privacy-en`，不需要 JavaScript、登入或展開操作。
 
 ## 維護
 
-- 頁面文字與完整政策：`website/index.html`；Markdown 版本：`docs/privacy.md`。修改政策時同步兩處與更新日期。
+- 產品介紹：`website/index.html`；完整政策：`website/privacy.html`；Markdown 版本：`docs/privacy.md`。修改政策時同步兩處與更新日期。
 - 風格與手機版：`website/styles.css`。
 - App 尚未公開上架，首頁目前標示「即將推出」。公開上架後，再換成正式下載連結 `https://apps.apple.com/app/id6826780064`。
 - App Store 中英文介紹已移除開源描述；網站也不使用開源宣傳文案。
