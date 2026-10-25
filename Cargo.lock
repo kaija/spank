@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "accel-probe"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "core-foundation 0.10.1",
  "core-foundation-sys",
@@ -255,7 +255,7 @@ checksum = "1254ebf6529f3763c491acfb5ab6e960809e3c75a38584cc664f8c5667fb7107"
 
 [[package]]
 name = "audio-probe"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "cpal",
 ]
@@ -1258,7 +1258,7 @@ checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
 name = "focus-probe"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "block2",
  "core-foundation-sys",
@@ -1493,7 +1493,7 @@ dependencies = [
 
 [[package]]
 name = "gen-builtin-sounds"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "fastrand",
  "sha2 0.11.1",
@@ -2327,7 +2327,7 @@ dependencies = [
 
 [[package]]
 name = "lid-probe"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "core-foundation 0.10.1",
  "core-foundation-sys",
@@ -4006,7 +4006,7 @@ dependencies = [
 
 [[package]]
 name = "spank-audio"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "cpal",
  "ebur128",
@@ -4022,7 +4022,7 @@ dependencies = [
 
 [[package]]
 name = "spank-core"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "fastrand",
  "serde",
@@ -4033,7 +4033,7 @@ dependencies = [
 
 [[package]]
 name = "spank-desktop"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "core-foundation 0.10.1",
  "libc",
@@ -4056,7 +4056,7 @@ dependencies = [
 
 [[package]]
 name = "spank-pack"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "fastrand",
  "hound",
@@ -4072,7 +4072,7 @@ dependencies = [
 
 [[package]]
 name = "spank-sensors"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "core-foundation 0.10.1",
  "core-foundation-sys",
@@ -4088,7 +4088,7 @@ dependencies = [
 
 [[package]]
 name = "spank-store"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "dirs 7.0.0",
  "fastrand",
@@ -4101,7 +4101,7 @@ dependencies = [
 
 [[package]]
 name = "spank-sysmon"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "block2",
  "core-foundation-sys",
@@ -5126,7 +5126,7 @@ checksum = "8df9b6e13f2d32c91b9bd719c00d1958837bc7dec474d94952798cc8e69eeec3"
 
 [[package]]
 name = "trace-recorder"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "core-foundation 0.10.1",
  "core-foundation-sys",
