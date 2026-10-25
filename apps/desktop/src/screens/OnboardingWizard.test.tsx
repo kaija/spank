@@ -38,18 +38,18 @@ describe("OnboardingWizard", () => {
     act(() =>
       backend.emit("trigger_fired", {
         event: { kind: "lid_opened", at_ms: 1, meta: { type: "none" } },
-        result: { type: "played", sound: "builtin.oh" },
+        result: { type: "played", sound: "builtin.glass-wake-01" },
       }),
     );
-    expect(screen.getByText("偵測到了！剛剛播放「喔！」")).toBeTruthy();
+    expect(screen.getByText("偵測到了！剛剛播放「玻璃甦醒」")).toBeTruthy();
     await click("下一步");
 
     // Profile cards: picking one switches the active profile.
-    expect(screen.getByRole("radio", { name: /毀滅/ }).getAttribute("aria-checked")).toBe("true");
-    fireEvent.click(screen.getByRole("radio", { name: /哀哀叫/ }));
-    await waitFor(() => expect(backend.data.config.active_profile).toBe("builtin.whine"));
-    await click("試聽 經典");
-    expect(backend.data.log).toContain("preview:builtin.thud-low");
+    expect(screen.getByRole("radio", { name: /全玻璃/ }).getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(screen.getByRole("radio", { name: /地城石門/ }));
+    await waitFor(() => expect(backend.data.config.active_profile).toBe("builtin.classic"));
+    await click("試聽 全玻璃");
+    expect(backend.data.log).toContain("preview:builtin.glass-split-01");
     await click("下一步");
 
     await click("啟用並校準");

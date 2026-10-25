@@ -1,0 +1,370 @@
+{
+  "_comment": "Prompts for the built-in sounds generated with ElevenLabs Sound Effects (tools/elevenlabs-sounds.py). Lengths follow how each event plays (docs/adr/0015, design §4): lid_overbent is the continuous opening sound (30-120 degrees, pauses and resumes), lid_opened plays once on wake, lid_closing once before sleep, slaps must stay short so the next slap isn't dropped.",
+  "defaults": {
+    "model_id": "eleven_text_to_sound_v2",
+    "prompt_influence": 0.6,
+    "style": "close-up, dry, no music, no voice-over, no long reverb"
+  },
+  "durations": {
+    "lid_overbent": 5.0,
+    "lid_opened": 1.5,
+    "lid_closing": 0.6,
+    "slap_light": 0.5,
+    "slap_medium": 0.7,
+    "slap_hard": 1.0,
+    "slap_combo": 2.0
+  },
+  "kept_sounds": [
+    { "stem": "glass-crack", "zh": "玻璃裂響", "en": "Glass crack", "file": "glass-crack.wav",
+      "what": "ElevenLabs Sound Effects: a sharp crack of glass (first 0.5 s, with a 50 ms fade-out)" },
+    { "stem": "glass-tension-01", "zh": "玻璃緊繃碎裂 01", "en": "Straining glass 01", "file": "glass-tension-01.mp3",
+      "what": "ElevenLabs Sound Effects: slow, high-tension glass straining, cracking and shattering" },
+    { "stem": "glass-tension-02", "zh": "玻璃緊繃碎裂 02", "en": "Straining glass 02", "file": "glass-tension-02.mp3",
+      "what": "ElevenLabs Sound Effects: slow, high-tension glass straining, cracking and shattering" },
+    { "stem": "glass-tension-03", "zh": "玻璃緊繃碎裂 03", "en": "Straining glass 03", "file": "glass-tension-03.mp3",
+      "what": "ElevenLabs Sound Effects: slow, high-tension glass straining, cracking and shattering" }
+  ],
+  "profiles": [
+    {
+      "id": "destruction",
+      "zh": "全玻璃",
+      "en": "All Glass",
+      "desc_zh": "整台都是玻璃：慢慢裂開、清脆碎掉。",
+      "desc_en": "Made of glass: it cracks slowly and shatters crisply.",
+      "keep": {
+        "lid_overbent": [
+          "glass-tension-01",
+          "glass-tension-02",
+          "glass-tension-03"
+        ],
+        "lid_closing": [
+          "glass-crack"
+        ]
+      },
+      "sounds": [
+        {
+          "stem": "glass-wake-01",
+          "event": "lid_opened",
+          "zh": "玻璃甦醒",
+          "en": "Glass wakes",
+          "prompt": "A bright crystal glass ring swelling up with a delicate high chime and a tiny crackle, like a glass panel waking up"
+        },
+        {
+          "stem": "glass-tap-01",
+          "event": "slap_light",
+          "zh": "敲玻璃 01",
+          "en": "Glass tap 01",
+          "prompt": "A single firm knuckle knock on a thick glass window, one crisp, bright and clearly audible 'tink'",
+          "prompt_influence": 0.8
+        },
+        {
+          "stem": "glass-tap-02",
+          "event": "slap_light",
+          "zh": "敲玻璃 02",
+          "en": "Glass tap 02",
+          "prompt": "A metal spoon tapping a drinking glass once, one bright clear ring 'ting', short",
+          "prompt_influence": 0.8
+        },
+        {
+          "stem": "glass-split-01",
+          "event": "slap_medium",
+          "zh": "玻璃裂紋 01",
+          "en": "Glass splits 01",
+          "prompt": "A sharp hit on a glass pane that cracks it with a quick splintering sound, no shattering"
+        },
+        {
+          "stem": "glass-split-02",
+          "event": "slap_medium",
+          "zh": "玻璃裂紋 02",
+          "en": "Glass splits 02",
+          "prompt": "A thick sheet of glass struck and cracking with a sharp creak and a few tiny splinters, it does not break"
+        },
+        {
+          "stem": "glass-shatter-01",
+          "event": "slap_hard",
+          "zh": "玻璃爆裂 01",
+          "en": "Glass shatters 01",
+          "prompt": "A hard punch shattering a glass pane: instant impact, dense shattering, a few shards falling, short tail"
+        },
+        {
+          "stem": "glass-shatter-02",
+          "event": "slap_hard",
+          "zh": "玻璃爆裂 02",
+          "en": "Glass shatters 02",
+          "prompt": "A glass bottle smashed against a hard surface, sudden burst of breaking glass with short scattering shards"
+        },
+        {
+          "stem": "glass-cascade-01",
+          "event": "slap_combo",
+          "zh": "玻璃牆崩落",
+          "en": "Glass wall collapse",
+          "prompt": "A large glass window shattering: a sudden crash, then a short shower of glass shards falling on a hard floor, all over within two seconds, clean recording without distortion",
+          "prompt_influence": 0.6
+        }
+      ]
+    },
+    {
+      "id": "classic",
+      "zh": "地城石門",
+      "en": "Dungeon Gate",
+      "desc_zh": "開蓋像推開地城石門，砂石落下，機關啟動。",
+      "desc_en": "Opening the lid grinds open a dungeon gate; grit falls and traps spring.",
+      "sounds": [
+        {
+          "stem": "stone-open-01",
+          "event": "lid_overbent",
+          "zh": "石門開啟 01",
+          "en": "Stone gate opens 01",
+          "prompt": "A massive ancient stone door slowly grinding open, continuous dry stone-on-stone scraping with small grit and pebbles trickling, steady pressure, no impact at the end"
+        },
+        {
+          "stem": "stone-open-02",
+          "event": "lid_overbent",
+          "zh": "石門開啟 02",
+          "en": "Stone gate opens 02",
+          "prompt": "A heavy stone slab being dragged slowly across a stone floor, continuous rough grinding with irregular little stutters and dust falling, no impact at the end"
+        },
+        {
+          "stem": "stone-wake-01",
+          "event": "lid_opened",
+          "zh": "石塊鬆動",
+          "en": "Stone shifts",
+          "prompt": "A heavy stone block shifting with a short deep rumble and a puff of falling dust in a dungeon"
+        },
+        {
+          "stem": "stone-close-01",
+          "event": "lid_closing",
+          "zh": "石門關上",
+          "en": "Stone gate shuts",
+          "prompt": "A stone door sliding shut quickly: a brief stone-on-stone grind that ends in one solid, heavy stop, very short, no echo",
+          "duration": 0.8,
+          "prompt_influence": 0.7
+        },
+        {
+          "stem": "stone-knock-01",
+          "event": "slap_light",
+          "zh": "敲石牆 01",
+          "en": "Stone knock 01",
+          "prompt": "A single knuckle knock on a solid stone wall, one short dull click"
+        },
+        {
+          "stem": "stone-knock-02",
+          "event": "slap_light",
+          "zh": "敲石牆 02",
+          "en": "Stone knock 02",
+          "prompt": "A small pebble tapping once on a stone floor, short dry tick"
+        },
+        {
+          "stem": "stone-ram-01",
+          "event": "slap_medium",
+          "zh": "撞石門 01",
+          "en": "Stone ram 01",
+          "prompt": "A fist hitting a stone door, one solid thump with a little crumbling grit"
+        },
+        {
+          "stem": "stone-ram-02",
+          "event": "slap_medium",
+          "zh": "撞石門 02",
+          "en": "Stone ram 02",
+          "prompt": "A wooden club hitting a stone pillar, one hard knock with a few small stones falling"
+        },
+        {
+          "stem": "stone-crumble-01",
+          "event": "slap_hard",
+          "zh": "石牆崩裂 01",
+          "en": "Stone crumbles 01",
+          "prompt": "A battering ram hitting a stone gate: deep impact, rocks cracking and debris falling briefly"
+        },
+        {
+          "stem": "stone-crumble-02",
+          "event": "slap_hard",
+          "zh": "石牆崩裂 02",
+          "en": "Stone crumbles 02",
+          "prompt": "A large rock smashed by a sledgehammer, heavy crack and chunks of stone scattering, short tail"
+        },
+        {
+          "stem": "stone-trap-01",
+          "event": "slap_combo",
+          "zh": "地城機關",
+          "en": "Dungeon trap",
+          "prompt": "A dungeon trap mechanism triggering: stone gears clunking, chains rattling and a heavy stone block dropping"
+        }
+      ]
+    }
+  ],
+  "parked_profiles": [
+    {
+      "id": "mech",
+      "zh": "機甲出擊",
+      "en": "Mecha Launch",
+      "desc_zh": "開蓋就是機甲啟動：渦輪升速、單眼亮起，拍太多次就紅色警報。",
+      "desc_en": "Opening the lid launches a giant robot: turbines spin up, the eye lights up, and too many slaps trigger red alert.",
+      "sounds": [
+        {
+          "stem": "mech-open-01",
+          "event": "lid_overbent",
+          "zh": "渦輪升速 01",
+          "en": "Turbine spin-up 01",
+          "prompt": "A giant anime mecha powering up: a jet turbine spinning up with a rising high-pitched whine, hydraulic hisses and rhythmic servo clunks, energy building, 1990s anime sci-fi sound design"
+        },
+        {
+          "stem": "mech-open-02",
+          "event": "lid_overbent",
+          "zh": "渦輪升速 02",
+          "en": "Turbine spin-up 02",
+          "prompt": "A giant robot reactor charging: a rising electric whir climbing steadily in pitch, mechanical locks releasing one after another and steam vents hissing, anime sci-fi"
+        },
+        {
+          "stem": "mech-wake-01",
+          "event": "lid_opened",
+          "zh": "單眼亮起",
+          "en": "Eye lights up",
+          "prompt": "A giant robot's single eye lighting up with a sharp electronic 'ping' and a short rising hum, anime mecha"
+        },
+        {
+          "stem": "mech-close-01",
+          "event": "lid_closing",
+          "zh": "艙門密封",
+          "en": "Hatch seals",
+          "prompt": "A cockpit hatch sealing shut with a short pneumatic hiss and a heavy metallic clunk"
+        },
+        {
+          "stem": "mech-clank-01",
+          "event": "slap_light",
+          "zh": "駕駛艙提示 01",
+          "en": "Cockpit blip 01",
+          "prompt": "A short sci-fi cockpit interface beep, mecha control panel"
+        },
+        {
+          "stem": "mech-clank-02",
+          "event": "slap_light",
+          "zh": "駕駛艙提示 02",
+          "en": "Cockpit blip 02",
+          "prompt": "A single light metallic tap on giant robot armour with a faint electronic blip"
+        },
+        {
+          "stem": "mech-hit-01",
+          "event": "slap_medium",
+          "zh": "裝甲受擊 01",
+          "en": "Armour hit 01",
+          "prompt": "A giant robot getting hit: a heavy metal clang with a short damage alert beep"
+        },
+        {
+          "stem": "mech-hit-02",
+          "event": "slap_medium",
+          "zh": "裝甲受擊 02",
+          "en": "Armour hit 02",
+          "prompt": "An armour plate impact with a short energy shield crackle, sci-fi"
+        },
+        {
+          "stem": "mech-spark-01",
+          "event": "slap_hard",
+          "zh": "重創 01",
+          "en": "Heavy damage 01",
+          "prompt": "A giant robot taking a heavy hit: explosive metal impact, electric sparks and a short alarm blip"
+        },
+        {
+          "stem": "mech-spark-02",
+          "event": "slap_hard",
+          "zh": "重創 02",
+          "en": "Heavy damage 02",
+          "prompt": "A beam weapon blast hitting armour: a zap, crackling sparks and a metal groan, sci-fi"
+        },
+        {
+          "stem": "mech-alarm-01",
+          "event": "slap_combo",
+          "zh": "紅色警報",
+          "en": "Red alert",
+          "prompt": "A mecha cockpit red alert: an urgent repeating warning klaxon with sparks and a flickering power drop, anime sci-fi"
+        }
+      ]
+    },
+    {
+      "id": "arcade",
+      "zh": "8-bit 街機",
+      "en": "8-bit Arcade",
+      "desc_zh": "把筆電變成紅白機：開蓋集氣、拍打就是受傷音，連擊直接 Game Over。",
+      "desc_en": "Your laptop as an 8-bit console: opening charges up, slaps are damage blips, and a combo means game over.",
+      "sounds": [
+        {
+          "stem": "arcade-open-01",
+          "event": "lid_overbent",
+          "zh": "集氣 01",
+          "en": "Power-up 01",
+          "prompt": "An 8-bit NES-style chiptune power-up: a square-wave pitch sweep slowly rising over five seconds with a fast arpeggio shimmer, retro video game"
+        },
+        {
+          "stem": "arcade-open-02",
+          "event": "lid_overbent",
+          "zh": "集氣 02",
+          "en": "Power-up 02",
+          "prompt": "A retro 8-bit video game charging attack: a buzzing square wave rising steadily in pitch with a pulsing tremolo, building up, chiptune"
+        },
+        {
+          "stem": "arcade-wake-01",
+          "event": "lid_opened",
+          "zh": "投幣開始",
+          "en": "Insert coin",
+          "prompt": "A short original retro arcade 'insert coin' start jingle, 8-bit chiptune"
+        },
+        {
+          "stem": "arcade-close-01",
+          "event": "lid_closing",
+          "zh": "暫停",
+          "en": "Pause",
+          "prompt": "A short 8-bit video game pause sound: two quick descending square-wave blips"
+        },
+        {
+          "stem": "arcade-blip-01",
+          "event": "slap_light",
+          "zh": "跳躍 01",
+          "en": "Jump 01",
+          "prompt": "A short 8-bit video game jump sound, one rising square-wave blip"
+        },
+        {
+          "stem": "arcade-blip-02",
+          "event": "slap_light",
+          "zh": "選單 01",
+          "en": "Menu blip 01",
+          "prompt": "A tiny 8-bit menu select blip, very short"
+        },
+        {
+          "stem": "arcade-hit-01",
+          "event": "slap_medium",
+          "zh": "受傷 01",
+          "en": "Damage 01",
+          "prompt": "An 8-bit video game hit sound: a short noisy crunch with a falling pitch"
+        },
+        {
+          "stem": "arcade-hit-02",
+          "event": "slap_medium",
+          "zh": "受傷 02",
+          "en": "Damage 02",
+          "prompt": "A retro video game player damage sound: a quick descending square-wave"
+        },
+        {
+          "stem": "arcade-boom-01",
+          "event": "slap_hard",
+          "zh": "爆炸 01",
+          "en": "Explosion 01",
+          "prompt": "An 8-bit video game explosion: a crunchy white noise burst decaying quickly"
+        },
+        {
+          "stem": "arcade-boom-02",
+          "event": "slap_hard",
+          "zh": "爆炸 02",
+          "en": "Explosion 02",
+          "prompt": "A retro arcade enemy destroyed sound: a noisy blast with a falling tone, chiptune"
+        },
+        {
+          "stem": "arcade-gameover-01",
+          "event": "slap_combo",
+          "zh": "Game Over",
+          "en": "Game over",
+          "prompt": "A short original 8-bit game over jingle: a sad descending chiptune melody"
+        }
+      ]
+    }
+  ],
+  "_parked": "parked_profiles are designed and were generated once (2026-10-25) but are not built in yet; the tool ignores them. Move one into profiles to bring it back."
+}

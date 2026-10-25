@@ -103,10 +103,7 @@ mod tests {
         let (set, errors) = load_builtin(&assets());
         assert!(errors.is_empty(), "{errors:?}");
         let ids: Vec<_> = set.profiles.iter().map(|p| p.id.0.as_str()).collect();
-        assert_eq!(
-            ids,
-            vec!["builtin.classic", "builtin.destruction", "builtin.whine"]
-        );
+        assert_eq!(ids, vec!["builtin.classic", "builtin.destruction"]);
         assert!(set.profiles.iter().all(|p| p.builtin && p.validate().is_ok()));
         // Every referenced sound is present, and shared sounds are loaded once.
         for p in &set.profiles {
@@ -115,22 +112,21 @@ mod tests {
             }
         }
         assert_eq!(set.sounds.len(), set.audio.len());
-        assert_eq!(
-            set.sounds.iter().filter(|s| s.id.0 == "builtin.thud-low").count(),
-            1
-        );
         assert!(
             set.sounds
                 .iter()
                 .all(|s| s.source == SoundSource::Builtin && s.duration_ms > 0)
         );
         let destruction = &set.profiles[1];
-        assert_eq!(destruction.name, "毀滅");
-        assert!(destruction.playable(EventKind::SlapCombo).is_some());
-        let classic = &set.profiles[0];
-        assert!(classic.playable(EventKind::SlapCombo).is_none());
+        assert_eq!(destruction.name, "全玻璃");
+        // Every built-in profile covers all seven events (ADR-0016).
+        for p in &set.profiles {
+            for k in EventKind::ALL {
+                assert!(p.playable(k).is_some(), "{} has no sound for {k:?}", p.id.0);
+            }
+        }
         let total: usize = set.audio.values().map(|a| a.len()).sum();
-        // ADR-0008 budget (raised from 5 MB for the long lid-opening recordings).
+        // ADR-0016 budget for the uncompressed built-in audio.
         assert!(total < 8 * 1024 * 1024);
     }
 

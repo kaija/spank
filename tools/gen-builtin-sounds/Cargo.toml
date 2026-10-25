@@ -1,6 +1,6 @@
 [package]
 name = "gen-builtin-sounds"
-description = "T35: synthesize the built-in sounds and write the three built-in .spankpack files."
+description = "T35 / ADR-0016: pack the built-in recordings and profiles as .spankpack files."
 edition.workspace = true
 license.workspace = true
 version.workspace = true
@@ -10,7 +10,8 @@ publish.workspace = true
 spank-core = { path = "../../crates/spank-core" }
 spank-audio = { path = "../../crates/spank-audio" }
 spank-pack = { path = "../../crates/spank-pack" }
-fastrand = "2"
+serde.workspace = true
+serde_json.workspace = true
 sha2 = "0.11"
 
 [lints]

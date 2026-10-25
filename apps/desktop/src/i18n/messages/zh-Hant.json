@@ -48,42 +48,38 @@
     "hintCombo": "{secs} 秒內第 {n} 下起"
   },
   "sounds": {
-    "aiyo": "哎唷",
-    "glass-01": "玻璃碎裂 01",
-    "glass-02": "玻璃碎裂 02",
+    "glass-cascade-01": "玻璃牆崩落",
     "glass-crack": "玻璃裂響",
-    "glass-crash": "玻璃大爆炸",
+    "glass-shatter-01": "玻璃爆裂 01",
+    "glass-shatter-02": "玻璃爆裂 02",
+    "glass-split-01": "玻璃裂紋 01",
+    "glass-split-02": "玻璃裂紋 02",
+    "glass-tap-01": "敲玻璃 01",
+    "glass-tap-02": "敲玻璃 02",
     "glass-tension-01": "玻璃緊繃碎裂 01",
     "glass-tension-02": "玻璃緊繃碎裂 02",
     "glass-tension-03": "玻璃緊繃碎裂 03",
-    "grating-01": "刺耳摩擦 01",
-    "grating-02": "刺耳摩擦 02",
-    "grating-03": "刺耳摩擦 03",
-    "hmm": "嗯？",
-    "metal-snap": "金屬斷裂",
-    "oh": "喔！",
-    "scream": "啊——！",
-    "stone-door-01": "石門 01",
-    "stone-door-02": "石門 02",
-    "stone-door-03": "石門 03",
-    "thud-low": "悶響 · 低",
-    "whimper": "嗚…",
-    "wood-click": "木扣喀噠",
-    "wood-crack": "木頭裂開",
-    "yelps": "哇哇哇"
+    "glass-wake-01": "玻璃甦醒",
+    "stone-close-01": "石門關上",
+    "stone-crumble-01": "石牆崩裂 01",
+    "stone-crumble-02": "石牆崩裂 02",
+    "stone-knock-01": "敲石牆 01",
+    "stone-knock-02": "敲石牆 02",
+    "stone-open-01": "石門開啟 01",
+    "stone-open-02": "石門開啟 02",
+    "stone-ram-01": "撞石門 01",
+    "stone-ram-02": "撞石門 02",
+    "stone-trap-01": "地城機關",
+    "stone-wake-01": "石塊鬆動"
   },
   "builtinProfiles": {
     "destruction": {
-      "name": "毀滅",
-      "desc": "玻璃、金屬"
-    },
-    "whine": {
-      "name": "哀哀叫",
-      "desc": "喔、尖叫"
+      "name": "全玻璃",
+      "desc": "慢慢裂開、清脆碎掉"
     },
     "classic": {
-      "name": "經典",
-      "desc": "石門、木扣、刺耳摩擦"
+      "name": "地城石門",
+      "desc": "石門摩擦、砂石、機關"
     }
   },
   "profiles": {
@@ -114,7 +110,7 @@
     "switchOff": "{event}：已關閉",
     "randomNote": "同一事件掛多個音效時，每次隨機挑一個播放。",
     "deleteTitle": "刪除「{name}」？",
-    "deleteActiveBody": "這是目前使用中的 Profile。刪除後會切換回「毀滅」。音效本身會留在音效庫。",
+    "deleteActiveBody": "這是目前使用中的 Profile。刪除後會切換回「全玻璃」。音效本身會留在音效庫。",
     "deleteBody": "音效本身會留在音效庫，只會移除這組對應。"
   },
   "library": {
@@ -320,9 +316,8 @@
     "start": "開始",
     "next": "下一步",
     "done": "完成",
-    "desc_destruction": "玻璃碎掉、金屬斷裂。適合想要戲劇效果的人。",
-    "desc_whine": "喔！救命啊！一台很會演的筆電。",
-    "desc_classic": "石門轟隆、木扣喀噠、刺耳摩擦。開合螢幕像在開古老的機關。"
+    "desc_destruction": "整台都是玻璃：開蓋時慢慢裂開，闔上清脆一響，拍久了整面崩落。",
+    "desc_classic": "開蓋像推開地城石門：石頭摩擦、砂石落下，連擊觸發機關。"
   },
   "calibration": {
     "window": "校準拍打力道",

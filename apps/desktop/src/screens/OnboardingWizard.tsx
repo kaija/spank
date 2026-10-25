@@ -25,7 +25,6 @@ const DONE_STEP = 5;
 export const CAL_STEPS: readonly CalStep[] = ["light", "medium", "hard", "typing"];
 const BUILTINS: { id: string; icon: IconName }[] = [
   { id: "builtin.destruction", icon: "evOver" },
-  { id: "builtin.whine", icon: "tapM" },
   { id: "builtin.classic", icon: "evOpen" },
 ];
 const LID_EVENTS: readonly EventKind[] = ["lid_opened", "lid_closing", "lid_overbent"];

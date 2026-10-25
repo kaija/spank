@@ -48,42 +48,38 @@
     "hintCombo": "From the {n}th slap within {secs} s"
   },
   "sounds": {
-    "aiyo": "Ouch",
-    "glass-01": "Glass shatter 01",
-    "glass-02": "Glass shatter 02",
+    "glass-cascade-01": "Glass wall collapse",
     "glass-crack": "Glass crack",
-    "glass-crash": "Glass avalanche",
+    "glass-shatter-01": "Glass shatters 01",
+    "glass-shatter-02": "Glass shatters 02",
+    "glass-split-01": "Glass splits 01",
+    "glass-split-02": "Glass splits 02",
+    "glass-tap-01": "Glass tap 01",
+    "glass-tap-02": "Glass tap 02",
     "glass-tension-01": "Straining glass 01",
     "glass-tension-02": "Straining glass 02",
     "glass-tension-03": "Straining glass 03",
-    "grating-01": "Harsh grating 01",
-    "grating-02": "Harsh grating 02",
-    "grating-03": "Harsh grating 03",
-    "hmm": "Hm?",
-    "metal-snap": "Metal snap",
-    "oh": "Oh!",
-    "scream": "Aaah!",
-    "stone-door-01": "Stone door 01",
-    "stone-door-02": "Stone door 02",
-    "stone-door-03": "Stone door 03",
-    "thud-low": "Low thud",
-    "whimper": "Whimper",
-    "wood-click": "Wooden click",
-    "wood-crack": "Wood cracking",
-    "yelps": "Yelp yelp yelp"
+    "glass-wake-01": "Glass wakes",
+    "stone-close-01": "Stone gate shuts",
+    "stone-crumble-01": "Stone crumbles 01",
+    "stone-crumble-02": "Stone crumbles 02",
+    "stone-knock-01": "Stone knock 01",
+    "stone-knock-02": "Stone knock 02",
+    "stone-open-01": "Stone gate opens 01",
+    "stone-open-02": "Stone gate opens 02",
+    "stone-ram-01": "Stone ram 01",
+    "stone-ram-02": "Stone ram 02",
+    "stone-trap-01": "Dungeon trap",
+    "stone-wake-01": "Stone shifts"
   },
   "builtinProfiles": {
     "destruction": {
-      "name": "Destruction",
-      "desc": "Glass, metal"
-    },
-    "whine": {
-      "name": "Whiner",
-      "desc": "Ow, screams"
+      "name": "All Glass",
+      "desc": "Slow cracks, crisp shatters"
     },
     "classic": {
-      "name": "Classic",
-      "desc": "Stone doors, wooden clicks, grating"
+      "name": "Dungeon Gate",
+      "desc": "Grinding stone, falling grit, traps"
     }
   },
   "profiles": {
@@ -114,7 +110,7 @@
     "switchOff": "{event}: off",
     "randomNote": "When an event has several sounds, one is picked at random each time.",
     "deleteTitle": "Delete “{name}”?",
-    "deleteActiveBody": "This is the active profile. Spank will switch back to “Destruction”. The sounds stay in the library.",
+    "deleteActiveBody": "This is the active profile. Spank will switch back to “All Glass”. The sounds stay in the library.",
     "deleteBody": "The sounds stay in the library; only this mapping is removed."
   },
   "library": {
@@ -320,9 +316,8 @@
     "start": "Start",
     "next": "Next",
     "done": "Done",
-    "desc_destruction": "Shattering glass, snapping metal. For the dramatic.",
-    "desc_whine": "Ow! Help! A laptop that loves to act.",
-    "desc_classic": "Grinding stone doors, wooden clicks, harsh grating. Opening the lid feels like working an old mechanism."
+    "desc_destruction": "Made of glass: it cracks slowly as you open it, clinks shut, and keep slapping and the whole pane comes down.",
+    "desc_classic": "Opening the lid grinds open a dungeon gate: scraping stone, falling grit, and a combo springs the trap."
   },
   "calibration": {
     "window": "Calibrate slaps",
