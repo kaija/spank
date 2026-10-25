@@ -15,6 +15,8 @@ App Store 版叫 **Creaky**，只有螢幕開合（打開、開啟中 30–120°
 | 支援網址 | `https://github.com/kaija/spank` |
 | 隱私權政策網址 | `https://github.com/kaija/spank/blob/main/docs/privacy.md` |
 
+網站部署完成後，支援網址改為 `https://creaky.arlo-ai.app/#support`、行銷網址改為 `https://creaky.arlo-ai.app/`、隱私權政策網址改為 `https://creaky.arlo-ai.app/#privacy`。目前表格保留已上線的網址；先依 [網站部署說明](website.md) 部署並確認 HTTPS 正常，再更新 App Store Connect 的兩個語言。
+
 ## 1. 一次性準備（依序）
 
 ### 1.1 憑證
@@ -153,7 +155,7 @@ Creaky
 **宣傳文字**
 
 ```
-慢慢掀開螢幕，它就嘎吱作響；手一停，聲音也停。兩套成套音效：裂開中的玻璃、推開的地城石門。開會、專注時自動安靜。
+讓你的 Mac 也有個性！搞怪、可愛，還是中二熱血？換上你喜歡的音效，讓每次開蓋都像你的專屬登場。平凡的日常，也能很好玩。
 ```
 
 **描述**
@@ -182,9 +184,7 @@ Creaky 只檢查麥克風「是否被其他 App 使用」，從不錄音，也�
 • 螢幕鎖定或睡眠時停止偵測，幾乎不耗電
 
 需求
-需要內建螢幕角度感測器的 Apple Silicon MacBook Air 或 MacBook Pro（M1 以上），macOS 14 以上。桌上型 Mac 與 Intel 機型沒有這個感測器。
-
-Creaky 是開源專案：https://github.com/kaija/spank
+需要內建螢幕角度感測器的 Apple Silicon MacBook Air 或 MacBook Pro（M1 以上），macOS 14 以上。此版本不支援桌上型 Mac 與 Intel 機型。
 ```
 
 **關鍵字**
@@ -222,7 +222,7 @@ Creaks when you open the lid
 **Promotional Text**
 
 ```
-Open the lid slowly and it creaks; stop and it stops. Two sound sets: cracking glass and a grinding dungeon gate. Goes quiet during meetings and Focus.
+Give your Mac a little main-character energy. Go cute, quirky, or gloriously dramatic—pick your own sounds and make every lid opening your signature entrance.
 ```
 
 **Description**
@@ -251,9 +251,7 @@ Light and private
 • Sensing stops while the screen is locked or asleep, so it barely uses any power
 
 Requirements
-An Apple Silicon MacBook Air or MacBook Pro (M1 or later) with a built-in lid angle sensor, running macOS 14 or later. Desktop Macs and Intel models don't have this sensor.
-
-Creaky is open source: https://github.com/kaija/spank
+An Apple Silicon MacBook Air or MacBook Pro (M1 or later) with a built-in lid angle sensor, running macOS 14 or later. Desktop Macs and Intel models are not supported by this release.
 ```
 
 **Keywords**

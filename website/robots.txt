@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://creaky.arlo-ai.app/sitemap.xml
