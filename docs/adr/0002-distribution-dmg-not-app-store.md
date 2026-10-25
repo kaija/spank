@@ -1,6 +1,6 @@
 # ADR-0002：發佈 — Developer ID 公證 DMG，不上 App Store
 
-- 狀態：Accepted
+- 狀態：Accepted（「不上 App Store」由 [ADR-0017](0017-mac-app-store-edition.md) 修訂：另有只做螢幕開合的 App Store 版 Creaky；完整版仍只發 DMG）
 - 日期：2026-10-24
 
 ## Context
@@ -28,6 +28,11 @@
 Spike S2 證實加速度計不需 root（ADR-0014），第 1 點阻礙已消失。
 第 2、3 點（未公開裝置、sandbox 內 HID / registry property 存取）仍未驗證，維持 DMG 決策；
 若未來想上 App Store，先做一個 sandbox spike。
+
+## 備註（2026-10-25 Sandbox spike 後）
+
+Sandbox 內角度感測器可用（`com.apple.security.device.usb`），加速度計不行。決定另發只做螢幕開合的 App Store 版「Creaky」，
+見 [ADR-0017](0017-mac-app-store-edition.md)。本 ADR 對完整版（DMG）的決定不變。
 
 ## Alternatives
 

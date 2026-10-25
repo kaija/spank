@@ -73,6 +73,8 @@ APPLE_SIGNING_IDENTITY="Developer ID Application: Chang KaiChieh (H2ZM466J6A)" t
 
 With `TAURI_SIGNING_PRIVATE_KEY=~/.tauri/spank-updater.key` it also writes the updater archive, `.sig` and `latest.json`. Before a release, walk `docs/release-checklist.md`. Release builds add `Spank.entitlements` and the embedded profile via `src-tauri/tauri.release.conf.json`; dev builds never carry them (the restricted entitlement would stop the app from launching without the profile).
 
+**Mac App Store edition** (ADR-0017, `docs/app-store.md`): "Creaky", lid sounds only (the sandbox can't switch the accelerometer on), built with the `appstore` Cargo feature instead of the default `direct`; same bundle id `dev.spank.app`, profile `signing/Creaky_App_Store.provisionprofile`, no updater, no network. `tools/release-appstore.sh --local-test` runs a sandboxed build locally; `--upload` sends the `.pkg` to App Store Connect. Store copy, review notes and privacy answers are in `docs/app-store.md`; the privacy policy URL points at `docs/privacy.md`.
+
 **Hardware probes** (real MacBook only; none need root)
 
 ```bash
