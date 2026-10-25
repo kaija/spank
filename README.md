@@ -110,6 +110,20 @@ fixtures/traces/        錄製的感測器資料（偵測回歸測試用）
 
 需要：Rust stable、Node 24、pnpm 11、Xcode Command Line Tools。
 
+常用指令都包在 `Makefile` 裡，`make` 會列出全部：
+
+| 指令 | 做什麼 |
+|------|--------|
+| `make setup` | 第一次：安裝 JS 套件、pre-commit hook、build 前端 |
+| `make dev` | 開發模式（hot reload）並打開設定視窗 |
+| `make ui` | 只在瀏覽器看設定 UI（假後端，不需要 Tauri） |
+| `make app` / `make dmg` | 打包未簽章的 `.app`（/ DMG） |
+| `make run` | 打開打包好的 `.app` |
+| `make release` | Developer ID 簽章的 `.app` + DMG（見 `docs/release.md`） |
+| `make check` | CI 會跑的檢查：lint、測試、bindings |
+
+下面是各指令實際執行的內容。
+
 ```bash
 pnpm install
 ```

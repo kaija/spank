@@ -20,6 +20,8 @@ The docs are written in Traditional Chinese. Code, comments and commit messages 
 
 ## Commands
 
+`make` lists shortcuts for everything below (`make setup`, `make dev`, `make ui`, `make app`, `make dmg`, `make release`, `make check`, …); the Makefile builds the frontend first when `apps/desktop/out` is missing.
+
 **Setup**
 
 ```bash
