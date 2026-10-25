@@ -32,3 +32,9 @@
 
 - 不支援錄音（不需麥克風權限）。
 - 音量一致，使用者體驗穩定；但原始檔被取代，無法「還原」。
+
+## 修訂（2026-10-25）
+
+- 「內建音效只用 CC0」放寬：「經典」的開合音效（石門、木扣喀噠、刺耳摩擦、木頭裂開）改用專案作者以 ElevenLabs Sound Effects 產生的音效，授權記為 `LicenseRef-Spank-ElevenLabs`：只隨 Spank 散布，不屬於 CC0 或 MIT。其餘內建音效仍是程序合成的 CC0（`tools/gen-builtin-sounds`）。
+- 原因：使用者試聽後認為合成的開合摩擦聲太假（見 `docs/sound-use-cases.md`），偏好實際音色。
+- 原檔放在 `assets/sounds/source/`，產生器轉 mono、限幅（最多 12 dB）、正規化後打包；`SOUNDS_LICENSE.md` 逐一列出來源。

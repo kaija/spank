@@ -172,4 +172,4 @@ cargo run --release -p trace-recorder -- --scenario all --out fixtures/traces/<�
 
 ## 授權
 
-程式碼：MIT，見 [LICENSE](LICENSE)。內建音效：CC0，見 [assets/sounds/SOUNDS_LICENSE.md](assets/sounds/SOUNDS_LICENSE.md)。
+程式碼：MIT，見 [LICENSE](LICENSE)。內建音效：合成的音效為 CC0；「經典」的開合音效是作者以 ElevenLabs 產生、只授權隨 Spank 使用，不屬於 CC0 或 MIT。詳見 [assets/sounds/SOUNDS_LICENSE.md](assets/sounds/SOUNDS_LICENSE.md)。

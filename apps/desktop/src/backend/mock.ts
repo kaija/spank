@@ -498,9 +498,9 @@ function defaultSeed(): MockSeed {
     },
     profiles: [
       profile("builtin.classic", "經典", true, {
-        lid_opened: ["builtin.creak"],
-        lid_closing: ["builtin.thud-low"],
-        lid_overbent: ["builtin.creak"],
+        lid_opened: ["builtin.stone-door-01", "builtin.stone-door-02", "builtin.stone-door-03"],
+        lid_closing: ["builtin.wood-click"],
+        lid_overbent: ["builtin.grating-01", "builtin.grating-02", "builtin.grating-03", "builtin.wood-crack"],
         slap_light: ["builtin.thud-low"],
         slap_medium: ["builtin.thud-low"],
         slap_hard: ["builtin.thud-low"],
@@ -533,8 +533,10 @@ function defaultSeed(): MockSeed {
       ...(
         [
           ["aiyo", 599],
-          ["creak", 1499],
           ["glass-01", 800],
+          ["grating-01", 3975],
+          ["grating-02", 3909],
+          ["grating-03", 3929],
           ["glass-02", 1100],
           ["glass-crash", 1600],
           ["hmm", 449],
@@ -542,8 +544,13 @@ function defaultSeed(): MockSeed {
           ["metal-snap", 1400],
           ["oh", 399],
           ["scream", 1199],
+          ["stone-door-01", 4875],
+          ["stone-door-02", 4997],
+          ["stone-door-03", 5000],
           ["thud-low", 599],
           ["whimper", 899],
+          ["wood-click", 1972],
+          ["wood-crack", 3790],
           ["yelps", 999],
         ] as const
       ).map(([s, ms]) => builtinSound(s, ms)),

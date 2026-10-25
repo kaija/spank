@@ -49,17 +49,24 @@
   },
   "sounds": {
     "aiyo": "哎唷",
-    "creak": "吱嘎門軸",
     "glass-01": "玻璃碎裂 01",
     "glass-02": "玻璃碎裂 02",
     "glass-crash": "玻璃大爆炸",
+    "grating-01": "刺耳摩擦 01",
+    "grating-02": "刺耳摩擦 02",
+    "grating-03": "刺耳摩擦 03",
     "hmm": "嗯？",
     "metal-bend": "鋼筋彎折",
     "metal-snap": "金屬斷裂",
     "oh": "喔！",
     "scream": "啊——！",
+    "stone-door-01": "石門 01",
+    "stone-door-02": "石門 02",
+    "stone-door-03": "石門 03",
     "thud-low": "悶響 · 低",
     "whimper": "嗚…",
+    "wood-click": "木扣喀噠",
+    "wood-crack": "木頭裂開",
     "yelps": "哇哇哇"
   },
   "builtinProfiles": {
@@ -73,7 +80,7 @@
     },
     "classic": {
       "name": "經典",
-      "desc": "吱嘎、悶響"
+      "desc": "石門、木扣、刺耳摩擦"
     }
   },
   "profiles": {
@@ -312,7 +319,7 @@
     "done": "完成",
     "desc_destruction": "玻璃碎掉、金屬斷裂。適合想要戲劇效果的人。",
     "desc_whine": "喔！救命啊！一台很會演的筆電。",
-    "desc_classic": "吱嘎、悶響。低調，同事比較不會轉頭。"
+    "desc_classic": "石門轟隆、木扣喀噠、刺耳摩擦。開合螢幕像在開古老的機關。"
   },
   "calibration": {
     "window": "校準拍打力道",

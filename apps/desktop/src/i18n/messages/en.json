@@ -49,17 +49,24 @@
   },
   "sounds": {
     "aiyo": "Ouch",
-    "creak": "Door creak",
     "glass-01": "Glass shatter 01",
     "glass-02": "Glass shatter 02",
     "glass-crash": "Glass avalanche",
+    "grating-01": "Harsh grating 01",
+    "grating-02": "Harsh grating 02",
+    "grating-03": "Harsh grating 03",
     "hmm": "Hm?",
     "metal-bend": "Rebar bending",
     "metal-snap": "Metal snap",
     "oh": "Oh!",
     "scream": "Aaah!",
+    "stone-door-01": "Stone door 01",
+    "stone-door-02": "Stone door 02",
+    "stone-door-03": "Stone door 03",
     "thud-low": "Low thud",
     "whimper": "Whimper",
+    "wood-click": "Wooden click",
+    "wood-crack": "Wood cracking",
     "yelps": "Yelp yelp yelp"
   },
   "builtinProfiles": {
@@ -73,7 +80,7 @@
     },
     "classic": {
       "name": "Classic",
-      "desc": "Creaks, thuds"
+      "desc": "Stone doors, wooden clicks, grating"
     }
   },
   "profiles": {
@@ -312,7 +319,7 @@
     "done": "Done",
     "desc_destruction": "Shattering glass, snapping metal. For the dramatic.",
     "desc_whine": "Ow! Help! A laptop that loves to act.",
-    "desc_classic": "Creaks and thuds. Low-key — coworkers won't turn around."
+    "desc_classic": "Grinding stone doors, wooden clicks, harsh grating. Opening the lid feels like working an old mechanism."
   },
   "calibration": {
     "window": "Calibrate slaps",

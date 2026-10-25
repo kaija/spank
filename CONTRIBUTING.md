@@ -57,7 +57,7 @@ Trace 只包含角度與加速度數值、機型代號（如 `Mac16,13`）與 ma
 - 不收電影、遊戲、卡通、名人等有版權的聲音，也不收 AI 模仿真人的聲音。
 - 每個音效 ≤ 10 秒、≤ 5 MB；整包解壓後 ≤ 50 MB。
 
-**想成為內建音效**：內建的三個 Profile 由 `tools/gen-builtin-sounds` 以程序合成產生（`assets/sounds/builtin/`），授權記在 `assets/sounds/SOUNDS_LICENSE.md`。要加入內建，請在 PR 中附上原始音檔、授權與來源，並更新 `SOUNDS_LICENSE.md`；內建總大小需維持在 5 MB 以下。
+**想成為內建音效**：內建的三個 Profile 由 `tools/gen-builtin-sounds` 產生（`assets/sounds/builtin/`）：程序合成的音效，加上 `assets/sounds/source/` 裡的錄音（轉成 mono、正規化）。授權記在 `assets/sounds/SOUNDS_LICENSE.md`。要加入內建，請在 PR 中附上原始音檔、授權與來源，放進 `assets/sounds/source/` 並在產生器的 `recorded()` 登記；內建總大小需維持在 5 MB 以下。
 
 ## 回報問題
 

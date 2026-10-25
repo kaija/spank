@@ -10,7 +10,7 @@
 | R2 | 拍打電腦時依力道分級播放哀叫，支援連擊 | 0006, 0014 |
 | R3 | 以 Profile 依情境設定音效；自動靜音（開會、專注、安靜時段、系統靜音） | 0007 |
 | R4 | 使用者上傳音效（正規化、≤10 s、≤5 MB） | 0008 |
-| R5 | 內建 3 個 CC0 Profile；`.spankpack` 匯入匯出；下載為 Phase 2 | 0008, 0009 |
+| R5 | 內建 3 個 Profile（合成音效 CC0，「經典」開合音效為作者以 ElevenLabs 產生）；`.spankpack` 匯入匯出；下載為 Phase 2 | 0008, 0009 |
 | R6 | Rust 實作、低功耗（best effort） | 0004, 0013 |
 | R7 | 只在選單列常駐、關閉視窗縮到 tray、登入時啟動 | 0004 |
 | NFR | Apple Silicon、macOS 14+、DMG 發佈、無遙測、zh-Hant/en、覆蓋率 ≥ 80% | 0001, 0002, 0010, 0011 |
@@ -68,7 +68,7 @@ spank/
 │   ├── focus-probe/           # Spike S4
 │   └── trace-recorder/        # 錄製 + 標註 trace
 ├── fixtures/traces/           # NDJSON traces（Git LFS）
-├── assets/sounds/             # 內建 CC0 音效 + SOUNDS_LICENSE.md
+├── assets/sounds/             # 內建音效（builtin/）、錄音原檔（source/）+ SOUNDS_LICENSE.md
 ├── docs/                      # ADR、design、tasks、spike 報告、release checklist
 └── .github/workflows/         # ci.yml、release.yml
 ```

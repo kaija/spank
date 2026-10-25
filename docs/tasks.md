@@ -469,6 +469,7 @@ flowchart LR
 - 狀態：✅ 完成（2026-10-24）：沒有下載第三方音源，改由 `tools/gen-builtin-sounds` 以固定 seed 程序合成 13 個音效（玻璃、金屬、悶響、吱嘎、formant 合成的卡通人聲），經 importer 正規化到 -16 LUFS，打包成 `assets/sounds/builtin/{destruction,whine,classic}.spankpack`（共 1.1 MB），`assets/sounds/SOUNDS_LICENSE.md` 為 CC0；App 啟動時以 `spank_pack::load_builtin` 從 bundle 資源載入成唯讀 Profile 與音效。人聲是合成的卡通音，之後可換成錄音
 - 內容：挑選 CC0 音源、經 importer 正規化、`SOUNDS_LICENSE.md` 記錄來源、組成「毀滅」「哀哀叫」「經典」三個 Profile，總計 < 5 MB。
 - 完成條件：bundle 內含並在首次啟動載入。
+- 備註（2026-10-25）：「經典」的三個開合事件改用作者以 ElevenLabs Sound Effects 產生的 8 段音效（石門 ×3 → 打開、木扣喀噠 → 闔上、刺耳摩擦 ×3 + 木頭裂開 → 掰過頭），原檔在 `assets/sounds/source/`，由 `gen-builtin-sounds` 轉 mono、限幅、正規化後打包；授權為 `LicenseRef-Spank-ElevenLabs`（只隨 Spank 使用，非 CC0）。合成的「吱嘎門軸」已移除。木頭裂開、木扣喀噠、刺耳摩擦 03 峰值尖、限幅 12 dB 後仍比 -16 LUFS 小聲 4–8 dB。
 
 ## Wave 6 — Onboarding、進階功能、發佈管線
 
