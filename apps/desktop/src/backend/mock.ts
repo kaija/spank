@@ -18,7 +18,7 @@ import type { Backend, BackendEvents, FileDrop, UpdateInfo } from "./types";
  */
 export function createMockBackend(
   seed: Partial<MockSeed> = {},
-  opts: { demo?: boolean } = {},
+  opts: { demo?: boolean; edition?: "direct" | "appstore" } = {},
 ): Backend & { emit: MockEmit; data: MockSeed } {
   const data: MockSeed = { ...defaultSeed(), ...structuredClone(seed) };
   const listeners = new Map<string, Set<(p: unknown) => void>>();
@@ -99,7 +99,8 @@ export function createMockBackend(
       return config();
     },
     async appInfo() {
-      return { version: "0.1.0", defaultConfig: defaultConfig() };
+      const edition = opts.edition ?? "direct";
+      return { version: "0.1.0", defaultConfig: defaultConfig(), edition, productName: edition === "appstore" ? "Creaky" : "Spank" };
     },
     async setLidConfig(lid) {
       data.config.lid = structuredClone(lid);

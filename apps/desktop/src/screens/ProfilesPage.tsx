@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useAppStore } from "@/lib/edition";
 import { useEffect, useMemo, useState, type DragEvent } from "react";
 import { useBackend, useConfig, useProfiles, useSoundIndex, useSounds } from "@/backend/BackendProvider";
 import type { AppConfig } from "@/bindings/AppConfig";
@@ -38,6 +39,7 @@ function hint(t: ReturnType<typeof useTranslations>, k: EventKind, cfg: AppConfi
 
 export function ProfilesPage() {
   const t = useTranslations();
+  const appStore = useAppStore();
   const backend = useBackend();
   const [profiles, reload, setProfiles] = useProfiles();
   const [sounds] = useSounds();
@@ -232,7 +234,7 @@ export function ProfilesPage() {
         )}
 
         <div role="list" aria-label={t("profiles.mapping")} className={s.rows}>
-          {EVENT_KINDS.map((k) => {
+          {EVENT_KINDS.filter((k) => !(appStore && k.startsWith("slap_"))).map((k) => {
             const b = cur.mapping[k] ?? { enabled: false, sounds: [] };
             const label = t(`events.${k}`);
             const options = (sounds ?? []).filter((x) => !b.sounds.includes(x.id));

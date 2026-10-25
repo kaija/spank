@@ -30,13 +30,22 @@ fn notify(app: &AppHandle, event: &str) {
 pub struct AppInfo {
     version: String,
     default_config: AppConfig,
+    /// `"direct"` (DMG) or `"appstore"` (Mac App Store, lid only).
+    edition: &'static str,
+    product_name: &'static str,
 }
 
 #[tauri::command]
 pub fn app_info(app: AppHandle) -> AppInfo {
     AppInfo {
         version: app.package_info().version.to_string(),
-        default_config: AppConfig::default(),
+        default_config: {
+            let mut c = AppConfig::default();
+            crate::edition::restrict(&mut c);
+            c
+        },
+        edition: crate::edition::NAME,
+        product_name: crate::edition::PRODUCT_NAME,
     }
 }
 
@@ -98,6 +107,13 @@ pub fn set_auto_check_updates(state: State<'_, AppState>, enabled: bool) -> CmdR
 }
 
 /// Register / unregister the login item, then remember the choice.
+#[cfg(feature = "appstore")]
+pub fn apply_launch_at_login(_app: &AppHandle, enabled: bool) -> CmdResult<()> {
+    crate::login_item::set_enabled(enabled)
+}
+
+/// Register / unregister the login item, then remember the choice.
+#[cfg(not(feature = "appstore"))]
 pub fn apply_launch_at_login(app: &AppHandle, enabled: bool) -> CmdResult<()> {
     use tauri_plugin_autostart::ManagerExt;
     let m = app.autolaunch();
@@ -126,11 +142,17 @@ pub fn get_calibration(state: State<'_, AppState>) -> CmdResult<Option<Calibrati
 
 #[tauri::command]
 pub fn open_calibration(app: AppHandle) {
+    if crate::edition::APP_STORE {
+        return;
+    }
     crate::window::open_wizard(&app, crate::window::Wizard::Calibration);
 }
 
 #[tauri::command]
 pub fn start_calibration(state: State<'_, AppState>) {
+    if crate::edition::APP_STORE {
+        return;
+    }
     state.engine.send(EngineCmd::StartCalibration);
 }
 
@@ -147,6 +169,9 @@ pub fn cancel_calibration(state: State<'_, AppState>) {
 /// End the wizard: save `calibration.json`, apply the new levels and turn slaps on.
 #[tauri::command]
 pub async fn finish_calibration(app: AppHandle) -> CmdResult<AppConfig> {
+    if crate::edition::APP_STORE {
+        return Err(crate::edition::unavailable());
+    }
     tauri::async_runtime::spawn_blocking(move || -> CmdResult<AppConfig> {
         let state = app.state::<AppState>();
         let (tx, rx) = std::sync::mpsc::channel();
@@ -185,6 +210,9 @@ pub fn complete_onboarding(state: State<'_, AppState>, window: tauri::WebviewWin
 /// Ask for Input Monitoring (system prompt the first time). Resolves with the current state.
 #[tauri::command]
 pub async fn request_input_monitoring(app: AppHandle) -> CmdResult<InputAccess> {
+    if crate::edition::APP_STORE {
+        return Err(crate::edition::unavailable());
+    }
     let access = tauri::async_runtime::spawn_blocking(|| {
         spank_sensors::request_input_access();
         spank_sensors::input_access()
@@ -203,15 +231,30 @@ pub fn open_input_monitoring_settings() -> CmdResult<()> {
 
 // ---- updates (T41) ----------------------------------------------------------------------------
 
+#[cfg(feature = "updater")]
 #[tauri::command]
 pub async fn check_for_updates(app: AppHandle) -> CmdResult<crate::update::UpdateInfo> {
     crate::update::check(&app).await
 }
 
 /// Download and install the update found by `check_for_updates`, then restart the app.
+#[cfg(feature = "updater")]
 #[tauri::command]
 pub async fn install_update(app: AppHandle) -> CmdResult<()> {
     crate::update::install(&app).await
+}
+
+/// The Mac App Store updates the App Store edition.
+#[cfg(not(feature = "updater"))]
+#[tauri::command]
+pub async fn check_for_updates() -> CmdResult<()> {
+    Err(crate::edition::unavailable())
+}
+
+#[cfg(not(feature = "updater"))]
+#[tauri::command]
+pub async fn install_update() -> CmdResult<()> {
+    Err(crate::edition::unavailable())
 }
 
 // ---- diagnostics & logs (T38) -----------------------------------------------------------------

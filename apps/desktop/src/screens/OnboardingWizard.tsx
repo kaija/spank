@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useAppStore } from "@/lib/edition";
 import { useEffect, useState, type ReactNode } from "react";
 import { useAccelWave, useBackend, useConfig, useProfiles, useRuntimeState, useSoundIndex, useSounds } from "@/backend/BackendProvider";
 import type { CalStatus } from "@/bindings/CalStatus";
@@ -63,6 +64,10 @@ export function OnboardingWizard({ mode }: { mode: WizardMode }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const appName = t("app.name");
+  const appStore = useAppStore();
+  // The slap and calibration steps don't exist in the App Store edition (ADR-0017).
+  const order = appStore ? [0, 1, 2, DONE_STEP] : Array.from({ length: STEPS }, (_, i) => i);
+  const pos = order.indexOf(step);
 
   useEffect(() => backend.on("calibration", setProgress), [backend]);
   useEffect(() => {
@@ -117,7 +122,7 @@ export function OnboardingWizard({ mode }: { mode: WizardMode }) {
       void backend.completeOnboarding();
       return;
     }
-    setStep(step + 1);
+    setStep(order[pos + 1] ?? step + 1);
   };
 
   const back = () => {
@@ -129,7 +134,7 @@ export function OnboardingWizard({ mode }: { mode: WizardMode }) {
       }
       return;
     }
-    setStep(step - 1);
+    setStep(order[pos - 1] ?? step - 1);
   };
 
   const canBack = calibrationOnly ? calStep > 0 : step > 0 && step < DONE_STEP;
@@ -155,7 +160,7 @@ export function OnboardingWizard({ mode }: { mode: WizardMode }) {
       <div className={s.titlebar} data-tauri-drag-region>
         {!calibrationOnly && (
           <span className={s.stepCount} data-tauri-drag-region>
-            {t("onboarding.stepCount", { n: step + 1, total: STEPS })}
+            {t("onboarding.stepCount", { n: pos + 1, total: order.length })}
           </span>
         )}
       </div>
@@ -219,8 +224,8 @@ export function OnboardingWizard({ mode }: { mode: WizardMode }) {
       <footer className={s.footer}>
         {!calibrationOnly && (
           <div className={s.dots} aria-hidden="true">
-            {Array.from({ length: STEPS }, (_, i) => (
-              <span key={i} className={s.dot} data-current={i === step ? "" : undefined} data-done={i <= step ? "" : undefined} />
+            {order.map((i, n) => (
+              <span key={i} className={s.dot} data-current={i === step ? "" : undefined} data-done={n <= pos ? "" : undefined} />
             ))}
           </div>
         )}
@@ -253,6 +258,7 @@ function Centered({ icon, title, children }: { icon?: IconName; title: string; c
 
 function Welcome() {
   const t = useTranslations();
+  const appStore = useAppStore();
   const appName = t("app.name");
   return (
     <div className={s.centered}>
@@ -267,7 +273,7 @@ function Welcome() {
         <div className={s.heroLine} style={{ right: 8, top: 28, width: 14, transform: "rotate(14deg)" }} />
       </div>
       <h1 className={s.hello}>{t("onboarding.hello", { appName })}</h1>
-      <p className={s.lead}>{t("onboarding.helloBody")}</p>
+      <p className={s.lead}>{t(appStore ? "onboarding.helloBodyStore" : "onboarding.helloBody")}</p>
       <p className={s.faint} style={{ marginTop: 6 }}>
         {t("onboarding.privacy")}
       </p>
@@ -277,6 +283,7 @@ function Welcome() {
 
 function LidStep() {
   const t = useTranslations();
+  const appStore = useAppStore();
   const backend = useBackend();
   const state = useRuntimeState();
   const [sounds] = useSounds();
@@ -318,7 +325,7 @@ function LidStep() {
       {unsupported ? (
         <div className={s.notice}>
           <Icon name="info" size={15} />
-          <span>{t("onboarding.noLid")}</span>
+          <span>{t(appStore ? "onboarding.noLidStore" : "onboarding.noLid")}</span>
         </div>
       ) : (
         <div className={s.lidRow}>
@@ -366,6 +373,7 @@ function sampleSound(p: Profile): string | undefined {
 
 function ProfileStep() {
   const t = useTranslations();
+  const appStore = useAppStore();
   const backend = useBackend();
   const [profiles] = useProfiles();
   const [config, , setConfig] = useConfig();
@@ -416,7 +424,7 @@ function ProfileStep() {
                 </span>
               </div>
               <div className={s.cardName}>{name}</div>
-              <div className={s.cardDesc}>{t(`onboarding.desc_${id.replace("builtin.", "")}`)}</div>
+              <div className={s.cardDesc}>{t(`onboarding.desc_${id.replace("builtin.", "")}${appStore ? "_store" : ""}`)}</div>
               <button
                 type="button"
                 className={s.play}

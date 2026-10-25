@@ -253,7 +253,8 @@
     "checking": "Checking",
     "granted": "Allowed",
     "denied": "Not allowed",
-    "notAsked": "Not asked"
+    "notAsked": "Not asked",
+    "unsupportedBodyStore": "This Mac has no lid angle sensor, so “Lid opened”, “Lid closing” and “Opening” won't fire."
   },
   "general": {
     "launchAtLogin": "Open at login",
@@ -280,7 +281,8 @@
     "install": "Update and restart",
     "downloading": "Downloading {pct}%",
     "checkFailed": "Couldn't check for updates: {message}",
-    "installFailed": "Couldn't update: {message}"
+    "installFailed": "Couldn't update: {message}",
+    "privacyStore": "{appName} collects no data. No analytics, no account, no servers, and it never goes online. The lid angle is processed live on your Mac and thrown away."
   },
   "onboarding": {
     "window": "Welcome to {appName}",
@@ -317,7 +319,11 @@
     "next": "Next",
     "done": "Done",
     "desc_destruction": "Made of glass: it cracks slowly as you open it, clinks shut, and keep slapping and the whole pane comes down.",
-    "desc_classic": "Opening the lid grinds open a dungeon gate: scraping stone, falling grit, and a combo springs the trap."
+    "desc_classic": "Opening the lid grinds open a dungeon gate: scraping stone, falling grit, and a combo springs the trap.",
+    "helloBodyStore": "A MacBook with a flair for drama. Open the lid, ease it back, close it — there's a sound for every move.",
+    "noLidStore": "This Mac has no lid angle sensor, so lid sounds won't fire.",
+    "desc_destruction_store": "Made of glass: it cracks slowly as you open it and clinks shut.",
+    "desc_classic_store": "Opening the lid grinds open a dungeon gate: scraping stone and falling grit, then it slams shut."
   },
   "calibration": {
     "window": "Calibrate slaps",

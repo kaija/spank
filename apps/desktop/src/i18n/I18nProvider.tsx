@@ -3,6 +3,7 @@
 import { NextIntlClientProvider } from "next-intl";
 import { useEffect, useState, type ReactNode } from "react";
 import { useConfig } from "@/backend/BackendProvider";
+import { useEdition, withProductName } from "@/lib/edition";
 import type { Language } from "@/bindings/Language";
 import { DEFAULT_LOCALE, MESSAGES, resolveLocale, type Locale } from "./locale";
 
@@ -12,6 +13,7 @@ import { DEFAULT_LOCALE, MESSAGES, resolveLocale, type Locale } from "./locale";
  */
 export function I18nProvider({ children, setting = "system" }: { children: ReactNode; setting?: Language }) {
   const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
+  const edition = useEdition();
 
   useEffect(() => {
     const next = resolveLocale(setting, navigator.languages ?? [navigator.language]);
@@ -20,7 +22,7 @@ export function I18nProvider({ children, setting = "system" }: { children: React
   }, [setting]);
 
   return (
-    <NextIntlClientProvider locale={locale} messages={MESSAGES[locale]} timeZone="Asia/Taipei">
+    <NextIntlClientProvider locale={locale} messages={withProductName(MESSAGES[locale], edition)} timeZone="Asia/Taipei">
       {children}
     </NextIntlClientProvider>
   );

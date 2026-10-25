@@ -50,6 +50,7 @@ impl AppState {
         let mut guard = self.config.lock().map_err(err)?;
         let mut next = guard.clone();
         f(&mut next);
+        crate::edition::restrict(&mut next);
         next.validate().map_err(err)?;
         self.store.save_config(&next).map_err(err)?;
         *guard = next.clone();

@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormatter, useTranslations } from "next-intl";
+import { useAppStore } from "@/lib/edition";
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { useAccelWave, useBackend, useCalibration, useConfig, useRuntimeState } from "@/backend/BackendProvider";
 import type { AppConfig } from "@/bindings/AppConfig";
@@ -49,6 +50,7 @@ const WAVE_H = 96;
 
 export function SensorsPage() {
   const t = useTranslations();
+  const appStore = useAppStore();
   const backend = useBackend();
   const [config, , setConfig] = useConfig();
   const state = useRuntimeState();
@@ -92,6 +94,7 @@ export function SensorsPage() {
         lidCap={state.caps.lid}
         onSave={(lid) => save({ ...config, lid }, () => backend.setLidConfig(lid))}
       />
+      {!appStore && (
       <TapSection
         config={config}
         accelCap={state.caps.accel}
@@ -104,11 +107,14 @@ export function SensorsPage() {
         onSlap={(slap) => save({ ...config, slap }, () => backend.setSlapConfig(slap))}
         hasCalibration={!!calibration}
       />
+      )}
       <section aria-labelledby="sg-cap" className={s.card}>
         <h2 id="sg-cap" className={s.capsTitle}>
           {t("sensors.capsTitle")}
         </h2>
         <CapRow icon="sensors" name={t("sensors.capLid")} sub={capSub(t, state.caps.lid, "sensors.capLidSub")} {...capBadge(t, state.caps.lid)} />
+        {!appStore && (
+          <>
         <CapRow icon="cpu" name={t("sensors.capAccel")} sub={t("sensors.capAccelSub")} {...capBadge(t, state.caps.accel)} />
         <CapRow
           icon="keyboard"
@@ -120,6 +126,8 @@ export function SensorsPage() {
               ? { tone: "danger" as Tone, status: t("sensors.denied") }
               : { tone: "neutral" as Tone, status: t("sensors.notAsked") })}
         />
+          </>
+        )}
       </section>
     </div>
   );
@@ -166,6 +174,7 @@ function LidSection({
   onSave: (lid: LidConfig) => void;
 }) {
   const t = useTranslations();
+  const appStore = useAppStore();
   const [draft, setDraft] = useState<LidConfig>(config.lid);
   const [drag, setDrag] = useState<Handle | null>(null);
   const [advanced, setAdvanced] = useState(false);
@@ -233,7 +242,7 @@ function LidSection({
           <span className={s.unsupportedIcon}>
             <Icon name="sensors" size={22} strokeWidth={2} />
           </span>
-          <p>{t("sensors.unsupportedBody")}</p>
+          <p>{t(appStore ? "sensors.unsupportedBodyStore" : "sensors.unsupportedBody")}</p>
         </div>
       ) : (
         <>

@@ -223,8 +223,11 @@ impl Core {
         sink: Box<dyn Fn(EngineEvent) + Send>,
     ) -> Self {
         let epoch = Instant::now();
-        // A crashed run may have left reporting on (ADR-0014).
-        spank_sensors::reset_accel_properties();
+        // A crashed run may have left reporting on (ADR-0014). The sandbox (App Store edition)
+        // forbids the property writes, and that edition never turns the accelerometer on.
+        if !crate::edition::APP_STORE {
+            spank_sensors::reset_accel_properties();
+        }
         let audio = match AudioPlayer::new(epoch) {
             Ok(p) => Audio::Real(p),
             Err(e) => {
@@ -315,7 +318,11 @@ impl Core {
 
     /// One-time capability check: switch the accelerometer on until the first report.
     fn probe_accel(&mut self) {
-        self.state.caps.accel = if !spank_sensors::accel_driver_present() {
+        self.state.caps.accel = if crate::edition::APP_STORE {
+            Capability::Unsupported {
+                reason: crate::edition::unavailable(),
+            }
+        } else if !spank_sensors::accel_driver_present() {
             Capability::Unsupported {
                 reason: "no accelerometer driver".into(),
             }
@@ -450,7 +457,8 @@ impl Core {
     /// Watch keyboard / trackpad activity only while it can matter: precise typing on, slaps
     /// being detected, and Input Monitoring granted.
     fn sync_input(&mut self) {
-        let want = self.orch.config().slap.precise_typing
+        let want = !crate::edition::APP_STORE
+            && self.orch.config().slap.precise_typing
             && self.accel.is_some()
             && !self.orch.calibrating()
             && self.state.input_access == InputAccess::Granted;
@@ -548,6 +556,8 @@ impl Core {
                 self.lid = None;
                 self.state.lid_angle = None;
             }
+            // Never asked for in the App Store edition (slaps and calibration are off there).
+            SensorCommand::StartAccel if crate::edition::APP_STORE => {}
             SensorCommand::StartAccel => match IoHidAccel::start(self.epoch) {
                 Ok(a) => self.accel = Some(a),
                 Err(e) => {

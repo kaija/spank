@@ -7,14 +7,19 @@
 //! - [`engine`] runs the sensors, the orchestrator and playback on a core thread (T30);
 //!   [`commands`] are the settings UI's backend.
 //! - First launch opens the onboarding wizard (T36); closing it counts as done.
-//! - Release builds check GitHub Releases for updates once a day and ask before installing ([`update`]).
+//! - Release builds check GitHub Releases for updates once a day and ask before installing ([`update`];
+//!   DMG edition only). The Mac App Store edition is described in [`edition`].
 //! - Launched outside a terminal, stderr goes to `~/Library/Logs/<bundle id>/spank.log` ([`diag`]).
 
 mod commands;
 mod diag;
+mod edition;
 mod engine;
+#[cfg(feature = "appstore")]
+mod login_item;
 mod state;
 mod tray;
+#[cfg(feature = "updater")]
 mod update;
 mod window;
 
@@ -33,7 +38,9 @@ pub const BUNDLE_ID: &str = "dev.spank.app";
 fn install_panic_hook() {
     let prev = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |info| {
-        spank_sensors::reset_accel_properties();
+        if !edition::APP_STORE {
+            spank_sensors::reset_accel_properties();
+        }
         prev(info);
     }));
 }
@@ -57,7 +64,13 @@ fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
             r.backup.display()
         );
     }
-    let config = loaded.value;
+    let mut config = loaded.value;
+    edition::restrict(&mut config);
+    // App Review 2.4.5: no launch at login without the user's consent. Until onboarding is done
+    // (a fresh install) the App Store edition starts with it off; Settings › General turns it on.
+    if edition::APP_STORE && !config.onboarding_done {
+        config.launch_at_login = false;
+    }
 
     let builtin_dir = app.path().resource_dir()?.join("builtin");
     let (builtin, errors) = spank_pack::load_builtin(&builtin_dir);
@@ -115,8 +128,11 @@ fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         sysmon: Mutex::new(Some(sysmon)),
     });
 
-    app.manage(update::Updates::default());
-    update::start_schedule(app.handle());
+    #[cfg(feature = "updater")]
+    {
+        app.manage(update::Updates::default());
+        update::start_schedule(app.handle());
+    }
 
     tray::create(app.handle())?;
     if first_run {
@@ -130,15 +146,21 @@ fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
 
 pub fn run() {
     install_panic_hook();
-    let app = tauri::Builder::default()
-        // A second launch (e.g. double-clicking the app again) opens settings in the running instance.
-        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
-            window::open_settings(app);
-        }))
+    let builder = tauri::Builder::default();
+    // A second launch (e.g. double-clicking the app again) opens settings in the running instance.
+    // The App Store edition can't create the plugin's /tmp socket inside the sandbox; there macOS
+    // keeps one instance and sends `RunEvent::Reopen` instead (handled below, in both editions).
+    #[cfg(not(feature = "appstore"))]
+    let builder = builder.plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+        window::open_settings(app);
+    }));
+    let builder = builder
         // Registered now; enabling "launch at login" is driven by config (T38), never implicitly in dev.
         .plugin(tauri_plugin_autostart::Builder::new().build())
-        .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_dialog::init());
+    #[cfg(feature = "updater")]
+    let builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
+    let app = builder
         .invoke_handler(tauri::generate_handler![
             commands::app_info,
             commands::get_state,
@@ -195,6 +217,9 @@ pub fn run() {
     app.run(|app, event| match event {
         // Closing the last window must not quit: we live in the menu bar.
         RunEvent::ExitRequested { api, code: None, .. } => api.prevent_exit(),
+        // Opening the app again while it runs (Finder, Launchpad, `open`).
+        #[cfg(target_os = "macos")]
+        RunEvent::Reopen { .. } => window::open_settings(app),
         RunEvent::Exit => {
             if let Some(state) = app.try_state::<AppState>() {
                 state.engine.shutdown();

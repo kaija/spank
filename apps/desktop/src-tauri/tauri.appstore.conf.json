@@ -16,5 +16,8 @@
         "Resources/PrivacyInfo.xcprivacy": "PrivacyInfo.xcprivacy"
       }
     }
+  },
+  "plugins": {
+    "updater": null
   }
 }

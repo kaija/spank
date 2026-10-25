@@ -45,7 +45,7 @@ pub fn open_settings(app: &AppHandle) {
     let _ = app.set_activation_policy(tauri::ActivationPolicy::Regular);
 
     let builder = WebviewWindowBuilder::new(app, SETTINGS_LABEL, WebviewUrl::App("index.html".into()))
-        .title("Spank")
+        .title(crate::edition::PRODUCT_NAME)
         .inner_size(760.0, 520.0)
         .min_inner_size(640.0, 440.0)
         .center();
@@ -73,7 +73,7 @@ pub fn open_wizard(app: &AppHandle, wizard: Wizard) {
     let _ = app.set_activation_policy(tauri::ActivationPolicy::Regular);
 
     let builder = WebviewWindowBuilder::new(app, ONBOARDING_LABEL, WebviewUrl::App(wizard.route().into()))
-        .title("Spank")
+        .title(crate::edition::PRODUCT_NAME)
         .inner_size(560.0, 440.0)
         .resizable(false)
         .maximizable(false)

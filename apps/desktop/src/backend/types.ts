@@ -32,7 +32,8 @@ export type BackendEvents = {
   update_progress: number;
 };
 
-export type AppInfo = { version: string; defaultConfig: AppConfig };
+/** `app_info` (commands.rs). `edition`: see `@/lib/edition`. */
+export type AppInfo = { version: string; defaultConfig: AppConfig; edition: "direct" | "appstore"; productName: string };
 /** `check_for_updates` (apps/desktop/src-tauri/src/update.rs). */
 export type UpdateInfo = { current: string; available: { version: string; notes: string | null } | null };
 

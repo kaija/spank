@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useAppStore } from "@/lib/edition";
 import { useEffect, useRef, useState } from "react";
 import { useBackend, useConfig } from "@/backend/BackendProvider";
 import type { AppConfig } from "@/bindings/AppConfig";
@@ -26,6 +27,7 @@ const LANGUAGES: { value: Language; key: string }[] = [
 /** Settings › General (mockup/Settings Window.dc.html, T38). */
 export function GeneralPage() {
   const t = useTranslations();
+  const appStore = useAppStore();
   const backend = useBackend();
   const [config, , setConfig] = useConfig();
   const [volume, setVolume] = useState<number | null>(null);
@@ -166,6 +168,8 @@ export function GeneralPage() {
       </div>
 
       <div className={s.card}>
+        {/* The App Store edition is updated by the App Store (ADR-0017). */}
+        {!appStore && (
         <div className={s.row}>
           <span className={s.grow}>{t("general.autoUpdate")}</span>
           <Switch
@@ -174,11 +178,14 @@ export function GeneralPage() {
             onChange={(v) => void save({ auto_check_updates: v }, () => backend.setAutoCheckUpdates(v))}
           />
         </div>
+        )}
         <div className={s.row} data-wrap="">
           <div className={s.grow}>
             <div>{t("general.version")}</div>
             <div className={s.mono}>{version && t("general.versionLine", { version })}</div>
           </div>
+          {!appStore && (
+            <>
           <span role="status" aria-live="polite" className={s.updateMsg} data-error={update.kind === "error" ? "" : undefined}>
             {updateMsg}
           </span>
@@ -193,6 +200,8 @@ export function GeneralPage() {
             >
               {t("general.checkUpdates")}
             </Button>
+          )}
+            </>
           )}
         </div>
       </div>
@@ -218,7 +227,7 @@ export function GeneralPage() {
 
       <div className={s.privacy}>
         <Icon name="shield" size={18} style={{ color: "var(--color-success)", flex: "none", marginTop: 1 }} />
-        <p>{t("general.privacy", { appName })}</p>
+        <p>{t(appStore ? "general.privacyStore" : "general.privacy", { appName })}</p>
       </div>
     </div>
   );

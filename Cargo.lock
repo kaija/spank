@@ -4040,6 +4040,7 @@ dependencies = [
  "libc",
  "serde",
  "serde_json",
+ "smappservice-rs",
  "spank-audio",
  "spank-core",
  "spank-pack",

@@ -30,6 +30,7 @@ const ID_QUIT: &str = "quit";
 const ID_PAUSE: &str = "pause";
 const PROFILE_PREFIX: &str = "profile:";
 const PREVIEW_PREFIX: &str = "preview:";
+const PRODUCT: &str = crate::edition::PRODUCT_NAME;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Lang {
@@ -61,11 +62,11 @@ impl Text {
 
     pub fn status(&self, s: &RuntimeState) -> String {
         if s.paused {
-            format!("Spank — {}", self.t("已暫停", "Paused"))
+            format!("{PRODUCT} — {}", self.t("已暫停", "Paused"))
         } else if let Some(r) = s.mute.reasons.first() {
-            format!("Spank — {}{}", self.t("已靜音：", "Muted: "), self.reason(*r))
+            format!("{PRODUCT} — {}{}", self.t("已靜音：", "Muted: "), self.reason(*r))
         } else {
-            format!("Spank — {}", self.t("運作中", "Running"))
+            format!("{PRODUCT} — {}", self.t("運作中", "Running"))
         }
     }
 
@@ -185,7 +186,11 @@ fn build_menu(app: &AppHandle) -> Result<(Menu<Wry>, MenuKey)> {
     let profile_menu = profile_menu.build()?;
 
     let mut preview = SubmenuBuilder::new(app, text.t("試聽", "Preview"));
-    for k in EventKind::ALL {
+    // The App Store edition has no slaps (ADR-0017).
+    for k in EventKind::ALL
+        .into_iter()
+        .filter(|k| !(crate::edition::APP_STORE && k.is_slap()))
+    {
         let id = format!(
             "{PREVIEW_PREFIX}{}",
             serde_json::to_value(k)
@@ -251,7 +256,7 @@ pub fn create(app: &AppHandle) -> Result<()> {
     TrayIconBuilder::with_id(TRAY_ID)
         .icon(Image::from_bytes(include_bytes!("../icons/tray-template.png"))?)
         .icon_as_template(true)
-        .tooltip("Spank")
+        .tooltip(PRODUCT)
         .menu(&menu)
         .show_menu_on_left_click(true)
         .on_menu_event(|app, event| on_menu(app, event.id().as_ref()))
@@ -302,15 +307,15 @@ mod tests {
         let zh = Text { lang: Lang::Zh };
         let en = Text { lang: Lang::En };
         let mut s = RuntimeState::default();
-        assert_eq!(zh.status(&s), "Spank — 運作中");
+        assert_eq!(zh.status(&s), format!("{PRODUCT} — 運作中"));
         s.mute = MuteStatus {
             reasons: vec![MuteReason::Meeting],
             focus_unavailable: false,
         };
-        assert_eq!(zh.status(&s), "Spank — 已靜音：開會中");
-        assert_eq!(en.status(&s), "Spank — Muted: in a meeting");
+        assert_eq!(zh.status(&s), format!("{PRODUCT} — 已靜音：開會中"));
+        assert_eq!(en.status(&s), format!("{PRODUCT} — Muted: in a meeting"));
         s.paused = true;
-        assert_eq!(en.status(&s), "Spank — Paused");
+        assert_eq!(en.status(&s), format!("{PRODUCT} — Paused"));
         assert_eq!(zh.event(EventKind::SlapCombo), "連擊");
         assert_eq!(en.reason(MuteReason::QuietHours), "quiet hours");
     }

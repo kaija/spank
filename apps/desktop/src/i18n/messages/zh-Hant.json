@@ -253,7 +253,8 @@
     "checking": "檢查中",
     "granted": "已授權",
     "denied": "未授權",
-    "notAsked": "尚未要求"
+    "notAsked": "尚未要求",
+    "unsupportedBodyStore": "這台 Mac 沒有螢幕角度感測器，所以「打開螢幕」「闔上螢幕」「開啟中」不會觸發。"
   },
   "general": {
     "launchAtLogin": "登入時啟動",
@@ -280,7 +281,8 @@
     "install": "更新並重新啟動",
     "downloading": "下載中 {pct}%",
     "checkFailed": "無法檢查更新：{message}",
-    "installFailed": "無法更新：{message}"
+    "installFailed": "無法更新：{message}",
+    "privacyStore": "{appName} 不收集任何資料。沒有分析、沒有帳號、沒有伺服器，也不會連上網路。螢幕角度只在你的 Mac 上即時處理，用完就丟。"
   },
   "onboarding": {
     "window": "歡迎使用 {appName}",
@@ -317,7 +319,11 @@
     "next": "下一步",
     "done": "完成",
     "desc_destruction": "整台都是玻璃：開蓋時慢慢裂開，闔上清脆一響，拍久了整面崩落。",
-    "desc_classic": "開蓋像推開地城石門：石頭摩擦、砂石落下，連擊觸發機關。"
+    "desc_classic": "開蓋像推開地城石門：石頭摩擦、砂石落下，連擊觸發機關。",
+    "helloBodyStore": "一台很會演的 MacBook。打開、慢慢掰開、闔上螢幕，它都有聲音配合演出。",
+    "noLidStore": "這台 Mac 沒有螢幕角度感測器，開合音效不會觸發。",
+    "desc_destruction_store": "整台都是玻璃：開蓋時慢慢裂開，闔上清脆一響。",
+    "desc_classic_store": "開蓋像推開地城石門：石頭摩擦、砂石落下，闔上時轟然關閉。"
   },
   "calibration": {
     "window": "校準拍打力道",
