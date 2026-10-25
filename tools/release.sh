@@ -91,6 +91,8 @@ if [[ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ]]; then
   COPYFILE_DISABLE=1 tar -czf "$OUT/$TARBALL" -C "$(dirname "$APP")" Spank.app
   rm -f "$OUT/$TARBALL.sig"
   # `tauri signer sign` reads the env var as key text only; a path goes through -f.
+  # KEY_ARGS is empty when the key is text (CI): macOS bash 3.2 with `set -u` rejects "${a[@]}"
+  # on an empty array, hence the ${a[@]+...} form below.
   KEY_ARGS=()
   if [[ -f "$TAURI_SIGNING_PRIVATE_KEY" ]]; then
     KEY_ARGS=(-f "$TAURI_SIGNING_PRIVATE_KEY")
@@ -98,7 +100,7 @@ if [[ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ]]; then
   (
     [[ ${#KEY_ARGS[@]} -gt 0 ]] && unset TAURI_SIGNING_PRIVATE_KEY
     TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}" \
-      pnpm --dir apps/desktop tauri signer sign "${KEY_ARGS[@]}" "$PWD/$OUT/$TARBALL" >/dev/null
+      pnpm --dir apps/desktop tauri signer sign ${KEY_ARGS[@]+"${KEY_ARGS[@]}"} "$PWD/$OUT/$TARBALL" >/dev/null
   )
   [[ -s "$OUT/$TARBALL.sig" ]] || { echo "updater signature missing" >&2; exit 1; }
   python3 -I tools/latest-json.py --version "$VERSION" --repo "${SPANK_REPO:-kaija/spank}" \
