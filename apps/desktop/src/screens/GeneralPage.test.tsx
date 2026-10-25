@@ -44,4 +44,33 @@ describe("GeneralPage", () => {
     expect((await screen.findByRole("alert")).textContent).toContain("not allowed");
     expect((screen.getByRole("switch", { name: "登入時啟動" }) as HTMLInputElement).checked).toBe(true);
   });
+
+  it("checks for updates and installs one", async () => {
+    const { backend } = renderWithBackend(<GeneralPage />);
+    const check = await screen.findByRole("button", { name: "檢查更新" });
+    await act(async () => {
+      fireEvent.click(check);
+    });
+    expect(await screen.findByText("已是最新版本")).toBeTruthy();
+
+    backend.data.update = { current: "0.1.0", available: { version: "0.2.0", notes: null } };
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "檢查更新" }));
+    });
+    expect(await screen.findByText("有新版本 0.2.0")).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "更新並重新啟動" }));
+    });
+    expect(backend.data.log).toContain("install:0.2.0");
+    expect(screen.getByText("下載中 100%")).toBeTruthy();
+  });
+
+  it("explains a failed check", async () => {
+    renderWithBackend(<GeneralPage />, { seed: { update: "error" } });
+    const check = await screen.findByRole("button", { name: "檢查更新" });
+    await act(async () => {
+      fireEvent.click(check);
+    });
+    expect((await screen.findByText(/無法檢查更新/)).textContent).toContain("could not fetch");
+  });
 });

@@ -314,11 +314,14 @@ fn pack_file_size_limit() {
 }
 
 /// Stable-toolchain stand-in for `cargo fuzz`: random mutations of a valid pack must never panic.
+/// Stable stand-in for `cargo fuzz run read_pack` (which needs nightly). Longer rounds:
+/// `SPANK_FUZZ_ITERS=500000 SPANK_FUZZ_SEED=7 cargo test --release -p spank-pack mutated_packs_never_panic`.
 #[test]
 fn mutated_packs_never_panic() {
+    let env = |k: &str, d: u64| std::env::var(k).ok().and_then(|v| v.parse().ok()).unwrap_or(d);
     let base = zip_bytes(&sample_pack());
-    let mut rng = fastrand::Rng::with_seed(0x5a4b);
-    for _ in 0..3000 {
+    let mut rng = fastrand::Rng::with_seed(env("SPANK_FUZZ_SEED", 0x5a4b));
+    for _ in 0..env("SPANK_FUZZ_ITERS", 3000) {
         let mut b = base.clone();
         for _ in 0..rng.usize(1..8) {
             match rng.u8(..3) {

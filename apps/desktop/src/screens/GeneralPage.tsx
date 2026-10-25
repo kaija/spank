@@ -5,9 +5,17 @@ import { useEffect, useRef, useState } from "react";
 import { useBackend, useConfig } from "@/backend/BackendProvider";
 import type { AppConfig } from "@/bindings/AppConfig";
 import type { Language } from "@/bindings/Language";
+import type { UpdateInfo } from "@/backend/types";
 import { Button, Slider, Switch } from "@/ui/controls";
 import { Icon } from "@/ui/Icon";
 import s from "./GeneralPage.module.css";
+
+type UpdateState =
+  | { kind: "idle" }
+  | { kind: "checking" }
+  | { kind: "done"; info: UpdateInfo }
+  | { kind: "installing"; progress: number }
+  | { kind: "error"; message: string };
 
 const LANGUAGES: { value: Language; key: string }[] = [
   { value: "system", key: "general.langSystem" },
@@ -25,6 +33,12 @@ export function GeneralPage() {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const copiedTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [update, setUpdate] = useState<UpdateState>({ kind: "idle" });
+
+  useEffect(
+    () => backend.on("update_progress", (p) => setUpdate({ kind: "installing", progress: p })),
+    [backend],
+  );
 
   useEffect(() => {
     let alive = true;
@@ -62,6 +76,37 @@ export function GeneralPage() {
   };
 
   const shownVolume = volume ?? Math.round(config.app_volume * 100);
+
+  const checkUpdates = async () => {
+    setUpdate({ kind: "checking" });
+    try {
+      setUpdate({ kind: "done", info: await backend.checkForUpdates() });
+    } catch (e) {
+      setUpdate({ kind: "error", message: t("general.checkFailed", { message: String(e) }) });
+    }
+  };
+  const installUpdate = async () => {
+    setUpdate({ kind: "installing", progress: 0 });
+    try {
+      // The app restarts when this succeeds.
+      await backend.installUpdate();
+    } catch (e) {
+      setUpdate({ kind: "error", message: t("general.installFailed", { message: String(e) }) });
+    }
+  };
+  const available = update.kind === "done" ? update.info.available : null;
+  const updateMsg =
+    update.kind === "checking"
+      ? t("general.checking")
+      : update.kind === "installing"
+        ? t("general.downloading", { pct: Math.round(update.progress * 100) })
+        : update.kind === "error"
+          ? update.message
+          : update.kind === "done"
+            ? available
+              ? t("general.available", { version: available.version })
+              : t("general.upToDate")
+            : "";
 
   return (
     <div className={s.page}>
@@ -129,11 +174,26 @@ export function GeneralPage() {
             onChange={(v) => void save({ auto_check_updates: v }, () => backend.setAutoCheckUpdates(v))}
           />
         </div>
-        <div className={s.row}>
+        <div className={s.row} data-wrap="">
           <div className={s.grow}>
             <div>{t("general.version")}</div>
             <div className={s.mono}>{version && t("general.versionLine", { version })}</div>
           </div>
+          <span role="status" aria-live="polite" className={s.updateMsg} data-error={update.kind === "error" ? "" : undefined}>
+            {updateMsg}
+          </span>
+          {available ? (
+            <Button variant="primary" onClick={() => void installUpdate()}>
+              {t("general.install")}
+            </Button>
+          ) : (
+            <Button
+              disabled={update.kind === "checking" || update.kind === "installing"}
+              onClick={() => void checkUpdates()}
+            >
+              {t("general.checkUpdates")}
+            </Button>
+          )}
         </div>
       </div>
 

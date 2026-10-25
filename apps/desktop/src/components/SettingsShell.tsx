@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -18,6 +18,13 @@ export const PAGES = [
 ] as const satisfies readonly { id: string; icon: IconName }[];
 
 export type PageId = (typeof PAGES)[number]["id"];
+
+/** ⌘1–⌘5 → page id (mockup interaction notes), or null for any other key. */
+export function pageForShortcut(e: Pick<KeyboardEvent, "metaKey" | "ctrlKey" | "altKey" | "shiftKey" | "key">): PageId | null {
+  if (!e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return null;
+  const n = Number(e.key);
+  return Number.isInteger(n) && n >= 1 && n <= PAGES.length ? PAGES[n - 1].id : null;
+}
 
 /** `/library/` → "library"; anything unknown → the first page. */
 export function pageFromPath(pathname: string | null): PageId {
@@ -51,6 +58,18 @@ type Props = {
 export function SettingsShell({ children, status = { kind: "running" }, headerActions }: Props) {
   const t = useTranslations();
   const current = pageFromPath(usePathname());
+  const router = useRouter();
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const page = pageForShortcut(e);
+      if (!page) return;
+      e.preventDefault();
+      router.push(`/${page}/`);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [router]);
   const statusText =
     status.kind === "muted" ? t("status.muted", { reason: status.reason }) : t(`status.${status.kind}`);
 

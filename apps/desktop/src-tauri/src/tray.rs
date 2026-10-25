@@ -88,7 +88,7 @@ unsafe extern "C" {
 }
 
 /// First preferred macOS language, e.g. "zh-Hant-TW".
-fn system_language() -> Option<String> {
+pub fn system_language() -> Option<String> {
     use core_foundation::array::CFArray;
     use core_foundation::base::TCFType;
     use core_foundation::string::CFString;

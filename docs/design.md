@@ -230,9 +230,10 @@ Profile ▸  ✓ 毀滅 / 哀哀叫 / 經典 / …自訂
 - 感測器頁：`set_accel_monitor(on)`（即時波形）；能力狀態在 `RuntimeState.caps` / `input_access`
 - 精準打字（T39）：`request_input_monitoring`、`open_input_monitoring_settings`
 - 一般頁（T38）：`diagnostics`、`copy_diagnostics`、`open_log_folder`
+- 更新（T41）：`check_for_updates`（`{current, available}`）、`install_update`（下載、安裝、重新啟動）
 
 Events：`engine_state`（`RuntimeState`，任何狀態變化）、`trigger_fired`（`FiredEvent`）、`config_changed`（`AppConfig`）、`profiles_changed`、`library_changed`、
-`calibration`（`CalibrationProgress`）、`accel_level`（每 ~50 ms 一個 g 值，只在校準中或感測器頁開著時送）。
+`calibration`（`CalibrationProgress`）、`accel_level`（每 ~50 ms 一個 g 值，只在校準中或感測器頁開著時送）、`update_progress`（0–1）。
 
 視窗：`settings`（設定）與 `onboarding`（首次啟動的 `onboarding/` 或只校準的 `calibrate/`，560 × 440）；任一視窗開著時顯示 Dock 圖示。
 
@@ -258,7 +259,7 @@ sequenceDiagram
   `cargo llvm-cov`（≥80%）、`pnpm lint && pnpm test`、`cargo deny`（依賴掃描）。
 - **Release（`release.yml`，tag `v*`）**：只建置 `aarch64-apple-darwin`（不出 universal，ADR-0001）；
   `codesign`（Developer ID Application, hardened runtime, entitlements）→ `notarytool submit --wait` → `stapler staple`
-  → DMG → GitHub Release + updater `latest.json`。
+  → updater 用的 `.app.tar.gz` + `.sig` + `latest.json` → DMG（簽章、公證、staple）→ 草稿 GitHub Release（`tools/release.sh`，見 `docs/release.md`）。
 - Entitlements：App 不 sandbox、啟用 Hardened Runtime；不需特殊 entitlement 存取 HID（待 T09 在簽章 .app 內確認）。
 - 版本：SemVer。
 

@@ -69,7 +69,7 @@ pnpm --dir apps/desktop tauri build --bundles app         # → target/release/b
 APPLE_SIGNING_IDENTITY="Developer ID Application: Chang KaiChieh (H2ZM466J6A)" tools/release.sh   # add --notarize with NOTARY_KEY_ID/ISSUER/PATH
 ```
 
-Release builds add `Spank.entitlements` and the embedded profile via `src-tauri/tauri.release.conf.json`; dev builds never carry them (the restricted entitlement would stop the app from launching without the profile).
+With `TAURI_SIGNING_PRIVATE_KEY=~/.tauri/spank-updater.key` it also writes the updater archive, `.sig` and `latest.json`. Before a release, walk `docs/release-checklist.md`. Release builds add `Spank.entitlements` and the embedded profile via `src-tauri/tauri.release.conf.json`; dev builds never carry them (the restricted entitlement would stop the app from launching without the profile).
 
 **Hardware probes** (real MacBook only; none need root)
 
@@ -81,6 +81,7 @@ cargo run -p lid-probe -- --mode poll --secs 10 --interval-ms 50
 cargo run -p accel-probe -- --enable --secs 5                     # --ndjson to stream samples
 cargo run --release -p audio-probe -- cpu paused --secs 20        # or: latency --runs 10 --gap-ms 15000
 cargo run -p spank-sensors --example input-check -- --request     # Input Monitoring + key/click timing (T39)
+cargo run --release -p spank-sensors --example power-check        # CPU of the sensor pipeline, slaps off/on (T42)
 tools/focus-probe/bundle.sh --watch-secs 20                       # must run as a signed .app; writes target/focus-probe/output.txt
 cargo run --release -p trace-recorder -- --check                  # both sensors OK? prints JSON
 cargo run --release -p trace-recorder -- --scenario all --out fixtures/traces/<machine>-v1   # interactive, guides the user
@@ -88,7 +89,7 @@ python3 -I tools/analyze-trace.py fixtures/traces/m4air-v1        # per-segment 
 tools/run-as-app.sh [--sign "Developer ID Application: …"] [--entitlements f] <pkg> -- <args>   # run a tool as a signed .app via LaunchServices
 ```
 
-CI (`.github/workflows/ci.yml`) runs on `macos-latest`: frontend typecheck and build, then fmt, clippy, test and coverage. cargo-deny runs as a separate Ubuntu job. The repo has no remote yet, so CI has never run on GitHub.
+CI (`.github/workflows/ci.yml`) runs on `macos-latest`: frontend typecheck and build, then fmt, clippy, test and coverage. cargo-deny runs as a separate Ubuntu job. The remote is `github.com/kaija/spank`.
 
 ## Architecture (big picture)
 
@@ -159,6 +160,7 @@ CI (`.github/workflows/ci.yml`) runs on `macos-latest`: frontend typecheck and b
 - `AppState::update_config` saves, sends the config to the engine, emits `config_changed` and refreshes the tray. The UI's `useConfig` reloads on that event (not on `engine_state`, which fires with every lid angle change).
 - Launch at login: `commands::apply_launch_at_login` (autostart plugin). Startup syncs it with the config **only in release builds**.
 - Logs: launched outside a terminal, stderr is redirected to `~/Library/Logs/dev.spank.app/spank.log` (`diag.rs`).
+- Updates (`update.rs`, T41): `tauri-plugin-updater` reads `latest.json` from GitHub Releases (`plugins.updater` in `tauri.conf.json`, public key there). Release builds check 2 min after launch, then daily, and ask with a native dialog; dev builds never check on their own. The private key is `~/.tauri/spank-updater.key` (outside the repo; losing it means installed copies can't be updated).
 
 **Pinned versions:**
 - Tauri **2.x** (3.x is still alpha).

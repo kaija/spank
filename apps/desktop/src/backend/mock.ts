@@ -9,7 +9,7 @@ import type { Profile } from "@/bindings/Profile";
 import type { RuntimeState } from "@/bindings/RuntimeState";
 import type { SoundEntry } from "@/bindings/SoundEntry";
 import { EVENT_KINDS } from "@/lib/events";
-import type { Backend, BackendEvents, FileDrop } from "./types";
+import type { Backend, BackendEvents, FileDrop, UpdateInfo } from "./types";
 
 /**
  * In-memory backend for `pnpm dev` in a plain browser and for component tests.
@@ -229,6 +229,15 @@ export function createMockBackend(
     async openLogFolder() {
       data.log.push("log-folder");
     },
+    async checkForUpdates() {
+      if (data.update === "error") throw new Error("could not fetch a valid release JSON");
+      return structuredClone(data.update);
+    },
+    async installUpdate() {
+      if (data.update === "error" || !data.update.available) throw new Error("already up to date");
+      for (const p of [0.25, 0.5, 1]) emit("update_progress", p);
+      data.log.push(`install:${data.update.available.version}`);
+    },
     async listProfiles() {
       return structuredClone(data.profiles);
     },
@@ -392,6 +401,8 @@ export type MockSeed = {
   /** What `requestInputMonitoring` answers. */
   inputAnswer: InputAccess;
   calibration: Calibration | null;
+  /** What `checkForUpdates` answers ("error" = it throws). */
+  update: UpdateInfo | "error";
   /** The running calibration wizard, if any. */
   calProgress: CalibrationProgress | null;
   /** Calls that have no visible effect (previews, reveal…), for tests. */
@@ -552,6 +563,7 @@ function defaultSeed(): MockSeed {
     inputAnswer: "granted",
     calibration: null,
     calProgress: null,
+    update: { current: "0.1.0", available: null },
     log: [],
   };
 }

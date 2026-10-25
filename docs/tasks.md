@@ -4,18 +4,13 @@
 > 一個 Wave 全部完成（或其依賴的任務完成）後即可開始下一個 Wave。
 > ⛳ = Gate：結果可能修改 ADR / 設計，後續任務開始前要先檢查。
 
-## 開發狀態（2026-10-24）
+## 開發狀態（2026-10-25）
 
-- **進度**：Wave 0–6 實作完成（T20、T31–T34、T36–T40 待手動驗證），branch `claude/wave-5-and-6-89137a`（含 `claude/wave-3-4-b3266e` 的 Wave 3–5；尚無 remote，未 push、CI／Release workflow 未在 GitHub 上跑過）。
-- **App 現況**：選單列 App：螢幕開合音效、拍打（校準後啟用）、自動靜音、精準打字模式、Tray 選單、五個設定頁、首次啟動 Onboarding 與校準精靈、內建三個 Profile、log 檔（`~/Library/Logs/dev.spank.app/spank.log`）。
-- **待使用者手動驗證**（🟡）：
-  - T20：`cargo run -p spank-sysmon --example sysmon-watch`，逐項切換麥克風／相機／音量／靜音／鎖定／睡眠。
-  - T31–T34、T37、T38：`pnpm --dir apps/desktop tauri build --bundles app` 後 `open target/release/bundle/macos/Spank.app`，試 Tray 選單與五個設定頁。
-  - T36：在全新使用者帳號（或刪掉 `~/Library/Application Support/dev.spank.app/config.json`）啟動，走完 Onboarding；校準後拍打 → 哀叫。
-  - T39：感測器頁打開精準打字模式 → 系統詢問「輸入監控」→ 允許後打字不觸發拍打；拒絕時頁面提示並照常用訊號濾波。`cargo run -p spank-sensors --example input-check -- --request`。
-  - T40：設定 `docs/release.md` 的 Secrets、push remote 後推 tag，確認 DMG 在乾淨機器上無 Gatekeeper 警告。
-- **下一步**：Wave 7（T41 updater、T42 檢查清單、T43 文件）。
-- **已知限制**：內建人聲是合成的卡通音；T23 參數只用一台 M4 Air、一位使用者的 trace 調過；`cargo fuzz` 需 nightly，尚未跑過；一般頁的「檢查更新」按鈕留給 T41。
+- **進度**：Wave 0–7 實作完成，只剩 T44（決定正式名稱與 bundle ID 後發佈）。已合併到 `main` 並推上 GitHub。
+- **App 現況**：選單列 App：螢幕開合音效、拍打（校準後啟用）、自動靜音、精準打字模式、Tray 選單、五個設定頁、首次啟動 Onboarding 與校準精靈、內建三個 Profile、每日檢查更新、log 檔（`~/Library/Logs/dev.spank.app/spank.log`）。
+- **待使用者手動驗證**（🟡）：統一整理在 [`docs/release-checklist.md`](release-checklist.md) 第 6 節（T20、T31–T34、T36–T39、T41），以及第 2–5 節未勾選的項目；T43 文件待審閱。
+- **發佈前要準備**：`docs/release.md` 的 Secrets（含 updater 私鑰 `TAURI_SIGNING_PRIVATE_KEY`）；ADR-0012 決定正式名稱與 bundle ID（會牽動 provisioning profile 與 entitlements）。
+- **已知限制**：內建人聲是合成的卡通音；T23 參數只用一台 M4 Air、一位使用者的 trace 調過；nightly `cargo fuzz` 尚未跑過（已跑 stable 替代測試）。
 
 ## 總覽
 
@@ -511,11 +506,13 @@ flowchart LR
 
 ### T41 Tauri updater
 - 依賴：T40
+- 狀態：🟡 實作完成（2026-10-25）：`tauri-plugin-updater`，`src-tauri/src/update.rs`（release build 啟動 2 分鐘後、之後每 24 小時檢查 `latest.json`；原生對話框詢問後下載、安裝、重新啟動；「稍後」同次執行不再問同一版；`check_for_updates`／`install_update` + 一般頁「檢查更新」與下載進度）；updater 金鑰 `~/.tauri/spank-updater.key`（公鑰在 `tauri.conf.json`）；`tools/release.sh` 在 staple 後打包 `.app.tar.gz`、簽 `.sig`、`tools/latest-json.py` 產生 `latest.json`，workflow 一併上傳。已在本機確認：release 腳本產出的簽章可被 App 內的公鑰驗過、竄改的檔案會被拒絕。**v0.0.x → v0.0.y 實際更新需發佈兩個版本後驗證**
 - 內容：簽章 `latest.json`、每日檢查、詢問更新。
 - 完成條件：v0.0.x → v0.0.y 自動更新成功。
 
 ### T42 強化與真機檢查清單
 - 依賴：T31、T32、T33、T34、T36、T37、T38、T39
+- 狀態：🟡 實作完成（2026-10-25）：`docs/release-checklist.md`（自動檢查、功耗、錯誤與 log、fuzz、無障礙、真機功能、發佈）；功耗實測（`spank-sensors` 的 `power-check` example：只有角度 0.18 % CPU、加上加速度計 0.78 %，寫入 ADR-0013）；fuzz 以 stable 替代測試跑 4 × 250,000 個變異 `.spankpack` 無 panic（`SPANK_FUZZ_ITERS`／`SPANK_FUZZ_SEED`；nightly `cargo fuzz` 仍待跑）；執行期程式碼無可能 panic 的 unwrap；無障礙：⌘1–⌘5 切頁、減少動態效果時波形 2 Hz、圖示按鈕皆有名稱。**清單中 `[ ]` 項目需使用者在真機上逐項確認**
 - 內容：`docs/release-checklist.md`；功耗觀察（ADR-0013）；錯誤處理與 log；fuzz 跑一輪；無障礙基本檢查。
 - 完成條件：checklist 全數通過。
 - 備註（W3–5）：待辦清單要包含：T20 逐項切換驗證（`sysmon-watch`）、T31–T34 手動驗證、`cargo +nightly fuzz run read_pack`（spank-pack）、播放中切換輸出裝置（`AudioPlayer` 會在下次播放時重建 stream，尚未在真機測過）、其他機型重錄 trace 驗證 T23 參數。
@@ -523,6 +520,7 @@ flowchart LR
 
 ### T43 文件
 - 依賴：T36、T38
+- 狀態：🟡 實作完成（2026-10-25）：`README.md`（支援機型、安裝、權限、FAQ、開發）、`CONTRIBUTING.md`（慣例、如何貢獻 trace 與音效包、授權規定）、`PRIVACY.md`（處理哪些資料、存在哪、唯一的網路連線、權限、移除）；ADR-0011 補實作備註。**待使用者審閱**
 - 內容：README（安裝、權限說明、FAQ、支援機型）、CONTRIBUTING（如何貢獻 trace / 音效包）、隱私說明。
 - 完成條件：審閱通過。
 

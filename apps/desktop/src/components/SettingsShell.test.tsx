@@ -3,10 +3,12 @@ import { NextIntlClientProvider } from "next-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "@/i18n/messages/en.json";
 import zhHant from "@/i18n/messages/zh-Hant.json";
-import { PAGES, SettingsShell, pageFromPath } from "./SettingsShell";
+import { fireEvent } from "@testing-library/react";
+import { PAGES, SettingsShell, pageForShortcut, pageFromPath } from "./SettingsShell";
 
 let pathname = "/profiles/";
-vi.mock("next/navigation", () => ({ usePathname: () => pathname }));
+const push = vi.fn();
+vi.mock("next/navigation", () => ({ usePathname: () => pathname, useRouter: () => ({ push }) }));
 
 function renderShell(messages: typeof zhHant, locale: string, props: Partial<Parameters<typeof SettingsShell>[0]> = {}) {
   return render(
@@ -30,7 +32,25 @@ describe("pageFromPath", () => {
   });
 });
 
+describe("pageForShortcut", () => {
+  const key = (k: string, mods: Partial<KeyboardEvent> = {}) =>
+    pageForShortcut({ metaKey: true, ctrlKey: false, altKey: false, shiftKey: false, key: k, ...mods });
+  it("maps ⌘1–⌘5 to the pages in order", () => {
+    expect(["1", "2", "3", "4", "5"].map((k) => key(k))).toEqual(PAGES.map((p) => p.id));
+    expect(key("6")).toBeNull();
+    expect(key("0")).toBeNull();
+    expect(key("1", { metaKey: false })).toBeNull();
+    expect(key("1", { shiftKey: true })).toBeNull();
+  });
+});
+
 describe("SettingsShell", () => {
+  it("switches pages with ⌘ + number", () => {
+    renderShell(zhHant, "zh-Hant");
+    fireEvent.keyDown(window, { key: "4", metaKey: true });
+    expect(push).toHaveBeenCalledWith("/mute/");
+  });
+
   it("renders the five pages in mockup order and marks the current one", () => {
     pathname = "/sensors/";
     renderShell(zhHant, "zh-Hant");

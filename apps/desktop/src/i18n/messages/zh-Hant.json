@@ -266,7 +266,15 @@
     "copied": "已複製",
     "openLogs": "打開 log 資料夾",
     "privacy": "{appName} 不收集任何資料。沒有分析、沒有帳號、沒有伺服器。感測器數值只在你的 Mac 上即時處理，用完就丟；檢查更新時只會送出版本號。",
-    "failed": "無法儲存：{message}"
+    "failed": "無法儲存：{message}",
+    "checkUpdates": "檢查更新",
+    "checking": "檢查中…",
+    "upToDate": "已是最新版本",
+    "available": "有新版本 {version}",
+    "install": "更新並重新啟動",
+    "downloading": "下載中 {pct}%",
+    "checkFailed": "無法檢查更新：{message}",
+    "installFailed": "無法更新：{message}"
   },
   "onboarding": {
     "window": "歡迎使用 {appName}",

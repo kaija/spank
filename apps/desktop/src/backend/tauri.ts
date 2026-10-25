@@ -46,6 +46,8 @@ export const tauriBackend: Backend = {
   openInputMonitoringSettings: () => invoke("open_input_monitoring_settings"),
 
   copyDiagnostics: () => invoke("copy_diagnostics"),
+  checkForUpdates: () => invoke("check_for_updates"),
+  installUpdate: () => invoke("install_update"),
   openLogFolder: () => invoke("open_log_folder"),
 
   listProfiles: () => invoke("list_profiles"),

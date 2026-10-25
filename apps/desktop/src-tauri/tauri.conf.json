@@ -36,5 +36,13 @@
     "resources": {
       "../../../assets/sounds/builtin/": "builtin/"
     }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDU3NENBQ0VCMzA0RUMzNjEKUldSaHcwNHc2NnhNVjBaellBc1BUTEdVNksrRkIvSWtvNllsbjh4N3VIeU42K2VSMDREdlhBMm4K",
+      "endpoints": [
+        "https://github.com/kaija/spank/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

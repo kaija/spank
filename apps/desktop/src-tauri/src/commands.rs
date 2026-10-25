@@ -201,6 +201,19 @@ pub fn open_input_monitoring_settings() -> CmdResult<()> {
     open_url("x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent")
 }
 
+// ---- updates (T41) ----------------------------------------------------------------------------
+
+#[tauri::command]
+pub async fn check_for_updates(app: AppHandle) -> CmdResult<crate::update::UpdateInfo> {
+    crate::update::check(&app).await
+}
+
+/// Download and install the update found by `check_for_updates`, then restart the app.
+#[tauri::command]
+pub async fn install_update(app: AppHandle) -> CmdResult<()> {
+    crate::update::install(&app).await
+}
+
 // ---- diagnostics & logs (T38) -----------------------------------------------------------------
 
 fn diagnostics_text(app: &AppHandle, state: &AppState) -> String {

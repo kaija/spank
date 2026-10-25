@@ -11,9 +11,15 @@
 #   With --notarize (App Store Connect API key; not Tauri's APPLE_API_* names, so Tauri's own
 #   notarization stays off and this script notarizes the app and the DMG itself):
 #   NOTARY_KEY_ID, NOTARY_ISSUER, NOTARY_KEY_PATH (path to the AuthKey_*.p8 file)
+#   For the updater (T41), when TAURI_SIGNING_PRIVATE_KEY is set (the key text, as in the CI
+#   secret, or a path such as ~/.tauri/spank-updater.key; password in
+#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD, may be empty):
+#   writes Spank_<v>_aarch64.app.tar.gz + .sig and latest.json for the release.
+#   SPANK_REPO  GitHub repo the release lives in (default kaija/spank)
 #
 # Steps: tauri build (sign, hardened runtime, entitlements, embedded profile) → verify →
-# [notarize + staple app] → DMG → sign DMG → [notarize + staple DMG] → Gatekeeper check.
+# [notarize + staple app] → [updater archive + latest.json] → DMG → sign DMG →
+# [notarize + staple DMG] → Gatekeeper check.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -77,6 +83,26 @@ if [[ $NOTARIZE == 1 ]]; then
   notarize "$ZIP"
   rm -f "$ZIP"
   xcrun stapler staple "$APP"
+fi
+
+if [[ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ]]; then
+  echo "==> Updater archive + latest.json"
+  TARBALL="Spank_${VERSION}_aarch64.app.tar.gz"
+  COPYFILE_DISABLE=1 tar -czf "$OUT/$TARBALL" -C "$(dirname "$APP")" Spank.app
+  rm -f "$OUT/$TARBALL.sig"
+  # `tauri signer sign` reads the env var as key text only; a path goes through -f.
+  KEY_ARGS=()
+  if [[ -f "$TAURI_SIGNING_PRIVATE_KEY" ]]; then
+    KEY_ARGS=(-f "$TAURI_SIGNING_PRIVATE_KEY")
+  fi
+  (
+    [[ ${#KEY_ARGS[@]} -gt 0 ]] && unset TAURI_SIGNING_PRIVATE_KEY
+    TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}" \
+      pnpm --dir apps/desktop tauri signer sign "${KEY_ARGS[@]}" "$PWD/$OUT/$TARBALL" >/dev/null
+  )
+  [[ -s "$OUT/$TARBALL.sig" ]] || { echo "updater signature missing" >&2; exit 1; }
+  python3 -I tools/latest-json.py --version "$VERSION" --repo "${SPANK_REPO:-kaija/spank}" \
+    --tarball "$TARBALL" --sig "$OUT/$TARBALL.sig" --out "$OUT/latest.json"
 fi
 
 echo "==> DMG"

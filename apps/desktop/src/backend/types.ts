@@ -28,9 +28,13 @@ export type BackendEvents = {
   calibration: CalibrationProgress;
   /** Largest |a| (g, gravity removed) of the last ~50 ms, while monitoring or calibrating. */
   accel_level: number;
+  /** Update download progress, 0–1. */
+  update_progress: number;
 };
 
 export type AppInfo = { version: string; defaultConfig: AppConfig };
+/** `check_for_updates` (apps/desktop/src-tauri/src/update.rs). */
+export type UpdateInfo = { current: string; available: { version: string; notes: string | null } | null };
 
 export type FileDrop = { type: "over"; count: number } | { type: "drop"; paths: string[] } | { type: "leave" };
 
@@ -68,6 +72,9 @@ export interface Backend {
 
   /** Diagnostics text (copied to the clipboard by `copyDiagnostics`). */
   copyDiagnostics(): Promise<string>;
+  checkForUpdates(): Promise<UpdateInfo>;
+  /** Download, install and restart into the update found by `checkForUpdates`. */
+  installUpdate(): Promise<void>;
   openLogFolder(): Promise<void>;
 
   listProfiles(): Promise<Profile[]>;

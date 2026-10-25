@@ -7,6 +7,7 @@
 //! - [`engine`] runs the sensors, the orchestrator and playback on a core thread (T30);
 //!   [`commands`] are the settings UI's backend.
 //! - First launch opens the onboarding wizard (T36); closing it counts as done.
+//! - Release builds check GitHub Releases for updates once a day and ask before installing ([`update`]).
 //! - Launched outside a terminal, stderr goes to `~/Library/Logs/<bundle id>/spank.log` ([`diag`]).
 
 mod commands;
@@ -14,6 +15,7 @@ mod diag;
 mod engine;
 mod state;
 mod tray;
+mod update;
 mod window;
 
 use engine::{Engine, EngineCmd, EngineEvent};
@@ -113,6 +115,9 @@ fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         sysmon: Mutex::new(Some(sysmon)),
     });
 
+    app.manage(update::Updates::default());
+    update::start_schedule(app.handle());
+
     tray::create(app.handle())?;
     if first_run {
         window::open_wizard(app.handle(), window::Wizard::Onboarding);
@@ -133,6 +138,7 @@ pub fn run() {
         // Registered now; enabling "launch at login" is driven by config (T38), never implicitly in dev.
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             commands::app_info,
             commands::get_state,
@@ -159,6 +165,8 @@ pub fn run() {
             commands::diagnostics,
             commands::copy_diagnostics,
             commands::open_log_folder,
+            commands::check_for_updates,
+            commands::install_update,
             commands::list_profiles,
             commands::create_profile,
             commands::duplicate_profile,

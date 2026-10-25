@@ -15,3 +15,8 @@
 ## Consequences
 
 - 沒有 CI 功耗回歸測試；靠手動檢查清單。
+
+## 實作備註（2026-10-25，T42）
+
+- ADR-0014 之後沒有 helper：上面「通知 helper」改由 App 內的 orchestrator 直接啟停感測器，規則不變（鎖定、睡眠、暫停時停止；加速度計每 ~50 ms 批次處理）。
+- 實測（MacBook Air 15" M4，`spank-sensors` 的 `power-check` example，不含 UI 與音訊）：只有角度 0.18 % CPU、每秒 5 次喚醒；加上加速度計 0.78 % CPU、每秒約 20 次喚醒。音訊 stream 閒置時暫停（spike S5）。手動項目見 `docs/release-checklist.md`。

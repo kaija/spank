@@ -266,7 +266,15 @@
     "copied": "Copied",
     "openLogs": "Open log folder",
     "privacy": "{appName} collects nothing. No analytics, no account, no server. Sensor readings are processed on your Mac and thrown away; checking for updates only sends the version number.",
-    "failed": "Couldn't save: {message}"
+    "failed": "Couldn't save: {message}",
+    "checkUpdates": "Check for updates",
+    "checking": "Checking…",
+    "upToDate": "You're up to date",
+    "available": "Version {version} is available",
+    "install": "Update and restart",
+    "downloading": "Downloading {pct}%",
+    "checkFailed": "Couldn't check for updates: {message}",
+    "installFailed": "Couldn't update: {message}"
   },
   "onboarding": {
     "window": "Welcome to {appName}",

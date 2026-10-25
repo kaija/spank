@@ -72,13 +72,33 @@ export const useSounds = () => useLive<SoundEntry[]>((b) => b.listSounds(), ["li
 export const useConfig = () => useLive<AppConfig>((b) => b.getConfig(), ["config_changed", "profiles_changed"]);
 export const useCalibration = () => useLive<Calibration | null>((b) => b.getCalibration(), ["config_changed"]);
 
-/** Last `n` values of the live acceleration waveform (`accel_level`), oldest first. */
+/**
+ * Last `n` values of the live acceleration waveform (`accel_level`), oldest first.
+ * With "Reduce motion" on, the picture redraws only every 0.5 s (mockup interaction notes);
+ * values in between are kept, so no peak is lost.
+ */
 export function useAccelWave(n: number, enabled = true): number[] {
   const backend = useBackend();
   const [wave, setWave] = useState<number[]>(() => Array(n).fill(0));
   useEffect(() => {
     if (!enabled) return;
-    return backend.on("accel_level", (g) => setWave((w) => [...w.slice(w.length - n + 1), g]));
+    const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    let pending: number[] = [];
+    const flush = () => {
+      if (!pending.length) return;
+      const add = pending;
+      pending = [];
+      setWave((w) => [...w, ...add].slice(-n));
+    };
+    const timer = reduce ? setInterval(flush, 500) : undefined;
+    const off = backend.on("accel_level", (g) => {
+      pending.push(g);
+      if (!reduce) flush();
+    });
+    return () => {
+      off();
+      clearInterval(timer);
+    };
   }, [backend, n, enabled]);
   return wave;
 }
