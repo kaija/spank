@@ -130,7 +130,8 @@ mod tests {
         let classic = &set.profiles[0];
         assert!(classic.playable(EventKind::SlapCombo).is_none());
         let total: usize = set.audio.values().map(|a| a.len()).sum();
-        assert!(total < 5 * 1024 * 1024);
+        // ADR-0008 budget (raised from 5 MB for the long lid-opening recordings).
+        assert!(total < 8 * 1024 * 1024);
     }
 
     #[test]

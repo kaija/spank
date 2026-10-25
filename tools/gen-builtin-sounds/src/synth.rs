@@ -152,34 +152,6 @@ pub fn metal_snap(rng: &mut fastrand::Rng, f0: f32, secs: f32) -> Vec<f32> {
     out
 }
 
-/// Stick-slip friction: impulses at a varying rate, each exciting a resonator bank.
-/// `rate(t)` gives impulses per second; `res` lists (frequency, Q, gain).
-pub fn friction(
-    rng: &mut fastrand::Rng,
-    secs: f32,
-    rate: impl Fn(f32) -> f32,
-    env: impl Fn(f32) -> f32,
-    res: &[(f32, f32, f32)],
-) -> Vec<f32> {
-    let n = len(secs);
-    let mut bank: Vec<(Biquad, f32)> = res.iter().map(|&(f, q, g)| (Biquad::bandpass(f, q), g)).collect();
-    let mut next = 0.0f32;
-    (0..n)
-        .map(|i| {
-            let t = i as f32 / SR;
-            let mut x = 0.0;
-            if t >= next {
-                x = 1.0 + noise(rng) * 0.3;
-                let r = rate(t).max(1.0);
-                next = t + (1.0 / r) * (0.85 + rng.f32() * 0.3);
-            }
-            x += noise(rng) * 0.02;
-            let y: f32 = bank.iter_mut().map(|(b, g)| b.run(x) * *g).sum();
-            y * env(t)
-        })
-        .collect()
-}
-
 /// Low thud: falling sine plus a short low-passed noise burst.
 pub fn thud(rng: &mut fastrand::Rng, f_start: f32, f_end: f32, secs: f32) -> Vec<f32> {
     let n = len(secs);
@@ -272,7 +244,6 @@ mod tests {
         let all = [
             glass(&mut rng, 0.8, 30, 0.1),
             metal_snap(&mut rng, 300.0, 1.0),
-            friction(&mut rng, 1.0, |_| 30.0, |_| 1.0, &[(900.0, 12.0, 1.0)]),
             thud(&mut rng, 90.0, 45.0, 0.5),
             voice(&mut rng, 0.5, |_| 200.0, |_| A, |t| ahr(t, 0.02, 0.3, 0.05)),
         ];

@@ -38,3 +38,5 @@
 - 「內建音效只用 CC0」放寬：「經典」的開合音效（石門、木扣喀噠、刺耳摩擦、木頭裂開）改用專案作者以 ElevenLabs Sound Effects 產生的音效，授權記為 `LicenseRef-Spank-ElevenLabs`：只隨 Spank 散布，不屬於 CC0 或 MIT。其餘內建音效仍是程序合成的 CC0（`tools/gen-builtin-sounds`）。
 - 原因：使用者試聽後認為合成的開合摩擦聲太假（見 `docs/sound-use-cases.md`），偏好實際音色。
 - 原檔放在 `assets/sounds/source/`，產生器轉 mono、限幅（最多 12 dB）、正規化後打包；`SOUNDS_LICENSE.md` 逐一列出來源。
+- 「毀滅」的開啟中音效（30–120°，ADR-0015）改用三個作者以 ElevenLabs 產生的「玻璃緊繃碎裂」錄音（各約 7 秒，`LicenseRef-Spank-ElevenLabs`），取代合成的金屬斷裂／鋼筋彎折；開啟中會連續播放、停下暫停，需要較長的音檔。喚醒與拍打仍用合成的短玻璃聲。
+- 內建音效總量上限由 5 MB 放寬為 **8 MB**（解壓後的 WAV 總和；`spank-pack` 測試與產生器都檢查），以容納長錄音。

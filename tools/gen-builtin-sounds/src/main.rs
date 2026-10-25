@@ -37,7 +37,29 @@ struct Recorded {
 fn recorded() -> Vec<Recorded> {
     let door = "ElevenLabs Sound Effects: a stone door grinding slowly";
     let grate = "ElevenLabs Sound Effects: a harsh, grating sound";
+    let glass = "ElevenLabs Sound Effects: slow, high-tension glass straining, cracking and shattering";
     vec![
+        Recorded {
+            stem: "glass-tension-01",
+            zh: "玻璃緊繃碎裂 01",
+            en: "Straining glass 01",
+            file: "glass-tension-01.mp3",
+            what: glass,
+        },
+        Recorded {
+            stem: "glass-tension-02",
+            zh: "玻璃緊繃碎裂 02",
+            en: "Straining glass 02",
+            file: "glass-tension-02.mp3",
+            what: glass,
+        },
+        Recorded {
+            stem: "glass-tension-03",
+            zh: "玻璃緊繃碎裂 03",
+            en: "Straining glass 03",
+            file: "glass-tension-03.mp3",
+            what: glass,
+        },
         Recorded {
             stem: "stone-door-01",
             zh: "石門 01",
@@ -211,28 +233,6 @@ fn sounds() -> Vec<Sound> {
             make: |r| metal_snap(r, 310.0, 1.4),
         },
         Sound {
-            stem: "metal-bend",
-            zh: "鋼筋彎折",
-            en: "Rebar bending",
-            what: "slow stick-slip groan through metal resonances, ending in a ping",
-            make: |r| {
-                let mut out = friction(
-                    r,
-                    1.6,
-                    |t| 45.0 + 25.0 * (t * 2.2).sin() + 30.0 * t,
-                    |t| ahr(t, 0.15, 1.1, 0.12),
-                    &[(420.0, 9.0, 1.0), (1150.0, 12.0, 0.6), (2600.0, 15.0, 0.25)],
-                );
-                let ping = metal_snap(r, 520.0, 0.5);
-                for (i, v) in ping.iter().enumerate() {
-                    if let Some(o) = out.get_mut(len(1.1) + i) {
-                        *o += v * 0.3;
-                    }
-                }
-                out
-            },
-        },
-        Sound {
             stem: "thud-low",
             zh: "悶響 · 低",
             en: "Low thud",
@@ -361,11 +361,14 @@ const PROFILES: &[ProfileDef] = &[
         id: "destruction",
         zh: "毀滅",
         en: "Destruction",
-        volume_note: "glass and metal",
+        volume_note: "glass and metal; straining glass while opening",
         events: &[
             (EventKind::LidOpened, &["glass-01", "glass-02"]),
             (EventKind::LidClosing, &["thud-low"]),
-            (EventKind::LidOverbent, &["metal-snap", "metal-bend"]),
+            (
+                EventKind::LidOverbent,
+                &["glass-tension-01", "glass-tension-02", "glass-tension-03"],
+            ),
             (EventKind::SlapLight, &["glass-01"]),
             (EventKind::SlapMedium, &["glass-02"]),
             (EventKind::SlapHard, &["metal-snap"]),
@@ -521,7 +524,10 @@ fn main() {
         println!("→ {} ({} KB, {})", path.display(), size / 1024, p.volume_note);
     }
     println!("total {} KB", total / 1024);
-    assert!(total < 5 * 1024 * 1024, "built-in sounds must stay under 5 MB");
+    assert!(
+        total < 8 * 1024 * 1024,
+        "built-in sounds must stay under 8 MB (ADR-0008)"
+    );
 
     let mut md = String::from(
         "# Built-in sounds\n\n\
@@ -567,8 +573,8 @@ fn main() {
 
 const SAMPLE_RATE: u32 = 48_000;
 
-/// Seed slot of each synthesized sound: its position in the original list (slot 6 was the
-/// synthesized "creak", replaced by recordings). Fixed, so removing or reordering sounds never
+/// Seed slot of each synthesized sound: its position in the original list (slot 4, "metal-bend",
+/// and slot 6, "creak", were replaced by recordings). Fixed, so removing or reordering sounds never
 /// changes the others. New sounds take the next free slot.
 fn seed_slot(stem: &str) -> u64 {
     const SLOTS: [&str; 13] = [
