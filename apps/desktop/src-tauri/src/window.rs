@@ -14,10 +14,12 @@ pub enum Wizard {
 }
 
 impl Wizard {
+    /// Trailing-slash routes work in both modes: the Next dev server serves `calibrate/` but
+    /// 404s on `calibrate/index.html`, and bundled assets resolve `calibrate/` to its index.html.
     fn route(self) -> &'static str {
         match self {
-            Wizard::Onboarding => "onboarding/index.html",
-            Wizard::Calibration => "calibrate/index.html",
+            Wizard::Onboarding => "onboarding/",
+            Wizard::Calibration => "calibrate/",
         }
     }
 }
