@@ -507,7 +507,7 @@ function defaultSeed(): MockSeed {
       }),
       profile("builtin.destruction", "毀滅", true, {
         lid_opened: ["builtin.glass-01", "builtin.glass-02"],
-        lid_closing: ["builtin.thud-low"],
+        lid_closing: ["builtin.glass-crack"],
         lid_overbent: ["builtin.glass-tension-01", "builtin.glass-tension-02", "builtin.glass-tension-03"],
         slap_light: ["builtin.glass-01"],
         slap_medium: ["builtin.glass-02"],
@@ -538,6 +538,7 @@ function defaultSeed(): MockSeed {
           ["grating-02", 3909],
           ["grating-03", 3929],
           ["glass-02", 1100],
+          ["glass-crack", 495],
           ["glass-crash", 1600],
           ["glass-tension-01", 6943],
           ["glass-tension-02", 6946],

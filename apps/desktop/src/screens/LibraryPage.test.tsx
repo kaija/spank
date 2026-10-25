@@ -26,7 +26,7 @@ describe("LibraryPage", () => {
     expect(screen.getAllByRole("row")).toHaveLength(2); // header + 1
     fireEvent.click(screen.getByRole("tab", { name: "全部" }));
     fireEvent.change(screen.getByRole("searchbox", { name: "搜尋音效" }), { target: { value: "玻璃" } });
-    expect(screen.getAllByRole("row")).toHaveLength(7); // header + 玻璃碎裂 01/02, 玻璃大爆炸, 玻璃緊繃碎裂 01–03
+    expect(screen.getAllByRole("row")).toHaveLength(8); // header + 玻璃碎裂 01/02, 玻璃裂響, 玻璃大爆炸, 玻璃緊繃碎裂 01–03
     fireEvent.change(screen.getByRole("searchbox", { name: "搜尋音效" }), { target: { value: "鴨子" } });
     expect(screen.getByText("找不到「鴨子」。也許它還沒被錄下來。")).toBeTruthy();
   });

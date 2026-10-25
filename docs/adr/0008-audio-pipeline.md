@@ -39,4 +39,5 @@
 - 原因：使用者試聽後認為合成的開合摩擦聲太假（見 `docs/sound-use-cases.md`），偏好實際音色。
 - 原檔放在 `assets/sounds/source/`，產生器轉 mono、限幅（最多 12 dB）、正規化後打包；`SOUNDS_LICENSE.md` 逐一列出來源。
 - 「毀滅」的開啟中音效（30–120°，ADR-0015）改用三個作者以 ElevenLabs 產生的「玻璃緊繃碎裂」錄音（各約 7 秒，`LicenseRef-Spank-ElevenLabs`），取代合成的金屬斷裂／鋼筋彎折；開啟中會連續播放、停下暫停，需要較長的音檔。喚醒與拍打仍用合成的短玻璃聲。
+- 「毀滅」的闔上螢幕音效改用作者以 ElevenLabs 產生的玻璃裂響（只取開頭約 0.5 秒的一次破裂、50 ms 淡出，`source/glass-crack.wav`），取代合成的悶響；悶響仍用於「經典」的拍打。
 - 內建音效總量上限由 5 MB 放寬為 **8 MB**（解壓後的 WAV 總和；`spank-pack` 測試與產生器都檢查），以容納長錄音。

@@ -40,6 +40,13 @@ fn recorded() -> Vec<Recorded> {
     let glass = "ElevenLabs Sound Effects: slow, high-tension glass straining, cracking and shattering";
     vec![
         Recorded {
+            stem: "glass-crack",
+            zh: "玻璃裂響",
+            en: "Glass crack",
+            file: "glass-crack.wav",
+            what: "ElevenLabs Sound Effects: a sharp crack of glass (first 0.5 s, with a 50 ms fade-out)",
+        },
+        Recorded {
             stem: "glass-tension-01",
             zh: "玻璃緊繃碎裂 01",
             en: "Straining glass 01",
@@ -364,7 +371,7 @@ const PROFILES: &[ProfileDef] = &[
         volume_note: "glass and metal; straining glass while opening",
         events: &[
             (EventKind::LidOpened, &["glass-01", "glass-02"]),
-            (EventKind::LidClosing, &["thud-low"]),
+            (EventKind::LidClosing, &["glass-crack"]),
             (
                 EventKind::LidOverbent,
                 &["glass-tension-01", "glass-tension-02", "glass-tension-03"],
