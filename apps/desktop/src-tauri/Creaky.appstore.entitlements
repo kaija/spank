@@ -3,7 +3,7 @@
 <!--
   Mac App Store entitlements for the lid-only "Creaky" edition (tauri.appstore.conf.json,
   tools/release-appstore.sh). Needs signing/Creaky_App_Store.provisionprofile embedded as
-  Contents/embedded.provisionprofile. No network entitlement: the App Store build has no updater.
+  Contents/embedded.provisionprofile. The app itself never goes online (no updater in this build).
 -->
 <plist version="1.0">
 <dict>
@@ -13,6 +13,11 @@
   <true/>
   <!-- Lets the sandboxed app open the SPU HID device (05AC:8104) to poll the lid angle. -->
   <key>com.apple.security.device.usb</key>
+  <true/>
+  <!-- Required by WKWebView inside the sandbox: WebKit's network process loads even the app's own
+       bundled UI, and without this it crashes in a loop and every window stays blank. The app
+       makes no network requests. -->
+  <key>com.apple.security.network.client</key>
   <true/>
   <!-- Importing sounds / .spankpack files and exporting packs through the open/save panels. -->
   <key>com.apple.security.files.user-selected.read-write</key>

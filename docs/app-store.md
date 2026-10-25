@@ -101,7 +101,7 @@ ASC_KEY_ID=XXXXXXXXXX ASC_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx tools/r
 - [ ] 自動靜音：開視訊會議（麥克風使用中）、開勿擾、系統靜音時不出聲。
 - [ ] 設定 › 音效庫 用檔案對話框和拖曳都能匯入音檔；`.spankpack` 能匯入與匯出。
 - [ ] 設定 › 一般 › 登入時啟動：打開後出現在 系統設定 › 一般 › 登入項目，登出再登入會自動啟動。
-- [ ] `codesign -d --entitlements - Creaky.app` 沒有 `network.client`。
+- [ ] `codesign -d --entitlements - Creaky.app` 有 `network.client`（WebKit 必須，否則視窗空白），沒有 `network.server`。
 
 ## 3. App Store Connect 的設定
 
@@ -280,7 +280,7 @@ https://github.com/kaija/spank
 
 - 「你或你的第三方合作夥伴是否會從此 App 收集資料？」→ **否，我們不會從此 App 收集資料**。
 - 結果顯示為 **Data Not Collected（未收集資料）**。
-- 理由（備查）：沒有網路存取（沒有 `network.client` entitlement）、沒有分析或廣告 SDK、沒有帳號；設定與匯入的音效只存在 App 的 sandbox container。
+- 理由（備查）：App 不發出任何網路請求（`network.client` 只是 WebKit 顯示內建介面所需）、沒有分析或廣告 SDK、沒有帳號；設定與匯入的音效只存在 App 的 sandbox container。
   麥克風 / 相機只檢查「是否被其他 App 使用中」，不擷取任何音訊或影像。
 
 ### 年齡分級
@@ -315,9 +315,10 @@ ENTITLEMENTS
 - com.apple.security.device.usb: the MacBook's built-in lid angle sensor is a HID device. Creaky opens it with the public IOKit HID API, read-only, to read the lid angle. It does not access any other USB or HID device, and it does not read the keyboard or trackpad.
 - com.apple.security.files.user-selected.read-write: import the user's own audio files and import/export sound packs through the standard open/save panels.
 - com.apple.developer.usernotifications.communication: used only to read whether a Focus is on (INFocusStatusCenter), so Creaky can stay silent. Creaky does not send notifications.
+- com.apple.security.network.client: required by WKWebView in the App Sandbox. The settings window is a web view of files bundled in the app, and WebKit's network process needs this entitlement to load them; without it the window stays blank. Creaky itself makes no network requests.
 
 PRIVACY
-No account or sign-in. No network access. No data is collected or transmitted. Creaky never records audio or video: it only checks whether another app is currently using the microphone or camera (CoreAudio / CoreMediaIO device state), to stay silent during calls, so it does not request microphone or camera permission.
+No account or sign-in. Creaky makes no network requests (the network.client entitlement is only for WebKit, see above). No data is collected or transmitted. Creaky never records audio or video: it only checks whether another app is currently using the microphone or camera (CoreAudio / CoreMediaIO device state), to stay silent during calls, so it does not request microphone or camera permission.
 ```
 
 ## 7. 通過之後

@@ -53,8 +53,10 @@ ADR-0002 決定只發 DMG，理由之一是「sandbox 內能否開啟感測器�
   - `com.apple.security.files.user-selected.read-write`：用檔案對話框匯入音檔、匯入／匯出 `.spankpack`（`tauri-plugin-dialog`）；
   - `com.apple.developer.usernotifications.communication`：專注模式狀態（spike-report S4）；
   - profile 帶的 `com.apple.application-identifier` / `com.apple.developer.team-identifier`。
-  - 不要 `com.apple.security.network.client`，也不要麥克風、相機或 Apple Events。
-- Info.plist 加 `ITSAppUsesNonExemptEncryption = false`（不用加密，也沒有網路），
+  - `com.apple.security.network.client`：WKWebView 在沙盒裡必須有它。WebKit 的網路行程連 App 內建的介面都要經手，
+    沒有它會不斷當掉、每個視窗一片空白（本機沙盒測試實際遇到）。App 本身不發出任何網路請求。
+  - 不要 `network.server`、麥克風、相機或 Apple Events。
+- Info.plist 加 `ITSAppUsesNonExemptEncryption = false`（不用加密，也不發出網路請求），
   `LSApplicationCategoryType` 改為 `public.app-category.entertainment`。
 - **不使用 temporary-exception entitlements**（見 Alternatives）。
 - App Store 版關閉 Tauri 的 `macOSPrivateApi`（`tauri.conf.json` 目前是 `true`），App Review 會拒絕使用私有 API 的 App。

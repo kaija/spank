@@ -58,6 +58,15 @@ APP="$OUT/Creaky.app"
 PKG="$OUT/Creaky.pkg"
 BUILD_NUMBER="${CREAKY_BUILD_NUMBER:-$(date +%y%m%d%H%M)}"
 [[ "$BUILD_NUMBER" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]] || die "CREAKY_BUILD_NUMBER must be up to three dot-separated integers"
+# --skip-build re-signs / re-packages the last build, so it keeps that build's number.
+if [[ $BUILD == 0 && -z "${CREAKY_BUILD_NUMBER:-}" ]]; then
+  for prev in "target/aarch64-apple-darwin/release/bundle/macos/Creaky.app" "$APP"; do
+    if [[ -f "$prev/Contents/Info.plist" ]]; then
+      BUILD_NUMBER="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$prev/Contents/Info.plist")"
+      break
+    fi
+  done
+fi
 
 # ---- preflight: fail before the (slow) build when anything is missing --------------------------
 
@@ -169,7 +178,9 @@ ENTITLEMENTS="$(codesign -d --entitlements :- "$APP" 2>/dev/null)"
 SIGNATURE="$(codesign -dvv "$APP" 2>&1)"
 [[ "$ENTITLEMENTS" == *"com.apple.security.app-sandbox"* ]] || die "app sandbox entitlement missing"
 [[ "$ENTITLEMENTS" == *"com.apple.security.device.usb"* ]] || die "USB entitlement (lid sensor) missing"
-[[ "$ENTITLEMENTS" != *"com.apple.security.network"* ]] || die "unexpected network entitlement"
+# WKWebView needs it in the sandbox (blank windows otherwise); the app itself makes no requests.
+[[ "$ENTITLEMENTS" == *"com.apple.security.network.client"* ]] || die "network.client entitlement missing (WebKit renders blank without it)"
+[[ "$ENTITLEMENTS" != *"com.apple.security.network.server"* ]] || die "unexpected network.server entitlement"
 [[ "$(plist_get CFBundleIdentifier)" == "$BUNDLE_ID" ]] || die "bundle id is not $BUNDLE_ID"
 [[ "$(plist_get CFBundleVersion)" == "$BUILD_NUMBER" ]] || die "CFBundleVersion is not $BUILD_NUMBER"
 [[ "$(plist_get LSApplicationCategoryType)" == "public.app-category.entertainment" ]] \
