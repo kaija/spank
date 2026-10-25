@@ -30,6 +30,14 @@
 
 更新：每天會檢查一次新版本，有新版時先問你再更新（設定 › 一般 可關閉，也可手動檢查）。
 
+## Mac App Store 版（Creaky）
+
+另有一個上架 Mac App Store 的版本 **Creaky**，免費，只有螢幕開合的部分：打開、慢慢打開時的連續音效、闔上，加上自動靜音、兩套內建音效與自訂音效。
+App Store 版必須在 sandbox 裡執行，而 sandbox 不允許開啟加速度計，所以**拍打、連擊與校準只有 DMG 版 Spank 才有**（[ADR-0017](docs/adr/0017-mac-app-store-edition.md)）。
+Creaky 不連網路，由 App Store 負責更新。兩版共用同一個 bundle ID，同一台 Mac 請擇一安裝。
+
+上架流程、文案與審查備註見 [docs/app-store.md](docs/app-store.md)，隱私權政策見 [docs/privacy.md](docs/privacy.md)。
+
 ## 權限
 
 **基本功能不需要任何權限，也不需要管理員密碼。** 以下兩個是選用的，只在你打開對應功能時才會詢問：
@@ -87,6 +95,8 @@
 | [docs/spike-report.md](docs/spike-report.md) | 感測器、Focus、音訊的實測結果 |
 | [docs/release.md](docs/release.md) | 簽章、公證與發佈流程 |
 | [docs/release-checklist.md](docs/release-checklist.md) | 發佈前的真機檢查清單 |
+| [docs/app-store.md](docs/app-store.md) | Mac App Store 版（Creaky）的上架流程與文案 |
+| [docs/privacy.md](docs/privacy.md) | 隱私權政策（中英對照，App Store 使用） |
 
 ## 開發
 

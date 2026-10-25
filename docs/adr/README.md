@@ -6,7 +6,7 @@
 | ADR | 標題 | 狀態 |
 |-----|------|------|
 | [0001](0001-target-platform.md) | 目標平台：Apple Silicon MacBook、macOS 14+ | Accepted |
-| [0002](0002-distribution-dmg-not-app-store.md) | 發佈：Developer ID 公證 DMG，不上 App Store | Accepted |
+| [0002](0002-distribution-dmg-not-app-store.md) | 發佈：Developer ID 公證 DMG，不上 App Store | Accepted（App Store 部分由 0017 修訂） |
 | [0003](0003-privileged-helper-for-accelerometer.md) | 權限分離：以 root helper 讀取加速度計 | Superseded by 0014（保留為備案） |
 | [0004](0004-ui-stack-tauri-nextjs.md) | UI：Tauri v2 + Next.js 靜態匯出 | Accepted |
 | [0005](0005-lid-event-model.md) | 螢幕開合：事件 + 角度區間模型 | Accepted |
@@ -21,3 +21,4 @@
 | [0014](0014-in-app-accelerometer.md) | 加速度計直接在 App 內讀取（不需 root） | Accepted |
 | [0015](0015-continuous-opening-sound.md) | 開啟中（30–120°）連續播放，停下暫停、繼續續播 | Accepted |
 | [0016](0016-elevenlabs-builtin-sounds.md) | 內建音效：以 ElevenLabs 產生、同一材質成套設計 | Accepted |
+| [0017](0017-mac-app-store-edition.md) | Mac App Store 版「Creaky」：只有螢幕開合 | Accepted |
