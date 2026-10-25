@@ -8,5 +8,9 @@
   <true/>
   <key>NSFocusStatusUsageDescription</key>
   <string>Spank mutes its sounds while Focus is on.</string>
+  <!-- No encryption beyond what macOS provides: skips the export compliance question in
+       App Store Connect. -->
+  <key>ITSAppUsesNonExemptEncryption</key>
+  <false/>
 </dict>
 </plist>

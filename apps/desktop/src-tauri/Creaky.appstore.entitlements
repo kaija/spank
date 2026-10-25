@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Mac App Store entitlements for the lid-only "Creaky" edition (tauri.appstore.conf.json,
+  tools/release-appstore.sh). Needs signing/Creaky_App_Store.provisionprofile embedded as
+  Contents/embedded.provisionprofile. No network entitlement: the App Store build has no updater.
+-->
+<plist version="1.0">
+<dict>
+  <!-- Required for every Mac App Store app. Also blocks the accelerometer's driver property
+       writes, so this edition plays lid sounds only. -->
+  <key>com.apple.security.app-sandbox</key>
+  <true/>
+  <!-- Lets the sandboxed app open the SPU HID device (05AC:8104) to poll the lid angle. -->
+  <key>com.apple.security.device.usb</key>
+  <true/>
+  <!-- Importing sounds / .spankpack files and exporting packs through the open/save panels. -->
+  <key>com.apple.security.files.user-selected.read-write</key>
+  <true/>
+  <!-- Ties the signature to the App ID in the provisioning profile. -->
+  <key>com.apple.application-identifier</key>
+  <string>H2ZM466J6A.dev.spank.app</string>
+  <key>com.apple.developer.team-identifier</key>
+  <string>H2ZM466J6A</string>
+  <!-- Communication Notifications: lets INFocusStatusCenter report Focus status for auto-mute.
+       Restricted, so it only launches with the matching profile embedded. -->
+  <key>com.apple.developer.usernotifications.communication</key>
+  <true/>
+</dict>
+</plist>

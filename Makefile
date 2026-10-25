@@ -4,6 +4,7 @@
 #   make dev        app with hot reload (Next dev server + Tauri), settings window open
 #   make app        release .app (unsigned) → target/release/bundle/macos/Spank.app
 #   make release    signed .app + DMG (Developer ID, see docs/release.md)
+#   make appstore   "Creaky" Mac App Store .pkg (lid only, sandboxed)
 #   make check      what CI runs: lint + tests
 
 SHELL := /bin/bash
@@ -19,7 +20,7 @@ UPDATER_KEY ?= $(wildcard $(HOME)/.tauri/spank-updater.key)
 
 .DEFAULT_GOAL := help
 .PHONY: help setup frontend dev dev-app ui app dmg run release release-notarize \
-        test test-rust test-ui lint fmt typecheck clippy check coverage bindings deny \
+        appstore appstore-upload appstore-local test test-rust test-ui lint fmt typecheck clippy check coverage bindings deny \
         traces sounds power clean
 
 help: ## List the targets
@@ -71,6 +72,15 @@ release: ## Signed .app + DMG with entitlements (needs the identity + signing/ p
 release-notarize: ## Same as release, then notarize + staple (needs NOTARY_KEY_ID/ISSUER/PATH)
 	APPLE_SIGNING_IDENTITY="$(SIGN_IDENTITY)" TAURI_SIGNING_PRIVATE_KEY="$(UPDATER_KEY)" \
 		tools/release.sh --notarize --out $(DIST)
+
+appstore: ## Mac App Store "Creaky" .app + .pkg (needs the 3rd Party identities + signing/ profile)
+	tools/release-appstore.sh
+
+appstore-upload: ## Same as appstore, then validate + upload (needs ASC_KEY_ID / ASC_ISSUER)
+	tools/release-appstore.sh --upload
+
+appstore-local: ## Sandboxed "Creaky" .app signed ad-hoc, to run on this Mac
+	tools/release-appstore.sh --local-test
 
 # ---- checks ------------------------------------------------------------------------------------
 
