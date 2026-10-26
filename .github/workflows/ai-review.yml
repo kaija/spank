@@ -1,0 +1,146 @@
+name: AI review
+
+# Independent AI review of a PR at one head SHA (docs/ai-dlc.md).
+#   review   Claude reads the diff and the linked issue's acceptance criteria with a fresh
+#            context and a read-only token; returns structured findings
+#   publish  posts them as a PR comment; for AI PRs (`ai/*` branches) it either starts the
+#            bounded fix loop (ai-fix.yml) or marks the draft ready for a human
+# The AI review never approves a PR; branch protection and a human approval decide merges.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions: {}
+
+concurrency:
+  group: ai-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  PR: ${{ github.event.pull_request.number }}
+  HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+  GH_REPO: ${{ github.repository }}
+  RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+jobs:
+  review:
+    # Same-repo PRs only (fork PRs get no secrets). AI PRs are reviewed while still drafts;
+    # human PRs once they are ready for review.
+    if: >-
+      vars.AI_REVIEW != 'off' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      ((startsWith(github.head_ref, 'ai/') && github.event.action != 'ready_for_review') ||
+       (!startsWith(github.head_ref, 'ai/') && !github.event.pull_request.draft))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - id: schema
+        run: echo "json=$(jq -c . .github/ai/schemas/review.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Claude reviews the PR
+        id: claude
+        uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13 # v1.0.262
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          # Pushes by the AI-DLC publisher come from these bot accounts.
+          allowed_bots: github-actions,${{ vars.AI_APP_BOT_LOGIN }}
+          prompt: |
+            Repository: ${{ github.repository }}
+            Pull request: #${{ env.PR }} (head ${{ env.HEAD_SHA }}, base ${{ github.base_ref }})
+
+            You are the AI-DLC reviewer. The reviewer guide on the base branch is authoritative:
+            read it with `git show origin/${{ github.base_ref }}:.github/ai/review.md` (only if
+            that file does not exist on the base yet, read `.github/ai/review.md`). Follow it
+            and return the structured result.
+          claude_args: >-
+            --max-turns ${{ vars.AI_REVIEW_MAX_TURNS || '60' }}
+            ${{ vars.AI_REVIEW_MODEL && format('--model {0}', vars.AI_REVIEW_MODEL) || '' }}
+            --allowedTools "Read,Glob,Grep,LS,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh issue view:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*)"
+            --json-schema '${{ steps.schema.outputs.json }}'
+
+      - name: Save the review
+        env:
+          RESULT: ${{ steps.claude.outputs.structured_output }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/ai-review"
+          printf '%s' "$RESULT" > "$RUNNER_TEMP/ai-review/review.json"
+          jq -e '.verdict' "$RUNNER_TEMP/ai-review/review.json" >/dev/null
+          printf '%s' "$HEAD_SHA" > "$RUNNER_TEMP/ai-review/sha.txt"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ai-review
+          path: ${{ runner.temp }}/ai-review
+          retention-days: 14
+
+  publish:
+    needs: review
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+          sparse-checkout: .github/ai
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ai-review
+          path: ${{ runner.temp }}/ai-review
+
+      - name: Post the review
+        id: post
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OUT: ${{ runner.temp }}/ai-review
+        run: |
+          gh pr view "$PR" --json headRefOid,commits > "$OUT/pr.json"
+          if [ "$(jq -r .headRefOid "$OUT/pr.json")" != "$HEAD_SHA" ]; then
+            echo "PR moved past $HEAD_SHA; a newer review will report."; echo "stale=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          attempts=$(jq '[.commits[] | select(.messageBody | contains("AI-Fix-Attempt:"))] | length' "$OUT/pr.json")
+          round=""; [ "$attempts" -gt 0 ] && round="after fix attempt $attempts"
+          python3 -I .github/ai/ai_dlc.py --github-output "$GITHUB_OUTPUT" review-verdict --review "$OUT/review.json"
+          python3 -I .github/ai/ai_dlc.py review-comment --review "$OUT/review.json" --sha "$HEAD_SHA" \
+            --run-url "$RUN_URL" --round "$round" > "$OUT/comment.md"
+          gh pr comment "$PR" --body-file "$OUT/comment.md"
+
+      - name: Route the AI PR
+        if: startsWith(github.head_ref, 'ai/') && steps.post.outputs.stale != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERDICT: ${{ steps.post.outputs.verdict }}
+          BRANCH: ${{ github.head_ref }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          if [ "$VERDICT" = "pass" ]; then
+            gh pr edit "$PR" --add-label ai:review-passed >/dev/null
+            gh pr ready "$PR" || true
+            echo "No blocking findings: marked ready for a human review."
+          else
+            gh pr edit "$PR" --remove-label ai:review-passed >/dev/null 2>&1 || true
+            # The fix workflow runs from the default branch's definition, not the PR's.
+            gh workflow run ai-fix.yml --ref "$DEFAULT_BRANCH" \
+              -f pr="$PR" -f branch="$BRANCH" -f head_sha="$HEAD_SHA" -f source=review -f context_run_id="${{ github.run_id }}"
+            echo "Blocking findings: started ai-fix.yml."
+          fi

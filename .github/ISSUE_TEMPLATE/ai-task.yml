@@ -1,0 +1,62 @@
+name: AI task
+description: A change small and testable enough for the AI worker. A maintainer adds `ai:ready` to start it.
+title: "[ai] "
+labels: ["ai:triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The AI worker treats this issue as its spec. It only starts after a maintainer reviews the
+        issue and adds the `ai:ready` label. Vague goals ("make it faster", "clean up the architecture")
+        should be an investigation issue first, not an AI task.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What happens now, what should happen, and how to reproduce it.
+      placeholder: |
+        After waking from sleep the lid-open sound plays twice.
+        Steps: close the lid, wait 10 s, open it.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Observable, testable outcomes. Each one should map to a test or a check.
+      placeholder: |
+        - `LidDetector` emits exactly one `LidOpened` per wake
+        - A regression test in `crates/spank-core/src/lid.rs` covers the double-wake case
+        - Existing lid tests still pass
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope / non-goals
+      description: Modules that may change, and what must not change (public types, config schema, UI copy, …).
+      placeholder: |
+        In scope: crates/spank-core/src/lid.rs
+        Out of scope: config schema, detection thresholds from docs/spike-report.md
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Related ADRs, design sections, tasks (T01–T44), issues or similar code.
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation
+      description: Commands that prove it works. Defaults to the CI commands in CLAUDE.md.
+      placeholder: "cargo test -p spank-core lid::"
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Risk
+      description: High-risk changes (sensors, signing, release, privacy) are not suitable for the AI worker.
+      options:
+        - Low (docs, tests, isolated logic)
+        - Medium (behaviour change behind existing tests)
+        - High (needs a human)
+    validations:
+      required: true

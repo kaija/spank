@@ -1,0 +1,30 @@
+{
+  "type": "object",
+  "required": ["status", "title", "summary"],
+  "properties": {
+    "status": { "type": "string", "enum": ["fixed", "no_change", "needs_human"] },
+    "title": { "type": "string" },
+    "summary": { "type": "string" },
+    "addressed": { "type": "array", "items": { "type": "string" } },
+    "declined": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "reason"],
+        "properties": { "id": { "type": "string" }, "reason": { "type": "string" } }
+      }
+    },
+    "validation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["command", "result"],
+        "properties": {
+          "command": { "type": "string" },
+          "result": { "type": "string", "enum": ["pass", "fail", "not_run"] },
+          "note": { "type": "string" }
+        }
+      }
+    }
+  }
+}

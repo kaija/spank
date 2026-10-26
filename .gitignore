@@ -8,3 +8,4 @@ fixtures/**/*.stderr
 
 # Provisioning profiles and other signing material (never commit)
 /signing/
+__pycache__/

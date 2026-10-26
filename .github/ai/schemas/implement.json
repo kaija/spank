@@ -1,0 +1,94 @@
+{
+  "type": "object",
+  "required": [
+    "status",
+    "title",
+    "summary"
+  ],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "implemented",
+        "needs_info",
+        "out_of_scope"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "acceptance": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "criterion",
+          "status"
+        ],
+        "properties": {
+          "criterion": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "met",
+              "not_met",
+              "unclear"
+            ]
+          },
+          "evidence": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "validation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "command",
+          "result"
+        ],
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "fail",
+              "not_run"
+            ]
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "not_done": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

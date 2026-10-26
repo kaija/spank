@@ -1,0 +1,359 @@
+name: AI fix
+
+# Bounded fix loop for AI PRs (`ai/*` branches), docs/ai-dlc.md.
+# Started by a blocking AI review (ai-review.yml dispatches this) or a failed CI run.
+#   gate     PR still at the same head? attempts left (AI_MAX_FIX_ATTEMPTS, default 2)?
+#            collects the review findings or the failed CI logs
+#   worker   Claude fixes on a throwaway macOS runner; read-only token, no push
+#   publish  path policy check, one commit with an `AI-Fix-Attempt: N` trailer, plain push
+#            (rejected if the branch moved); never sees the Anthropic key
+#   report   comments on the PR; hands over to a human (`ai:needs-human`) when the loop stops
+# The push re-runs CI and the AI review, which may start the next attempt.
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: PR number
+        required: true
+        type: number
+      branch:
+        description: PR head branch (ai/...)
+        required: true
+        type: string
+      head_sha:
+        description: Head SHA the findings are about
+        required: true
+        type: string
+      source:
+        description: What failed
+        required: true
+        type: choice
+        options: [review, ci]
+      context_run_id:
+        description: Run that holds the findings (AI review run or CI run)
+        required: true
+        type: string
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions: {}
+
+# One writer per PR branch; a queued run replaces an older queued one.
+concurrency:
+  group: ai-fix-${{ inputs.branch || github.event.workflow_run.head_branch || github.run_id }}
+  cancel-in-progress: false
+
+env:
+  GH_REPO: ${{ github.repository }}
+  RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+  MAX_ATTEMPTS: ${{ vars.AI_MAX_FIX_ATTEMPTS || '2' }}
+
+jobs:
+  gate:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'failure' &&
+       github.event.workflow_run.event == 'pull_request' &&
+       startsWith(github.event.workflow_run.head_branch, 'ai/') &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      actions: read
+    outputs:
+      proceed: ${{ steps.check.outputs.proceed }}
+      pr: ${{ steps.check.outputs.pr }}
+      branch: ${{ steps.check.outputs.branch }}
+      head_sha: ${{ steps.check.outputs.head_sha }}
+      source: ${{ steps.check.outputs.source }}
+      attempt: ${{ steps.check.outputs.attempt }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/ai
+
+      - name: Check the PR and the attempt budget
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          IN_PR: ${{ inputs.pr }}
+          IN_SHA: ${{ inputs.head_sha }}
+          IN_SOURCE: ${{ inputs.source }}
+          IN_RUN: ${{ inputs.context_run_id }}
+          WR_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          WR_SHA: ${{ github.event.workflow_run.head_sha }}
+          WR_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            pr="$IN_PR"; sha="$IN_SHA"; source="$IN_SOURCE"; run_id="$IN_RUN"
+          else
+            pr=$(gh pr list --head "$WR_BRANCH" --state open --json number --jq '.[0].number // empty')
+            sha="$WR_SHA"; source=ci; run_id="$WR_ID"
+          fi
+          skip() { echo "$1"; echo "$1" >> "$GITHUB_STEP_SUMMARY"; echo "proceed=false" >> "$GITHUB_OUTPUT"; exit 0; }
+          [ -n "$pr" ] || skip "No open PR for this run."
+          gh pr view "$pr" --json state,isCrossRepository,headRefName,headRefOid,labels,commits > "$RUNNER_TEMP/pr.json"
+          j() { jq -r "$1" "$RUNNER_TEMP/pr.json"; }
+          [ "$(j .state)" = "OPEN" ] || skip "PR #$pr is not open."
+          [ "$(j .isCrossRepository)" = "false" ] || skip "PR #$pr comes from a fork."
+          branch=$(j .headRefName)
+          case "$branch" in ai/*) ;; *) skip "PR #$pr is not an AI branch." ;; esac
+          [ "$(j .headRefOid)" = "$sha" ] || skip "PR #$pr moved past $sha; the newer head gets its own CI and review."
+          if j '.labels[].name' | grep -qx 'ai:needs-human'; then skip "PR #$pr is labelled ai:needs-human."; fi
+          attempts=$(j '[.commits[] | select(.messageBody | contains("AI-Fix-Attempt:"))] | length')
+          {
+            echo "pr=$pr"; echo "branch=$branch"; echo "head_sha=$sha"; echo "source=$source"
+            echo "run_id=$run_id"; echo "attempt=$((attempts + 1))"
+          } >> "$GITHUB_OUTPUT"
+          if [ "$attempts" -ge "$MAX_ATTEMPTS" ]; then
+            gh pr edit "$pr" --add-label ai:needs-human >/dev/null
+            printf '<!-- ai-dlc:fix -->\nThe AI fix loop stopped after %s attempts and the %s still fails. Over to a human.\n\n<sub>AI-DLC · [workflow run](%s)</sub>\n' \
+              "$attempts" "$([ "$source" = ci ] && echo "CI run" || echo "AI review")" "$RUN_URL" | gh pr comment "$pr" --body-file - >/dev/null
+            skip "Attempt budget used ($attempts/$MAX_ATTEMPTS)."
+          fi
+          echo "proceed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Download the review findings
+        if: steps.check.outputs.proceed == 'true' && steps.check.outputs.source == 'review'
+        uses: actions/download-artifact@v4
+        with:
+          name: ai-review
+          run-id: ${{ steps.check.outputs.run_id }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/ai-context
+
+      - name: Collect the failed CI logs
+        if: steps.check.outputs.proceed == 'true' && steps.check.outputs.source == 'ci'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ steps.check.outputs.run_id }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/ai-context"
+          gh run view "$RUN_ID" --json jobs \
+            --jq '.jobs[] | select(.conclusion == "failure") | "\(.name): " + ([.steps[] | select(.conclusion == "failure") | .name] | join(", "))' \
+            > "$RUNNER_TEMP/ai-context/failed-jobs.txt"
+          gh run view "$RUN_ID" --log-failed | tail -c 120000 > "$RUNNER_TEMP/ai-context/ci-failed.log" || true
+          cat "$RUNNER_TEMP/ai-context/failed-jobs.txt"
+
+      # Claude's subprocesses run with secrets scrubbed, so the worker gets the PR, its diff and
+      # the linked issue as files instead of calling the GitHub API itself.
+      - name: Fetch the PR and linked issue
+        if: steps.check.outputs.proceed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ steps.check.outputs.pr }}
+        run: |
+          ctx="$RUNNER_TEMP/ai-context"; mkdir -p "$ctx"
+          gh pr view "$PR" --json number,title,body,headRefName,baseRefName,files,closingIssuesReferences > "$ctx/pr.json"
+          gh pr diff "$PR" > "$ctx/pr.diff"
+          issue=$(jq -r '.closingIssuesReferences[0].number // empty' "$ctx/pr.json")
+          if [ -n "$issue" ]; then gh issue view "$issue" --json number,title,body > "$ctx/issue.json"; fi
+
+      - uses: actions/upload-artifact@v4
+        if: steps.check.outputs.proceed == 'true'
+        with:
+          name: ai-fix-context
+          path: ${{ runner.temp }}/ai-context
+          retention-days: 14
+
+  worker:
+    needs: gate
+    if: needs.gate.outputs.proceed == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: read # download the context artifact
+    outputs:
+      status: ${{ steps.collect.outputs.status }}
+      has_patch: ${{ steps.collect.outputs.has_patch }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.gate.outputs.head_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ai-fix-context
+          path: ${{ runner.temp }}/ai-context
+
+      - uses: ./.github/actions/ai-toolchain
+
+      - id: schema
+        run: echo "json=$(jq -c . .github/ai/schemas/fix.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Claude fixes the PR
+        id: claude
+        uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13 # v1.0.262
+        env:
+          CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: "1"
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          allowed_bots: github-actions,${{ vars.AI_APP_BOT_LOGIN }}
+          prompt: |
+            Repository: ${{ github.repository }}
+            Pull request: #${{ needs.gate.outputs.pr }} (branch ${{ needs.gate.outputs.branch }}, head ${{ needs.gate.outputs.head_sha }})
+            Fix attempt: ${{ needs.gate.outputs.attempt }} of ${{ env.MAX_ATTEMPTS }}
+            Source: ${{ needs.gate.outputs.source }}
+            Context directory: ${{ runner.temp }}/ai-context
+              pr.json, pr.diff, issue.json (linked issue, if any), and either
+              review.json (review findings) or failed-jobs.txt + ci-failed.log (CI failure)
+
+            You are the AI-DLC fixer. Read `.github/ai/fix.md` and follow it exactly, then return
+            the structured result.
+          claude_args: >-
+            --max-turns ${{ vars.AI_MAX_TURNS || '150' }}
+            ${{ vars.AI_MODEL && format('--model {0}', vars.AI_MODEL) || '' }}
+            --add-dir ${{ runner.temp }}/ai-context
+            --allowedTools "Read,Edit,MultiEdit,Write,Glob,Grep,LS,TodoWrite,Bash(cargo:*),Bash(pnpm:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(python3 -I tools/gen-task-overview.py)"
+            --json-schema '${{ steps.schema.outputs.json }}'
+
+      - name: Format Rust
+        if: fromJSON(steps.claude.outputs.structured_output || '{}').status == 'fixed'
+        run: cargo fmt --all
+
+      - name: Collect patch and result
+        id: collect
+        if: always()
+        env:
+          RESULT: ${{ steps.claude.outputs.structured_output }}
+        run: |
+          out="$RUNNER_TEMP/ai-out"; mkdir -p "$out"
+          printf '%s' "$RESULT" > "$out/result.json"
+          status=$(jq -r '.status // "failed"' "$out/result.json" 2>/dev/null || echo failed)
+          case "$status" in fixed|no_change|needs_human) ;; *) status=failed ;; esac
+          git add -A
+          git diff --cached --binary --full-index > "$out/patch.diff"
+          git diff --cached --stat
+          if [ -s "$out/patch.diff" ]; then echo "has_patch=true" >> "$GITHUB_OUTPUT"; fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.collect.outcome == 'success'
+        with:
+          name: ai-fix
+          path: ${{ runner.temp }}/ai-out
+          retention-days: 14
+
+  publish:
+    needs: [gate, worker]
+    if: needs.worker.outputs.status == 'fixed' && needs.worker.outputs.has_patch == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      reject: ${{ steps.apply.outputs.error }}
+    steps:
+      - id: app-token
+        if: vars.AI_APP_CLIENT_ID != ''
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.AI_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AI_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.gate.outputs.branch }}
+          token: ${{ steps.app-token.outputs.token || github.token }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ai-fix
+          path: ${{ runner.temp }}/ai-out
+
+      # The policy script comes from the branch, but AI patches can't touch .github/,
+      # so it is the version a human merged.
+      - name: Check the patch against the path policy and stage it
+        id: apply
+        env:
+          OUT: ${{ runner.temp }}/ai-out
+          HEAD_SHA: ${{ needs.gate.outputs.head_sha }}
+        run: |
+          if [ "$(git rev-parse HEAD)" != "$HEAD_SHA" ]; then
+            echo "error=branch moved past $HEAD_SHA while the worker ran" >> "$GITHUB_OUTPUT"; exit 1
+          fi
+          python3 -I .github/ai/ai_dlc.py --github-output "$GITHUB_OUTPUT" apply \
+            --patch "$OUT/patch.diff" --report "$OUT/report.json" \
+            --max-files "${{ vars.AI_MAX_FILES || '40' }}" --max-lines "${{ vars.AI_MAX_LINES || '2000' }}"
+
+      - name: Commit and push
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token || github.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          OUT: ${{ runner.temp }}/ai-out
+          BRANCH: ${{ needs.gate.outputs.branch }}
+          ATTEMPT: ${{ needs.gate.outputs.attempt }}
+          SOURCE: ${{ needs.gate.outputs.source }}
+          SENSITIVE: ${{ steps.apply.outputs.sensitive }}
+          PR: ${{ needs.gate.outputs.pr }}
+        run: |
+          if [ -n "$APP_SLUG" ]; then
+            name="${APP_SLUG}[bot]"; email="$(gh api "/users/$name" --jq .id)+$name@users.noreply.github.com"
+          else
+            name="github-actions[bot]"; email="41898282+github-actions[bot]@users.noreply.github.com"
+          fi
+          git config user.name "$name"; git config user.email "$email"
+          python3 -I .github/ai/ai_dlc.py commit-msg --result "$OUT/result.json" --fallback "fix: address AI-DLC $SOURCE findings" \
+            --trailer "AI-Fix-Attempt: $ATTEMPT" --trailer "AI-Fix-Source: $SOURCE" --trailer "AI-Run: $RUN_URL" > "$OUT/msg.txt"
+          git -c core.hooksPath=/dev/null commit -q -F "$OUT/msg.txt"
+          git push origin "HEAD:refs/heads/$BRANCH"
+          if [ "$SENSITIVE" = "true" ]; then gh pr edit "$PR" --add-label ai:sensitive >/dev/null; fi
+
+  report:
+    needs: [gate, worker, publish]
+    if: always() && needs.gate.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/ai
+
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: ai-fix
+          path: ${{ runner.temp }}/ai-out
+
+      - name: Report on the PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OUT: ${{ runner.temp }}/ai-out
+          PR: ${{ needs.gate.outputs.pr }}
+          ATTEMPT: ${{ needs.gate.outputs.attempt }}
+          SOURCE: ${{ needs.gate.outputs.source }}
+          STATUS: ${{ needs.worker.outputs.status }}
+          PUBLISH: ${{ needs.publish.result }}
+          REJECT: ${{ needs.publish.outputs.reject }}
+        run: |
+          [ -f "$OUT/result.json" ] || { mkdir -p "$OUT"; echo '{}' > "$OUT/result.json"; }
+          pushed=""; [ "$PUBLISH" = "success" ] && pushed="--pushed"
+          python3 -I .github/ai/ai_dlc.py fix-comment --result "$OUT/result.json" --report "$OUT/report.json" \
+            --attempt "$ATTEMPT" --max-attempts "$MAX_ATTEMPTS" --source "$SOURCE" --run-url "$RUN_URL" $pushed > "$OUT/comment.md"
+          if [ -n "$REJECT" ]; then
+            printf "\n**Patch rejected:** \`%s\`\n" "$REJECT" >> "$OUT/comment.md"
+          fi
+          gh pr comment "$PR" --body-file "$OUT/comment.md" >/dev/null
+          if [ "$PUBLISH" != "success" ]; then
+            # Nothing was pushed, so nothing re-runs: a human has to look.
+            gh pr edit "$PR" --add-label ai:needs-human >/dev/null
+          fi
