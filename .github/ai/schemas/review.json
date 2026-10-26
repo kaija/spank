@@ -1,0 +1,36 @@
+{
+  "type": "object",
+  "required": ["verdict", "summary", "findings"],
+  "properties": {
+    "verdict": { "type": "string", "enum": ["pass", "changes_requested"] },
+    "summary": { "type": "string" },
+    "acceptance": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["criterion", "status"],
+        "properties": {
+          "criterion": { "type": "string" },
+          "status": { "type": "string", "enum": ["met", "not_met", "unclear"] },
+          "evidence": { "type": "string" }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "severity", "path", "title", "detail"],
+        "properties": {
+          "id": { "type": "string" },
+          "severity": { "type": "string", "enum": ["P0", "P1", "P2"] },
+          "path": { "type": "string" },
+          "line": { "type": "integer" },
+          "title": { "type": "string" },
+          "detail": { "type": "string" },
+          "suggestion": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+name: AI-DLC toolchain
+description: Node, pnpm, the frontend build Tauri embeds, and Rust; the same setup as CI so the AI worker can build and test.
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v4
+    - uses: actions/setup-node@v5
+      with:
+        node-version: 24
+        cache: pnpm
+    - name: pnpm install
+      shell: bash
+      run: pnpm install --frozen-lockfile
+    - name: Frontend build (static export, embedded by Tauri)
+      shell: bash
+      run: pnpm --dir apps/desktop build
+    - uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+    - uses: Swatinem/rust-cache@v2
+      with:
+        shared-key: ai-worker

@@ -65,6 +65,14 @@ jobs:
       - name: Coverage (≥ 80% lines)
         run: cargo llvm-cov -p spank-core -p spank-store -p spank-audio -p spank-pack -p spank-sensors -p spank-sysmon --summary-only --fail-under-lines 80
 
+  ai-dlc:
+    name: AI-DLC scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Patch policy and comment rendering tests
+        run: python3 -I -m unittest discover -s .github/ai -v
+
   deny:
     name: Dependency policy (cargo-deny)
     runs-on: ubuntu-latest

@@ -93,7 +93,9 @@ python3 -I tools/analyze-trace.py fixtures/traces/m4air-v1        # per-segment 
 tools/run-as-app.sh [--sign "Developer ID Application: …"] [--entitlements f] <pkg> -- <args>   # run a tool as a signed .app via LaunchServices
 ```
 
-CI (`.github/workflows/ci.yml`) runs on `macos-latest`: frontend typecheck and build, then fmt, clippy, test and coverage. cargo-deny runs as a separate Ubuntu job. The remote is `github.com/kaija/spank`.
+CI (`.github/workflows/ci.yml`) runs on `macos-latest`: frontend typecheck and build, then fmt, clippy, test and coverage. cargo-deny and the AI-DLC script tests run as separate Ubuntu jobs. The remote is `github.com/kaija/spank`.
+
+**AI-DLC** (`docs/ai-dlc.md`): `ai-implement.yml` (issue labelled `ai:ready` → draft PR on `ai/issue-<N>`), `ai-review.yml` (independent review comment on every same-repo PR), `ai-fix.yml` (≤ 2 fix rounds on blocking review / CI failure). Claude only runs in read-only worker jobs; a separate job checks the patch with `.github/ai/ai_dlc.py` (path policy: `FORBIDDEN` / `SENSITIVE`) and pushes. Worker instructions are `.github/ai/{implement,review,fix}.md`. Tests: `python3 -I -m unittest discover -s .github/ai`.
 
 ## Architecture (big picture)
 

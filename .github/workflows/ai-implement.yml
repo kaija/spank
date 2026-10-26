@@ -1,0 +1,318 @@
+name: AI implement
+
+# Issue -> draft PR. A maintainer adds `ai:ready` to an issue written with the
+# "AI task" form. Three roles with separate permissions (docs/ai-dlc.md):
+#   gate     checks who labelled it and whether the spec is complete
+#   worker   Claude implements and tests on a throwaway macOS runner; read-only token, no push
+#   publish  checks the patch against .github/ai/ai_dlc.py's path policy, commits, opens a draft PR;
+#            never sees the Anthropic key and runs no code from the patch
+#   report   comments the outcome on the issue and moves the labels
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: Issue number to implement (same checks as the label)
+        required: true
+        type: number
+
+permissions: {}
+
+# Only real starts share a group, so other label events can't displace a queued start.
+concurrency:
+  group: >-
+    ai-implement-${{ (github.event_name == 'workflow_dispatch' || github.event.label.name == 'ai:ready')
+    && format('issue-{0}', github.event.issue.number || inputs.issue) || github.run_id }}
+  cancel-in-progress: false
+
+env:
+  ISSUE: ${{ github.event.issue.number || inputs.issue }}
+  GH_REPO: ${{ github.repository }}
+  RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+jobs:
+  gate:
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'ai:ready'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    outputs:
+      proceed: ${{ steps.decide.outputs.proceed }}
+      base_sha: ${{ steps.base.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - id: base
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Only maintainers can start the worker
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SENDER: ${{ github.event.sender.login || github.actor }}
+        run: |
+          perm=$(gh api "repos/$GH_REPO/collaborators/$SENDER/permission" --jq .permission)
+          case "$perm" in
+            admin|maintain|write) echo "$SENDER has $perm access" ;;
+            *) echo "::error::$SENDER has '$perm' access; only maintainers can start the AI worker"; exit 1 ;;
+          esac
+
+      - name: Read the issue
+        id: issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue view "$ISSUE" --json state,body > "$RUNNER_TEMP/issue.json"
+          jq -r '.body // ""' "$RUNNER_TEMP/issue.json" > "$RUNNER_TEMP/body.md"
+          echo "state=$(jq -r .state "$RUNNER_TEMP/issue.json")" >> "$GITHUB_OUTPUT"
+          python3 -I .github/ai/ai_dlc.py --github-output "$GITHUB_OUTPUT" check-issue --body-file "$RUNNER_TEMP/body.md"
+          if gh api "repos/$GH_REPO/branches/ai/issue-$ISSUE" --silent 2>/dev/null; then
+            echo "branch_exists=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Decide
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STATE: ${{ steps.issue.outputs.state }}
+          OK: ${{ steps.issue.outputs.ok }}
+          MISSING: ${{ steps.issue.outputs.missing }}
+          RISK: ${{ steps.issue.outputs.risk }}
+          BRANCH_EXISTS: ${{ steps.issue.outputs.branch_exists }}
+        run: |
+          bash .github/ai/ensure-labels.sh
+          stop() { # $1 label to add, $2 comment
+            gh issue edit "$ISSUE" --remove-label ai:ready --add-label "$1" >/dev/null
+            printf '%s\n\n<sub>AI-DLC · [workflow run](%s)</sub>\n' "$2" "$RUN_URL" | gh issue comment "$ISSUE" --body-file - >/dev/null
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+          if [ "$STATE" != "OPEN" ]; then
+            echo "Issue is $STATE; nothing to do."; echo "proceed=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if [ "$BRANCH_EXISTS" = "true" ]; then
+            stop ai:needs-human "The branch \`ai/issue-$ISSUE\` already exists. Fixes to an open AI PR go through the review/fix loop; delete the branch to start over."
+          fi
+          if [ "$OK" != "true" ]; then
+            stop ai:needs-info "The AI worker needs these sections filled in before it can start: **$MISSING**. Use the *AI task* issue form, then add \`ai:ready\` again."
+          fi
+          if [ "$RISK" = "high" ]; then
+            stop ai:needs-human "This issue is marked **High** risk, which the AI worker does not take. Lower the risk by narrowing the scope, or implement it by hand."
+          fi
+          gh issue edit "$ISSUE" --remove-label ai:ready --remove-label ai:needs-info --add-label ai:in-progress >/dev/null
+          echo "proceed=true" >> "$GITHUB_OUTPUT"
+
+  worker:
+    needs: gate
+    if: needs.gate.outputs.proceed == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      issues: read
+    outputs:
+      status: ${{ steps.collect.outputs.status }}
+      has_patch: ${{ steps.collect.outputs.has_patch }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.gate.outputs.base_sha }}
+          persist-credentials: false
+
+      - uses: ./.github/actions/ai-toolchain
+
+      - id: schema
+        run: echo "json=$(jq -c . .github/ai/schemas/implement.json)" >> "$GITHUB_OUTPUT"
+
+      # Claude's subprocesses run with secrets scrubbed, so the worker gets the issue as a file
+      # instead of calling the GitHub API itself.
+      - name: Fetch the issue for the worker
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/ai-context"
+          gh issue view "$ISSUE" --json number,title,body,labels > "$RUNNER_TEMP/ai-context/issue.json"
+
+      - name: Claude implements the issue
+        id: claude
+        uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13 # v1.0.262
+        env:
+          # Best-effort: keep the API key out of the commands Claude runs (cargo, pnpm).
+          CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: "1"
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          prompt: |
+            Repository: ${{ github.repository }}
+            Issue: #${{ env.ISSUE }}
+
+            Issue file: ${{ runner.temp }}/ai-context/issue.json
+
+            You are the AI-DLC implementation worker. Read `.github/ai/implement.md` and follow it
+            exactly, then return the structured result.
+          claude_args: >-
+            --max-turns ${{ vars.AI_MAX_TURNS || '150' }}
+            ${{ vars.AI_MODEL && format('--model {0}', vars.AI_MODEL) || '' }}
+            --add-dir ${{ runner.temp }}/ai-context
+            --allowedTools "Read,Edit,MultiEdit,Write,Glob,Grep,LS,TodoWrite,Bash(cargo:*),Bash(pnpm:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(python3 -I tools/gen-task-overview.py)"
+            --json-schema '${{ steps.schema.outputs.json }}'
+
+      - name: Format Rust
+        if: fromJSON(steps.claude.outputs.structured_output || '{}').status == 'implemented'
+        run: cargo fmt --all
+
+      - name: Collect patch and result
+        id: collect
+        if: always() && needs.gate.outputs.proceed == 'true'
+        env:
+          RESULT: ${{ steps.claude.outputs.structured_output }}
+        run: |
+          out="$RUNNER_TEMP/ai-out"; mkdir -p "$out"
+          printf '%s' "$RESULT" > "$out/result.json"
+          status=$(jq -r '.status // "failed"' "$out/result.json" 2>/dev/null || echo failed)
+          case "$status" in implemented|needs_info|out_of_scope) ;; *) status=failed ;; esac
+          git add -A
+          git diff --cached --binary --full-index > "$out/patch.diff"
+          git diff --cached --stat
+          if [ -s "$out/patch.diff" ]; then echo "has_patch=true" >> "$GITHUB_OUTPUT"; fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          echo "Worker status: $status" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.collect.outcome == 'success'
+        with:
+          name: ai-implement
+          path: ${{ runner.temp }}/ai-out
+          retention-days: 14
+
+  publish:
+    needs: [gate, worker]
+    if: needs.worker.outputs.status == 'implemented' && needs.worker.outputs.has_patch == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    outputs:
+      pr_url: ${{ steps.pr.outputs.url }}
+      reject: ${{ steps.apply.outputs.error }}
+    steps:
+      # A GitHub App token lets CI and the AI review run on the new PR without a manual
+      # approval; without it the workflow falls back to GITHUB_TOKEN (docs/ai-dlc.md).
+      - id: app-token
+        if: vars.AI_APP_CLIENT_ID != ''
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.AI_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AI_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.gate.outputs.base_sha }}
+          token: ${{ steps.app-token.outputs.token || github.token }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ai-implement
+          path: ${{ runner.temp }}/ai-out
+
+      - name: Check the patch against the path policy and stage it
+        id: apply
+        env:
+          OUT: ${{ runner.temp }}/ai-out
+        run: |
+          python3 -I .github/ai/ai_dlc.py --github-output "$GITHUB_OUTPUT" apply \
+            --patch "$OUT/patch.diff" --report "$OUT/report.json" \
+            --max-files "${{ vars.AI_MAX_FILES || '40' }}" --max-lines "${{ vars.AI_MAX_LINES || '2000' }}"
+
+      - name: Commit, push and open a draft PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token || github.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          OUT: ${{ runner.temp }}/ai-out
+          BASE_SHA: ${{ needs.gate.outputs.base_sha }}
+          BASE_BRANCH: ${{ github.event.repository.default_branch }}
+          SENSITIVE: ${{ steps.apply.outputs.sensitive }}
+          MODEL: ${{ vars.AI_MODEL }}
+        run: |
+          if [ -n "$APP_SLUG" ]; then
+            name="${APP_SLUG}[bot]"; email="$(gh api "/users/$name" --jq .id)+$name@users.noreply.github.com"
+          else
+            name="github-actions[bot]"; email="41898282+github-actions[bot]@users.noreply.github.com"
+          fi
+          git config user.name "$name"; git config user.email "$email"
+          branch="ai/issue-$ISSUE"
+          python3 -I .github/ai/ai_dlc.py commit-msg --result "$OUT/result.json" \
+            --fallback "feat: resolve #$ISSUE" --trailer "AI-Issue: #$ISSUE" --trailer "AI-Run: $RUN_URL" > "$OUT/msg.txt"
+          git -c core.hooksPath=/dev/null commit -q -F "$OUT/msg.txt"
+          git push origin "HEAD:refs/heads/$branch"
+          python3 -I .github/ai/ai_dlc.py pr-body --result "$OUT/result.json" --report "$OUT/report.json" \
+            --issue "$ISSUE" --run-url "$RUN_URL" --base-sha "$BASE_SHA" --model "$MODEL" > "$OUT/body.md"
+          labels="ai:generated"
+          if [ "$SENSITIVE" = "true" ]; then labels="$labels,ai:sensitive"; fi
+          url=$(gh pr create --draft --base "$BASE_BRANCH" --head "$branch" \
+            --title "$(git log -1 --format=%s)" --body-file "$OUT/body.md" --label "$labels")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Draft PR: $url" >> "$GITHUB_STEP_SUMMARY"
+
+  report:
+    needs: [gate, worker, publish]
+    if: always() && needs.gate.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.gate.outputs.base_sha }}
+          persist-credentials: false
+          sparse-checkout: .github/ai
+
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: ai-implement
+          path: ${{ runner.temp }}/ai-out
+
+      - name: Report on the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OUT: ${{ runner.temp }}/ai-out
+          STATUS: ${{ needs.worker.outputs.status }}
+          HAS_PATCH: ${{ needs.worker.outputs.has_patch }}
+          PR_URL: ${{ needs.publish.outputs.pr_url }}
+          REJECT: ${{ needs.publish.outputs.reject }}
+          PUBLISH: ${{ needs.publish.result }}
+        run: |
+          label() { gh issue edit "$ISSUE" --remove-label ai:in-progress --add-label "$1" >/dev/null; }
+          comment() { gh issue comment "$ISSUE" --body-file - >/dev/null; }
+          footer="<sub>AI-DLC · [workflow run]($RUN_URL)</sub>"
+          if [ -n "$PR_URL" ]; then
+            label ai:pr-open
+            printf 'Draft PR opened: %s\n\nCI and the AI review run on it next; a human approval is still required to merge.\n\n%s\n' "$PR_URL" "$footer" | comment
+          elif [ "$STATUS" = "needs_info" ] || [ "$STATUS" = "out_of_scope" ]; then
+            if [ "$STATUS" = "needs_info" ]; then label ai:needs-info; else label ai:needs-human; fi
+            python3 -I .github/ai/ai_dlc.py worker-comment --result "$OUT/result.json" --run-url "$RUN_URL" | comment
+          elif [ -n "$REJECT" ]; then
+            label ai:needs-human
+            printf "The worker's patch was rejected by the path policy, so no PR was opened:\n\n\`\`\`\n%s\n\`\`\`\n\n%s\n" "$REJECT" "$footer" | comment
+          elif [ "$STATUS" = "implemented" ] && [ "$HAS_PATCH" != "true" ]; then
+            label ai:needs-human
+            printf 'The worker reported the issue as implemented but changed no files. No PR was opened.\n\n%s\n' "$footer" | comment
+          elif [ "$PUBLISH" = "failure" ]; then
+            label ai:needs-human
+            printf "The patch passed the path policy but committing, pushing or opening the PR failed. The patch is in the run's \`ai-implement\` artifact.\n\n%s\n" "$footer" | comment
+          else
+            label ai:needs-human
+            printf "The AI worker failed (status: \`%s\`). See the workflow run for details; add \`ai:ready\` again to retry.\n\n%s\n" "${STATUS:-failed}" "$footer" | comment
+          fi
