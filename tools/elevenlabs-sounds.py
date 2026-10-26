@@ -7,6 +7,9 @@ Prompts, lengths and profiles live in assets/sounds/elevenlabs.json.
   python3 -I tools/elevenlabs-sounds.py page       # target/sound-candidates/index.html
   python3 -I tools/elevenlabs-sounds.py import picks.json
 
+Each command covers the built-in `profiles`; `--profile ID` picks one profile instead, including
+one from `parked_profiles` (designed but not built in).
+
 The API key is read from --key, $ELEVENLABS_API_KEY or signing/elevenlabs.key (gitignored) and is
 never printed. Candidates go to target/sound-candidates/<profile>/<stem>/cN.wav (48 kHz WAV) with
 the exact request next to them; `import` copies the chosen ones to assets/sounds/source/<stem>.wav,
@@ -50,8 +53,17 @@ def load_spec():
     return json.loads(SPEC.read_text(encoding="utf-8"))
 
 
-def all_sounds(spec):
-    for p in spec["profiles"]:
+def selected_profiles(spec, profile=None):
+    if not profile:
+        return spec["profiles"]
+    found = [p for p in spec["profiles"] + spec.get("parked_profiles", []) if p["id"] == profile]
+    if not found:
+        sys.exit(f"no profile {profile!r} in {SPEC.relative_to(ROOT)}")
+    return found
+
+
+def all_sounds(spec, profile=None):
+    for p in selected_profiles(spec, profile):
         for s in p["sounds"]:
             yield p, s
 
@@ -109,7 +121,7 @@ def generate(args):
     spec = load_spec()
     key = read_key(args.key)
     jobs = []
-    for p, s in all_sounds(spec):
+    for p, s in all_sounds(spec, args.profile):
         if args.only and s["stem"] not in args.only:
             continue
         body = request_body(spec, s)
@@ -164,7 +176,7 @@ def measure(path):
 def page(args):
     spec = load_spec()
     rows = []
-    for p in spec["profiles"]:
+    for p in selected_profiles(spec, args.profile):
         sounds = sorted(p["sounds"], key=lambda s: EVENT_ORDER.index(s["event"]))
         rows.append(f'<section><h2>{html.escape(p["zh"])} <small>{html.escape(p["en"])}</small></h2>'
                     f'<p class="desc">{html.escape(p["desc_zh"])}</p>')
@@ -246,7 +258,7 @@ render();
 def import_picks(args):
     spec = load_spec()
     picks = json.loads(Path(args.picks).read_text())
-    where = {s["stem"]: p["id"] for p, s in all_sounds(spec)}
+    where = {s["stem"]: p["id"] for p, s in all_sounds(spec, args.profile)}
     redo, ignored = [], []
     for stem, choice in sorted(picks.items()):
         if stem not in where:
@@ -276,9 +288,11 @@ def main():
     g.add_argument("--only", nargs="*")
     g.add_argument("--force", action="store_true")
     g.add_argument("--jobs", type=int, default=2)
-    sub.add_parser("page")
+    pg = sub.add_parser("page")
     i = sub.add_parser("import")
     i.add_argument("picks")
+    for sp in (g, pg, i):
+        sp.add_argument("--profile", help="one profile id, also from parked_profiles")
     a = ap.parse_args()
     {"generate": generate, "page": page, "import": import_picks}[a.cmd](a)
 

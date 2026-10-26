@@ -190,6 +190,97 @@
           "prompt": "A dungeon trap mechanism triggering: stone gears clunking, chains rattling and a heavy stone block dropping"
         }
       ]
+    },
+    {
+      "id": "chopstick",
+      "zh": "竹筷",
+      "en": "Bamboo Chopstick",
+      "desc_zh": "螢幕是一根竹筷：越扳越開就一絲一絲裂開，拍下去就喀一聲折斷。",
+      "desc_en": "The screen is a bamboo chopstick: bend it open and it splinters fibre by fibre; slap it and it snaps.",
+      "sounds": [
+        {
+          "stem": "chopstick-bend-01",
+          "event": "lid_overbent",
+          "zh": "慢慢折竹筷 01",
+          "en": "Slow bend 01",
+          "prompt": "A bamboo chopstick being bent very slowly between two hands, dry wood fibres creaking and splintering bit by bit, many tiny crackles and small cracks one after another, rising tension, it never fully snaps",
+          "prompt_influence": 0.7
+        },
+        {
+          "stem": "chopstick-bend-02",
+          "event": "lid_overbent",
+          "zh": "慢慢折竹筷 02",
+          "en": "Slow bend 02",
+          "prompt": "A dry wooden stick slowly bending under steady pressure, continuous creaking with small fibres popping and splitting one by one, little crackles coming closer together, no final break",
+          "prompt_influence": 0.7
+        },
+        {
+          "stem": "chopstick-split-01",
+          "event": "lid_opened",
+          "zh": "掰開免洗筷",
+          "en": "Chopsticks split",
+          "prompt": "A pair of disposable wooden chopsticks being pulled apart, one clean dry splitting crack with a tiny woody rattle"
+        },
+        {
+          "stem": "chopstick-close-01",
+          "event": "lid_closing",
+          "zh": "筷子折斷",
+          "en": "Chopstick snaps",
+          "prompt": "A thin wooden chopstick snapped in half quickly, one short crisp dry snap",
+          "prompt_influence": 0.8
+        },
+        {
+          "stem": "chopstick-tick-01",
+          "event": "slap_light",
+          "zh": "筷尖折斷 01",
+          "en": "Tip snap 01",
+          "prompt": "The thin tip of a bamboo chopstick snapped off between fingers, one small but clearly audible crisp dry crack, close-up",
+          "prompt_influence": 0.8
+        },
+        {
+          "stem": "chopstick-tick-02",
+          "event": "slap_light",
+          "zh": "竹籤裂開 02",
+          "en": "Skewer crack 02",
+          "prompt": "A thin bamboo skewer cracking once, a small sharp woody tick",
+          "prompt_influence": 0.8
+        },
+        {
+          "stem": "chopstick-snap-01",
+          "event": "slap_medium",
+          "zh": "竹筷折斷 01",
+          "en": "Chopstick snap 01",
+          "prompt": "A bamboo chopstick snapped in half, one crisp dry crack with a few small splinters"
+        },
+        {
+          "stem": "chopstick-snap-02",
+          "event": "slap_medium",
+          "zh": "竹筷折斷 02",
+          "en": "Chopstick snap 02",
+          "prompt": "A dry wooden chopstick breaking over a thumb, one sharp clean snap"
+        },
+        {
+          "stem": "chopstick-break-01",
+          "event": "slap_hard",
+          "zh": "一把筷子折斷 01",
+          "en": "Bundle snaps 01",
+          "prompt": "A thick bundle of wooden chopsticks snapped all at once, a loud splintering crack with fibres tearing, short tail"
+        },
+        {
+          "stem": "chopstick-break-02",
+          "event": "slap_hard",
+          "zh": "粗竹棍折斷 02",
+          "en": "Bamboo stick breaks 02",
+          "prompt": "A thick dry bamboo stick broken over a knee, a loud sharp crack and splintering, short tail"
+        },
+        {
+          "stem": "chopstick-bundle-01",
+          "event": "slap_combo",
+          "zh": "連折一把筷子",
+          "en": "Snapping a handful",
+          "prompt": "A handful of bamboo chopsticks snapped one after another in quick succession, a rapid series of dry cracks, then broken pieces clattering onto a wooden table, all over within two seconds"
+        }
+      ]
     }
   ],
   "parked_profiles": [
@@ -366,5 +457,5 @@
       ]
     }
   ],
-  "_parked": "parked_profiles are designed and were generated once (2026-10-25) but are not built in yet; the tool ignores them. Move one into profiles to bring it back."
+  "_parked": "parked_profiles are designed but not built in; the tool skips them unless asked with --profile ID (mech and arcade were generated 2026-10-25). Move one into profiles to build it in."
 }

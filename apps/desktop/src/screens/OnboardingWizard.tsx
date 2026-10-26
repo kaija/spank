@@ -27,6 +27,7 @@ export const CAL_STEPS: readonly CalStep[] = ["light", "medium", "hard", "typing
 const BUILTINS: { id: string; icon: IconName }[] = [
   { id: "builtin.destruction", icon: "evOver" },
   { id: "builtin.classic", icon: "evOpen" },
+  { id: "builtin.chopstick", icon: "evClose" },
 ];
 const LID_EVENTS: readonly EventKind[] = ["lid_opened", "lid_closing", "lid_overbent"];
 /** Calibration starts detecting at 0.06 g (`CAL_TRIGGER_G`); each step must beat the last by 1.2×. */

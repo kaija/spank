@@ -48,6 +48,17 @@
     "hintCombo": "From the {n}th slap within {secs} s"
   },
   "sounds": {
+    "chopstick-bend-01": "Slow bend 01",
+    "chopstick-bend-02": "Slow bend 02",
+    "chopstick-break-01": "Bundle snaps 01",
+    "chopstick-break-02": "Bamboo stick breaks 02",
+    "chopstick-bundle-01": "Snapping a handful",
+    "chopstick-close-01": "Chopstick snaps",
+    "chopstick-snap-01": "Chopstick snap 01",
+    "chopstick-snap-02": "Chopstick snap 02",
+    "chopstick-split-01": "Chopsticks split",
+    "chopstick-tick-01": "Tip snap 01",
+    "chopstick-tick-02": "Skewer crack 02",
     "glass-cascade-01": "Glass wall collapse",
     "glass-crack": "Glass crack",
     "glass-shatter-01": "Glass shatters 01",
@@ -80,6 +91,10 @@
     "classic": {
       "name": "Dungeon Gate",
       "desc": "Grinding stone, falling grit, traps"
+    },
+    "chopstick": {
+      "name": "Bamboo Chopstick",
+      "desc": "Splinters slowly, snaps sharply"
     }
   },
   "profiles": {
@@ -320,10 +335,12 @@
     "done": "Done",
     "desc_destruction": "Made of glass: it cracks slowly as you open it, clinks shut, and keep slapping and the whole pane comes down.",
     "desc_classic": "Opening the lid grinds open a dungeon gate: scraping stone, falling grit, and a combo springs the trap.",
+    "desc_chopstick": "The screen is a bamboo chopstick: it splinters fibre by fibre as you open it, snaps shut, and a combo breaks a whole handful.",
     "helloBodyStore": "A MacBook with a flair for drama. Open the lid, ease it back, close it — there's a sound for every move.",
     "noLidStore": "This Mac has no lid angle sensor, so lid sounds won't fire.",
     "desc_destruction_store": "Made of glass: it cracks slowly as you open it and clinks shut.",
-    "desc_classic_store": "Opening the lid grinds open a dungeon gate: scraping stone and falling grit, then it slams shut."
+    "desc_classic_store": "Opening the lid grinds open a dungeon gate: scraping stone and falling grit, then it slams shut.",
+    "desc_chopstick_store": "The screen is a bamboo chopstick: it splinters fibre by fibre as you open it and snaps shut."
   },
   "calibration": {
     "window": "Calibrate slaps",

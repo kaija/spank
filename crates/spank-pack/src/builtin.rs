@@ -103,7 +103,10 @@ mod tests {
         let (set, errors) = load_builtin(&assets());
         assert!(errors.is_empty(), "{errors:?}");
         let ids: Vec<_> = set.profiles.iter().map(|p| p.id.0.as_str()).collect();
-        assert_eq!(ids, vec!["builtin.classic", "builtin.destruction"]);
+        assert_eq!(
+            ids,
+            vec!["builtin.chopstick", "builtin.classic", "builtin.destruction"]
+        );
         assert!(set.profiles.iter().all(|p| p.builtin && p.validate().is_ok()));
         // Every referenced sound is present, and shared sounds are loaded once.
         for p in &set.profiles {
@@ -117,8 +120,9 @@ mod tests {
                 .iter()
                 .all(|s| s.source == SoundSource::Builtin && s.duration_ms > 0)
         );
-        let destruction = &set.profiles[1];
-        assert_eq!(destruction.name, "全玻璃");
+        let name = |id: &str| &set.profiles.iter().find(|p| p.id.0 == id).unwrap().name;
+        assert_eq!(name("builtin.destruction"), "全玻璃");
+        assert_eq!(name("builtin.chopstick"), "竹筷");
         // Every built-in profile covers all seven events (ADR-0016).
         for p in &set.profiles {
             for k in EventKind::ALL {

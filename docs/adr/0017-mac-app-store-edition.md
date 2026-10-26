@@ -31,7 +31,7 @@ ADR-0002 決定只發 DMG，理由之一是「sandbox 內能否開啟感測器�
   | Sandbox | 不啟用 | 啟用（App Store 必要） |
   | 螢幕開合（打開、開啟中 30–120°、闔上） | ✅ | ✅ |
   | 拍打、連擊、校準、精準打字 | ✅ | ❌ |
-  | 自動靜音、兩套內建 Profile（全玻璃、地城石門）、自訂音效 | ✅ | ✅ |
+  | 自動靜音、內建 Profile（全玻璃、地城石門、竹筷）、自訂音效 | ✅ | ✅ |
   | 更新 | Tauri updater（ADR-0011） | App Store 自己處理，不內建 updater |
   | 登入時啟動 | autostart plugin | `SMAppService.mainApp` |
   | 網路 | 只有檢查更新 | 完全沒有 |

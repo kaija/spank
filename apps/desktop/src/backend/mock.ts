@@ -516,6 +516,15 @@ function defaultSeed(): MockSeed {
         slap_hard: ["builtin.glass-shatter-01", "builtin.glass-shatter-02"],
         slap_combo: ["builtin.glass-cascade-01"],
       }),
+      profile("builtin.chopstick", "竹筷", true, {
+        lid_opened: ["builtin.chopstick-split-01"],
+        lid_closing: ["builtin.chopstick-close-01"],
+        lid_overbent: ["builtin.chopstick-bend-01", "builtin.chopstick-bend-02"],
+        slap_light: ["builtin.chopstick-tick-01", "builtin.chopstick-tick-02"],
+        slap_medium: ["builtin.chopstick-snap-01", "builtin.chopstick-snap-02"],
+        slap_hard: ["builtin.chopstick-break-01", "builtin.chopstick-break-02"],
+        slap_combo: ["builtin.chopstick-bundle-01"],
+      }),
       profile("user-office", "辦公室安靜版", false, {
         lid_opened: ["builtin.stone-wake-01"],
         lid_closing: ["builtin.glass-crack"],
@@ -525,6 +534,17 @@ function defaultSeed(): MockSeed {
     sounds: [
       ...(
         [
+          ["chopstick-bend-01", 4682],
+          ["chopstick-bend-02", 4756],
+          ["chopstick-break-01", 945],
+          ["chopstick-break-02", 954],
+          ["chopstick-bundle-01", 1217],
+          ["chopstick-close-01", 534],
+          ["chopstick-snap-01", 679],
+          ["chopstick-snap-02", 679],
+          ["chopstick-split-01", 1475],
+          ["chopstick-tick-01", 463],
+          ["chopstick-tick-02", 480],
           ["glass-cascade-01", 2000],
           ["glass-crack", 495],
           ["glass-shatter-01", 1000],

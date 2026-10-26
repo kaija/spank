@@ -48,6 +48,17 @@
     "hintCombo": "{secs} 秒內第 {n} 下起"
   },
   "sounds": {
+    "chopstick-bend-01": "慢慢折竹筷 01",
+    "chopstick-bend-02": "慢慢折竹筷 02",
+    "chopstick-break-01": "一把筷子折斷 01",
+    "chopstick-break-02": "粗竹棍折斷 02",
+    "chopstick-bundle-01": "連折一把筷子",
+    "chopstick-close-01": "筷子折斷",
+    "chopstick-snap-01": "竹筷折斷 01",
+    "chopstick-snap-02": "竹筷折斷 02",
+    "chopstick-split-01": "掰開免洗筷",
+    "chopstick-tick-01": "筷尖折斷 01",
+    "chopstick-tick-02": "竹籤裂開 02",
     "glass-cascade-01": "玻璃牆崩落",
     "glass-crack": "玻璃裂響",
     "glass-shatter-01": "玻璃爆裂 01",
@@ -80,6 +91,10 @@
     "classic": {
       "name": "地城石門",
       "desc": "石門摩擦、砂石、機關"
+    },
+    "chopstick": {
+      "name": "竹筷",
+      "desc": "一絲一絲裂開、喀一聲折斷"
     }
   },
   "profiles": {
@@ -320,10 +335,12 @@
     "done": "完成",
     "desc_destruction": "整台都是玻璃：開蓋時慢慢裂開，闔上清脆一響，拍久了整面崩落。",
     "desc_classic": "開蓋像推開地城石門：石頭摩擦、砂石落下，連擊觸發機關。",
+    "desc_chopstick": "螢幕是一根竹筷：開蓋時一絲一絲裂開，闔上喀一聲折斷，連擊折斷一整把。",
     "helloBodyStore": "一台很會演的 MacBook。打開、慢慢掰開、闔上螢幕，它都有聲音配合演出。",
     "noLidStore": "這台 Mac 沒有螢幕角度感測器，開合音效不會觸發。",
     "desc_destruction_store": "整台都是玻璃：開蓋時慢慢裂開，闔上清脆一響。",
-    "desc_classic_store": "開蓋像推開地城石門：石頭摩擦、砂石落下，闔上時轟然關閉。"
+    "desc_classic_store": "開蓋像推開地城石門：石頭摩擦、砂石落下，闔上時轟然關閉。",
+    "desc_chopstick_store": "螢幕是一根竹筷：開蓋時一絲一絲裂開，闔上喀一聲折斷。"
   },
   "calibration": {
     "window": "校準拍打力道",
