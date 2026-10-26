@@ -8,6 +8,12 @@
   <true/>
   <key>NSFocusStatusUsageDescription</key>
   <string>Spank mutes its sounds while Focus is on.</string>
+  <!-- App Store Connect requires this with the Communication Notifications entitlement we carry
+       for Focus status (ITMS-90894). The app never sends messages or handles the intent. -->
+  <key>NSUserActivityTypes</key>
+  <array>
+    <string>INSendMessageIntent</string>
+  </array>
   <!-- No encryption beyond what macOS provides: skips the export compliance question in
        App Store Connect. -->
   <key>ITSAppUsesNonExemptEncryption</key>

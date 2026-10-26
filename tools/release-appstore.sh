@@ -186,6 +186,9 @@ SIGNATURE="$(codesign -dvv "$APP" 2>&1)"
 [[ "$(plist_get LSApplicationCategoryType)" == "public.app-category.entertainment" ]] \
   || die "LSApplicationCategoryType is not Entertainment"
 [[ "$(plist_get ITSAppUsesNonExemptEncryption)" == "false" ]] || die "ITSAppUsesNonExemptEncryption missing"
+# ITMS-90894: the Communication Notifications entitlement needs INSendMessageIntent or INStartCallIntent.
+[[ "$(plist_get NSUserActivityTypes)" == *"INSendMessageIntent"* ]] \
+  || die "NSUserActivityTypes lacks INSendMessageIntent (required with the communication entitlement)"
 [[ -f "$APP/Contents/Resources/PrivacyInfo.xcprivacy" ]] || die "PrivacyInfo.xcprivacy missing"
 if [[ $LOCAL == 0 ]]; then
   [[ "$ENTITLEMENTS" == *"$APP_ID"* ]] || die "application identifier entitlement missing"

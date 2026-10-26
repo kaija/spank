@@ -57,6 +57,7 @@ ADR-0002 決定只發 DMG，理由之一是「sandbox 內能否開啟感測器�
     沒有它會不斷當掉、每個視窗一片空白（本機沙盒測試實際遇到）。App 本身不發出任何網路請求。
   - 不要 `network.server`、麥克風、相機或 Apple Events。
 - Info.plist 加 `ITSAppUsesNonExemptEncryption = false`（不用加密，也不發出網路請求），
+  `NSUserActivityTypes = [INSendMessageIntent]`（帶 communication entitlement 就必須宣告，否則 ITMS-90894；App 不處理這個 intent），
   `LSApplicationCategoryType` 改為 `public.app-category.entertainment`。
 - **不使用 temporary-exception entitlements**（見 Alternatives）。
 - App Store 版關閉 Tauri 的 `macOSPrivateApi`（`tauri.conf.json` 目前是 `true`），App Review 會拒絕使用私有 API 的 App。

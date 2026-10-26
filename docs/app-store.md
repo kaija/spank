@@ -312,7 +312,7 @@ If you hear nothing: check that the Mac is not muted, no Focus is on, and no oth
 ENTITLEMENTS
 - com.apple.security.device.usb: the MacBook's built-in lid angle sensor is a HID device. Creaky opens it with the public IOKit HID API, read-only, to read the lid angle. It does not access any other USB or HID device, and it does not read the keyboard or trackpad.
 - com.apple.security.files.user-selected.read-write: import the user's own audio files and import/export sound packs through the standard open/save panels.
-- com.apple.developer.usernotifications.communication: used only to read whether a Focus is on (INFocusStatusCenter), so Creaky can stay silent. Creaky does not send notifications.
+- com.apple.developer.usernotifications.communication: used only to read whether a Focus is on (INFocusStatusCenter), so Creaky can stay silent. Creaky does not send notifications or messages; INSendMessageIntent is listed in NSUserActivityTypes only because App Store Connect requires it with this entitlement (ITMS-90894).
 - com.apple.security.network.client: required by WKWebView in the App Sandbox. The settings window is a web view of files bundled in the app, and WebKit's network process needs this entitlement to load them; without it the window stays blank. Creaky itself makes no network requests.
 
 PRIVACY
